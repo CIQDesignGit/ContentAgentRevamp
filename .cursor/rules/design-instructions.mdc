@@ -1,0 +1,72 @@
+---
+description: UI design and coding standards for every page and component in this project
+alwaysApply: true
+---
+
+# Design Instructions
+
+These rules apply to every page and component. Follow them unless the user explicitly says otherwise.
+
+---
+
+## Icons
+- Use **Lucide React** only — no Heroicons, no FontAwesome.
+- Import from `lucide-react`:
+```tsx
+// ✅ GOOD
+import { Bell, Home } from "lucide-react"
+
+// ❌ BAD
+import { BellIcon } from "@heroicons/react/24/outline"
+```
+
+## Colors
+- **Tailwind color utilities only** — no raw hex values.
+- `bg-primary`, `text-foreground`, `text-muted-foreground` (shadcn semantic tokens) are fine.
+- **Slate is the neutral color** — use `slate-*` for borders, muted backgrounds, secondary text.
+- Do NOT use `zinc-*`, `gray-*`, or any raw `#hex` values.
+```tsx
+// ✅ GOOD
+<p className="text-slate-500 border-slate-200">...</p>
+<button className="bg-violet-600 text-white">...</button>
+
+// ❌ BAD
+<p style={{ color: "#6b7280" }}>...</p>
+<div className="bg-zinc-100">...</div>
+```
+
+## Images & Avatars
+- Always use `https://placehold.co/{w}x{h}` for placeholder images — never reference local files that don't exist.
+```tsx
+// ✅ GOOD
+<img src="https://placehold.co/40x40" alt="user avatar" />
+
+// ❌ BAD
+<img src="/images/user.png" alt="user avatar" />
+```
+
+## Gradients
+- Do NOT add gradients unless the user explicitly asks for them.
+
+## Styling
+- Tailwind CSS 4 utility classes only — no inline styles.
+- Use shadcn/ui components for all base UI primitives (Button, Avatar, Badge, Card, etc.).
+- Use prompt-kit components for all agentic/chat UI (PromptInput, Message, Loader, etc.).
+
+## Layout
+- All pages share the **AppShell** layout: left icon sidebar + main content area.
+- Left alerts panel is shown on the **Home page only**.
+- Keep page files under 300 lines — extract reusable pieces into `src/components/`.
+
+## Typography
+- Font: Inter (configured as `--font-sans` / `--font-inter` in globals.css).
+- Headings: `font-semibold` or `font-bold`.
+- Body: default weight.
+- Muted/secondary text: `text-muted-foreground`.
+- Code/data values: `font-mono` (JetBrains Mono).
+
+## Code Quality
+- All interactive pages must start with `"use client"`.
+- No inline styles — Tailwind classes only.
+- Keep component files under 150 lines; split into sub-components when needed.
+- Add comments only for non-obvious logic — do not narrate what the code does.
