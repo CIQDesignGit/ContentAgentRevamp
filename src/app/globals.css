@@ -1,0 +1,282 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ─────────────────────────────────────────────
+   DESIGN TOKENS
+   All values here come from design-specs.md.
+   Edit this file whenever the Figma variables
+   are updated. See design-specs.md for the full
+   reference table.
+───────────────────────────────────────────── */
+@theme inline {
+
+  /* ── Fonts ──────────────────────────────── */
+  /* --font-inter is injected by next/font in layout.tsx */
+  --font-sans:    var(--font-inter);
+  --font-heading: var(--font-inter);
+  --font-mono:    var(--font-mono);  /* JetBrains Mono via layout.tsx */
+
+  /* ── Semantic color aliases (Tailwind ↔ CSS var) ── */
+  --color-background:        var(--background);
+  --color-foreground:        var(--foreground);
+  --color-card:              var(--card);
+  --color-card-foreground:   var(--card-foreground);
+  --color-popover:           var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary:           var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary:         var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:             var(--muted);
+  --color-muted-foreground:  var(--muted-foreground);
+  --color-accent:            var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive:       var(--destructive);
+  --color-border:            var(--border);
+  --color-input:             var(--input);
+  --color-ring:              var(--ring);
+
+  /* ── Sidebar ────────────────────────────── */
+  --color-sidebar:                    var(--sidebar);
+  --color-sidebar-foreground:         var(--sidebar-foreground);
+  --color-sidebar-primary:            var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent:             var(--sidebar-accent);
+  --color-sidebar-accent-foreground:  var(--sidebar-accent-foreground);
+  --color-sidebar-border:             var(--sidebar-border);
+  --color-sidebar-ring:               var(--sidebar-ring);
+
+  /* ── Chart colors ───────────────────────── */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* ── Border radius ──────────────────────── */
+  --radius-none: 0;
+  --radius-xs:   0.125rem;   /* 2px  — tiny chips */
+  --radius-sm:   0.25rem;    /* 4px  — tags, small badges */
+  --radius-md:   0.375rem;   /* 6px  — buttons, inputs */
+  --radius-lg:   0.5rem;     /* 8px  — default: cards, dropdowns */
+  --radius-xl:   0.75rem;    /* 12px — modals, drawers */
+  --radius-2xl:  1rem;       /* 16px — panels, large cards */
+  --radius-3xl:  1.5rem;     /* 24px — feature sections */
+  --radius-4xl:  2rem;       /* 32px — hero sections */
+  --radius-full: 9999px;     /* pills, avatars, circular buttons */
+
+  /* ── Shadows / Elevation ────────────────── */
+  --shadow-xs:       0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm:       0 1px 3px 0 rgb(0 0 0 / 0.10), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-md:       0 4px 6px -1px rgb(0 0 0 / 0.10), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+  --shadow-lg:       0 10px 15px -3px rgb(0 0 0 / 0.10), 0 4px 6px -4px rgb(0 0 0 / 0.06);
+  --shadow-xl:       0 20px 25px -5px rgb(0 0 0 / 0.10), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+  --shadow-2xl:      0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-brand:    0 4px 14px 0 rgb(135 91 247 / 0.35);  /* brand glow */
+  --shadow-brand-lg: 0 8px 28px 0 rgb(135 91 247 / 0.40); /* brand glow — large */
+  --shadow-inner:    inset 0 2px 4px 0 rgb(0 0 0 / 0.06);
+
+  /* ── Brand — Purple (Figma Purple/500 = #875BF7) ── */
+  --color-brand-50:  #faf5ff;
+  --color-brand-100: #f3e8ff;
+  --color-brand-200: #ddd6fe;  /* Figma Purple/200 */
+  --color-brand-300: #c4b5fd;
+  --color-brand-400: #a78bfa;
+  --color-brand-500: #875bf7;  /* Figma Purple/500 — PRIMARY */
+  --color-brand-600: #7c3aed;
+  --color-brand-700: #6d28d9;
+  --color-brand-800: #5b21b6;
+  --color-brand-900: #4c1d95;
+  --color-brand-950: #2e1065;
+
+  /* ── Warning — Amber (Figma Warning/100 + Warning/600) ── */
+  --color-warning-50:  #fffbeb;
+  --color-warning-100: #fef0c7;  /* Figma Warning/100 */
+  --color-warning-200: #fed27a;
+  --color-warning-300: #fdc63c;
+  --color-warning-400: #fcb519;
+  --color-warning-500: #f89b04;
+  --color-warning-600: #dc6803;  /* Figma Warning/600 */
+  --color-warning-700: #b54107;
+  --color-warning-800: #923009;
+  --color-warning-900: #78270a;
+
+  /* ── Success — Green ────────────────────── */
+  --color-success-50:  #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+
+  /* ── Error — Red ────────────────────────── */
+  --color-error-50:  #fef2f2;
+  --color-error-100: #fee2e2;
+  --color-error-500: #ef4444;
+  --color-error-600: #dc2626;
+  --color-error-700: #b91c1c;
+
+  /* ── Info — Blue ────────────────────────── */
+  --color-info-50:  #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-500: #3b82f6;
+  --color-info-600: #2563eb;
+  --color-info-700: #1d4ed8;
+
+  /* ── Neutral — Gray ─────────────────────── */
+  --color-neutral-50:  #f9fafb;
+  --color-neutral-100: #f3f4f6;
+  --color-neutral-200: #e5e7eb;
+  --color-neutral-300: #d1d5db;
+  --color-neutral-400: #9ca3af;
+  --color-neutral-500: #6b7280;
+  --color-neutral-600: #4b5563;
+  --color-neutral-700: #374151;
+  --color-neutral-800: #1f2937;
+  --color-neutral-900: #111827;
+  --color-neutral-950: #030712;
+}
+
+/* ─────────────────────────────────────────────
+   LIGHT MODE — Semantic CSS variables
+   These power bg-primary, text-foreground, etc.
+   All shadcn components read from these vars.
+───────────────────────────────────────────── */
+:root {
+  /* Core surfaces */
+  --background:        #ffffff;
+  --foreground:        #111827;  /* neutral-900 */
+
+  /* Card / popover */
+  --card:              #ffffff;
+  --card-foreground:   #111827;
+  --popover:           #ffffff;
+  --popover-foreground: #111827;
+
+  /* Brand primary — Figma Purple/500 */
+  --primary:           #875bf7;
+  --primary-foreground: #ffffff;
+
+  /* Secondary surface */
+  --secondary:         #f3f4f6;  /* neutral-100 */
+  --secondary-foreground: #111827;
+
+  /* Muted */
+  --muted:             #f3f4f6;  /* neutral-100 */
+  --muted-foreground:  #6b7280;  /* neutral-500 */
+
+  /* Accent — Figma Purple/200 */
+  --accent:            #ddd6fe;
+  --accent-foreground: #4c1d95;  /* brand-900 */
+
+  /* Destructive */
+  --destructive:       #ef4444;  /* error-500 */
+
+  /* Borders / inputs */
+  --border:            #e5e7eb;  /* neutral-200 */
+  --input:             #e5e7eb;
+  --ring:              #875bf7;  /* matches primary */
+
+  /* Border radius base (shadcn scales from this) */
+  --radius: 0.5rem;
+
+  /* Chart — brand-aligned palette */
+  --chart-1: #875bf7;
+  --chart-2: #3b82f6;
+  --chart-3: #22c55e;
+  --chart-4: #dc6803;
+  --chart-5: #ef4444;
+
+  /* Sidebar */
+  --sidebar:                    #f9fafb;   /* neutral-50 */
+  --sidebar-foreground:         #111827;
+  --sidebar-primary:            #875bf7;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent:             #ddd6fe;
+  --sidebar-accent-foreground:  #4c1d95;
+  --sidebar-border:             #e5e7eb;
+  --sidebar-ring:               #875bf7;
+}
+
+/* ─────────────────────────────────────────────
+   DARK MODE
+   Toggle by adding class="dark" to <html>.
+───────────────────────────────────────────── */
+.dark {
+  --background:        #111827;  /* neutral-900 */
+  --foreground:        #f9fafb;  /* neutral-50 */
+
+  --card:              #1f2937;  /* neutral-800 */
+  --card-foreground:   #f9fafb;
+  --popover:           #1f2937;
+  --popover-foreground: #f9fafb;
+
+  --primary:           #a78bfa;  /* brand-400 — lighter for dark bg */
+  --primary-foreground: #2e1065; /* brand-950 */
+
+  --secondary:         #374151;  /* neutral-700 */
+  --secondary-foreground: #f9fafb;
+
+  --muted:             #374151;
+  --muted-foreground:  #9ca3af;  /* neutral-400 */
+
+  --accent:            #4c1d95;  /* brand-900 */
+  --accent-foreground: #ddd6fe;  /* brand-200 */
+
+  --destructive:       #f87171;  /* error-400 — lighter for dark bg */
+
+  --border:            rgb(255 255 255 / 10%);
+  --input:             rgb(255 255 255 / 15%);
+  --ring:              #a78bfa;
+
+  --chart-1: #a78bfa;
+  --chart-2: #60a5fa;
+  --chart-3: #4ade80;
+  --chart-4: #fcb519;
+  --chart-5: #f87171;
+
+  --sidebar:                    #1f2937;
+  --sidebar-foreground:         #f9fafb;
+  --sidebar-primary:            #a78bfa;
+  --sidebar-primary-foreground: #2e1065;
+  --sidebar-accent:             #4c1d95;
+  --sidebar-accent-foreground:  #ddd6fe;
+  --sidebar-border:             rgb(255 255 255 / 10%);
+  --sidebar-ring:               #a78bfa;
+}
+
+/* ─────────────────────────────────────────────
+   BASE LAYER
+   Applied to every element globally.
+───────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   PROTOTYPE UTILITIES
+───────────────────────────────────────────── */
+
+/* Thin scrollbar for horizontal image rail */
+.scroll-thin::-webkit-scrollbar { height: 6px; width: 6px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+.scroll-thin::-webkit-scrollbar-track { background: transparent; }
+
+/* Drag-and-drop bullet states */
+.bullet-drag-over {
+  outline: 2px dashed #875bf7;
+  outline-offset: -2px;
+  background: #ede9fe;
+  border-radius: 8px;
+}
+.dragging { opacity: 0.4; }
