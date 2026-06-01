@@ -71,6 +71,7 @@ Always follow them unless the user explicitly says otherwise.
 
 | File | Purpose |
 |---|---|
+| `product-context.md` | Product behaviour rules (Actions Log status model, drawer, remarks) |
 | `design-specs.md` | Full color tokens, typography scale, shadow values from Figma |
 | `src/app/globals.css` | All design tokens as CSS variables and `@theme` block |
 | `src/app/layout.tsx` | Font loading (Inter + JetBrains Mono) |

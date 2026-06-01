@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Check, ChevronDown, FunnelPlus, History, Search, Sparkles, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -206,6 +207,7 @@ export function FilterBar({
   search, onSearchChange, activeFilter, onFilterChange,
   selectedBrands, onBrandsChange, matchCount,
 }: FilterBarProps) {
+  const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(search.length > 0)
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false)
   const [columnFilters, setColumnFilters] = useState<ColumnFilters>({})
@@ -305,7 +307,13 @@ export function FilterBar({
         <button type="button" aria-label="AI suggestions" title="AI suggestions" className="grid size-8 place-items-center rounded-md text-slate-500 hover:bg-slate-100">
           <Sparkles className="size-4" />
         </button>
-        <button type="button" aria-label="Activity log" title="Recent activity" className="relative grid size-8 place-items-center rounded-md text-slate-500 hover:bg-slate-100">
+        <button
+          type="button"
+          aria-label="Activity log"
+          title="Recent activity"
+          onClick={() => router.push("/actions-log")}
+          className="relative grid size-8 place-items-center rounded-md text-slate-500 hover:bg-slate-100"
+        >
           <History className="size-4" />
           <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-error-600 px-1 text-[10px] font-semibold text-white">2</span>
         </button>
