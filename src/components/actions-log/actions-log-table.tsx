@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { Check, Copy } from "lucide-react"
-import { ActionLogDetailPanel } from "./action-log-detail-drawer"
 import { PdpStatusBadge, PimStatusBadge, RetailerStatusBadge } from "./status-badge"
 import { effectiveTableStatuses } from "./resolve-panel-view"
 import type { ActionLogEntry } from "./types"
@@ -73,14 +72,12 @@ interface ActionsLogTableProps {
   entries: ActionLogEntry[]
   selectedEntry: ActionLogEntry | null
   onRowClick: (entry: ActionLogEntry) => void
-  onClosePanel: () => void
 }
 
 export function ActionsLogTable({
   entries,
   selectedEntry,
   onRowClick,
-  onClosePanel,
 }: ActionsLogTableProps) {
   return (
     <div className="relative min-h-0 flex-1 overflow-hidden bg-white">
@@ -155,10 +152,6 @@ export function ActionsLogTable({
         </tbody>
       </table>
       </div>
-
-      {selectedEntry ? (
-        <ActionLogDetailPanel entry={selectedEntry} onClose={onClosePanel} />
-      ) : null}
     </div>
   )
 }

@@ -27,7 +27,7 @@ export function ActionLogDetailPanel({ entry, onClose }: ActionLogDetailPanelPro
 
   return (
     <aside
-      className="absolute top-0 right-0 z-20 flex h-full w-[520px] flex-col border-l border-slate-200 bg-slate-50 shadow-md"
+      className="fixed inset-y-0 right-0 z-30 flex h-screen w-[650px] flex-col border-l border-slate-200 bg-slate-50 shadow-md"
       aria-label="Action log details"
     >
       <div className="z-10 flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">

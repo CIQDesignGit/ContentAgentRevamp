@@ -4,7 +4,21 @@ import type { ReactNode } from "react"
 import { AlertTriangle, Check, Clock } from "lucide-react"
 import type { ChangeSegment, FieldCardView } from "./types"
 
-function AddedSpan({ children }: { children: ReactNode }) {
+function AddedSpan({
+  children,
+  block,
+}: {
+  children: ReactNode
+  block?: boolean
+}) {
+  if (block) {
+    return (
+      <div className="rounded bg-success-50 px-2 py-1.5 font-medium text-success-700">
+        {children}
+      </div>
+    )
+  }
+
   return (
     <span className="rounded bg-success-50 px-0.5 font-medium text-success-700">
       {children}
@@ -29,7 +43,9 @@ function InlineTextDiff({
     return (
       <Tag className="text-sm leading-relaxed">
         {after?.map((segment, index) => (
-          <AddedSpan key={index}>{segment.text}</AddedSpan>
+          <AddedSpan key={index} block={block}>
+            {segment.text}
+          </AddedSpan>
         ))}
       </Tag>
     )

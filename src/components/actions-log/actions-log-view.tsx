@@ -3,16 +3,17 @@
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
+  ArrowLeft,
   Calendar,
   FileDown,
   Funnel,
-  History,
   Search,
   X,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { ACTION_LOG_ENTRIES, DEFAULT_DATE_RANGE } from "./data"
 import { ActionsLogTable } from "./actions-log-table"
+import { ActionLogDetailPanel } from "./action-log-detail-drawer"
 import { StatusTabs } from "./status-tabs"
 import type { ActionLogEntry, StatusTabKey } from "./types"
 
@@ -58,9 +59,14 @@ export function ActionsLogView() {
     <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
       <header className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
         <div className="flex items-center gap-2">
-          <div className="grid size-9 place-items-center rounded-lg bg-slate-100 text-slate-600">
-            <History className="size-5" />
-          </div>
+          <button
+            type="button"
+            aria-label="Go back"
+            onClick={() => router.push("/")}
+            className="grid size-9 place-items-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200"
+          >
+            <ArrowLeft className="size-5" />
+          </button>
           <h1 className="text-lg font-semibold text-slate-900">Actions Log</h1>
         </div>
         <button
@@ -112,8 +118,14 @@ export function ActionsLogView() {
         entries={filteredEntries}
         selectedEntry={selectedEntry}
         onRowClick={setSelectedEntry}
-        onClosePanel={() => setSelectedEntry(null)}
       />
+
+      {selectedEntry ? (
+        <ActionLogDetailPanel
+          entry={selectedEntry}
+          onClose={() => setSelectedEntry(null)}
+        />
+      ) : null}
     </div>
   )
 }

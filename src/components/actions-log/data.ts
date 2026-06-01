@@ -33,13 +33,22 @@ const TIDY_CATS_CHANGES: AttemptedChange[] = [
   {
     type: "text",
     field: "Description",
-    changeKind: "add",
+    changeKind: "edit",
     liveDate: "May 28",
     fieldReflection: "live",
-    before: null,
+    before: [
+      {
+        text: "Keep litter boxes fresh with powerful odor control. ",
+      },
+      {
+        text: "Our standard clay formula is ideal for everyday use in single-cat homes.",
+        variant: "removed",
+      },
+    ],
     after: [
       {
-        text: "Keep litter boxes fresh with powerful odor control, now half the weight…",
+        text: "Tidy Cats LightWeight Free & Clean is now half the weight of traditional clay litter, with 14-day odor control and a dye-free, fragrance-free formula ideal for multi-cat households.",
+        variant: "added",
       },
     ],
   },
@@ -138,10 +147,23 @@ export const ACTION_LOG_ENTRIES: ActionLogEntry[] = [
       {
         type: "text",
         field: "Description",
-        changeKind: "add",
+        changeKind: "edit",
         fieldReflection: "pending",
-        before: null,
-        after: [{ text: "Authentic black cherry fragrance for any room…" }],
+        before: [
+          {
+            text: "Authentic black cherry fragrance fills any room with rich, long-lasting scent. ",
+          },
+          {
+            text: "Compact jar size ideal for bedside tables and small spaces.",
+            variant: "removed",
+          },
+        ],
+        after: [
+          {
+            text: "This 22 oz large jar delivers up to 150 hours of burn time with premium-grade paraffin wax for a clean, even burn from first light to last.",
+            variant: "added",
+          },
+        ],
       },
     ],
   },
@@ -194,11 +216,24 @@ export const ACTION_LOG_ENTRIES: ActionLogEntry[] = [
       {
         type: "text",
         field: "Description",
-        changeKind: "add",
+        changeKind: "edit",
         liveDate: "May 18",
         fieldReflection: "not_reflected",
-        before: null,
-        after: [{ text: "Bring coastal calm to your space with Pink Sands…" }],
+        before: [
+          {
+            text: "Bring coastal calm to your space with Pink Sands — ",
+          },
+          {
+            text: "a light floral note for small rooms.",
+            variant: "removed",
+          },
+        ],
+        after: [
+          {
+            text: "a sun-warmed blend of floral and citrus notes inspired by beachside breezes, with a clean, even burn in a modern Studio collection vessel.",
+            variant: "added",
+          },
+        ],
       },
     ],
     pdpRemarks: {
@@ -251,7 +286,11 @@ export const ACTION_LOG_ENTRIES: ActionLogEntry[] = [
         field: "Description",
         changeKind: "add",
         before: null,
-        after: [{ text: "Versatile food processor for everyday meal prep…" }],
+        after: [
+          {
+            text: "Versatile food processor for everyday meal prep — chop, slice, shred, and puree with an 8-cup work bowl and digital touch control panel. Ideal for sauces, dips, vegetables, and dough with dishwasher-safe parts for easy cleanup.",
+          },
+        ],
       },
     ],
   },
@@ -296,7 +335,11 @@ export const ACTION_LOG_ENTRIES: ActionLogEntry[] = [
         field: "Description",
         changeKind: "add",
         before: null,
-        after: [{ text: "Cordless vacuum with advanced filtration…" }],
+        after: [
+          {
+            text: "Cordless vacuum with advanced filtration captures pet hair, dust, and allergens across carpets and hard floors. The V11 Animal delivers powerful suction, up to 60 minutes of runtime, and a whole-machine filtration system certified asthma & allergy friendly.",
+          },
+        ],
       },
     ],
     syndicationRemarksDetail: AMAZON_REJECTION,
@@ -352,7 +395,11 @@ export const ACTION_LOG_ENTRIES: ActionLogEntry[] = [
         changeKind: "add",
         fieldReflection: "not_submitted",
         before: null,
-        after: [{ text: "High-speed grain mill for commercial kitchens…" }],
+        after: [
+          {
+            text: "High-speed grain mill for commercial kitchens and home bakers — 304 stainless steel burrs grind wheat, corn, rice, and spices with a commercial-grade motor built for daily use. Adjustable texture from fine flour to coarse meal.",
+          },
+        ],
       },
     ],
     syndicationRemarksDetail: {
