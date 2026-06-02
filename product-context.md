@@ -65,7 +65,7 @@ All remarks under the stage timeline use the same **card shell**: white backgrou
 | **Amber (warning)** | `warning-600` | Partially live / not reflected — PDP field issues |
 | **Green (success)** | `success-600` | Live — all fields reflected |
 
-**Rejection / error** also includes: summary line, numbered errors in a slate detail box, collapsible raw response, suggested fix.
+**Rejection / error** includes: summary line, copy raw, collapsible raw response.
 
 **PDP partially live** includes: body summary, likely cause + next step in a slate detail box.
 
@@ -75,11 +75,9 @@ All remarks under the stage timeline use the same **card shell**: white backgrou
 
 **PIM / Retailer rejection**
 
-- Raw response verbatim (collapsible)
-- Multi-part Amazon errors as numbered lines
+- Headline + summary (plain terms)
 - Copy raw control
-- Suggested fix where derivable
-- Optional "Summarize with AI" (raw text always retained)
+- Raw response verbatim (collapsible)
 
 **PDP not reflected**
 

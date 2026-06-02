@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { PdpStatus, PimStatus, RetailerStatus } from "./types"
+import type { PdpStatus, PimStatus, RetailerStatus, StatusTabKey } from "./types"
 import { COLOR_INTENT_CLASSES, statusColorIntent, statusLabel } from "./status-styles"
 
 interface BadgeSpec {
@@ -156,20 +156,20 @@ export function PanelScenarioBadge({
 }
 
 export function TabStatusIcon({
-  status,
+  tab,
   className,
 }: {
-  status: "pending" | "failed" | "success" | "cancelled"
+  tab: Exclude<StatusTabKey, "all">
   className?: string
 }) {
-  if (status === "pending") {
+  if (tab === "pending") {
     return <Clock className={cn("size-3.5 text-info-600", className)} />
   }
-  if (status === "failed") {
-    return <X className={cn("size-3.5 text-error-600", className)} />
-  }
-  if (status === "success") {
+  if (tab === "live_on_pdp") {
     return <Check className={cn("size-3.5 text-success-600", className)} />
+  }
+  if (tab === "needs_attention") {
+    return <AlertTriangle className={cn("size-3.5 text-warning-600", className)} />
   }
   return <Minus className={cn("size-3.5 text-slate-400", className)} />
 }

@@ -10,6 +10,7 @@ import type {
   PimStatus,
   RetailerStatus,
   SyndicationRemarks,
+  StatusTabKey,
   TimelineStep,
   TimelineVariant,
 } from "./types"
@@ -214,6 +215,52 @@ export function effectiveTableStatuses(entry: ActionLogEntry): {
     retailer: effectiveRetailerStatus(entry) as RetailerStatus | "not_run" | "pending",
     pdp: effectivePdpStatus(entry) as PdpStatus | "not_run" | "pending",
   }
+}
+
+export type FilterTabKey = Exclude<StatusTabKey, "all">
+
+/** Map each row to a list filter tab. */
+export function entryFilterTab(entry: ActionLogEntry): FilterTabKey {
+  if (isRejectedButLive(entry)) return "needs_attention"
+  if (entry.pimStatus === "rejected" || entry.retailerStatus === "rejected") {
+    return "needs_attention"
+  }
+
+  const pdp = effectivePdpStatus(entry)
+  if (
+    pdp === "partially_live" ||
+    pdp === "not_reflected" ||
+    pdp === "verification_unavailable"
+  ) {
+    return "needs_attention"
+  }
+
+  if (pdp === "live") return "live_on_pdp"
+
+  if (
+    entry.pimStatus === "pending" ||
+    entry.retailerStatus === "pending" ||
+    pdp === "pending"
+  ) {
+    return "pending"
+  }
+
+  return "needs_attention"
+}
+
+export function countByFilterTab(
+  entries: ActionLogEntry[],
+): Record<StatusTabKey, number> {
+  const counts: Record<StatusTabKey, number> = {
+    all: entries.length,
+    live_on_pdp: 0,
+    pending: 0,
+    needs_attention: 0,
+  }
+  for (const entry of entries) {
+    counts[entryFilterTab(entry)] += 1
+  }
+  return counts
 }
 
 export function resolvePanelView(entry: ActionLogEntry): PanelViewModel {

@@ -112,7 +112,7 @@ export interface ActionLogEntry {
   panelScenario?: PanelScenario
 }
 
-export type StatusTabKey = "all" | LogStatus
+export type StatusTabKey = "all" | "live_on_pdp" | "pending" | "needs_attention"
 
 export interface FieldCardView {
   change: AttemptedChange
