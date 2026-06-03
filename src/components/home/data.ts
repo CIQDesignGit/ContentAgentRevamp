@@ -136,8 +136,12 @@ export const MOCK_SKUS: Sku[] = [
 // ─── Content initializer ──────────────────────────────────────────────────────
 
 export function makeInitialContent(sku: Sku): SkuContent {
-  // Use per-SKU content bundle; fall back to first SKU's content if missing
-  return SKU_CONTENT[sku.id] ?? SKU_CONTENT["sku-1"]
+  const bundle = SKU_CONTENT[sku.id] ?? SKU_CONTENT["sku-1"]
+  return {
+    ...bundle,
+    descriptionStatus: bundle.descriptionStatus ?? "pending",
+    descriptionRecommendation: bundle.descriptionRecommendation ?? null,
+  }
 }
 
 export function buildInitialState(): ContentState {

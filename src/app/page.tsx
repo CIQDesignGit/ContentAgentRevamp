@@ -6,20 +6,17 @@
 export const dynamic = "force-static"
 
 import { useMemo, useState } from "react"
-import { cn } from "@/lib/utils"
 
 import { AppHeader } from "@/components/home/app-header"
 import { FilterBar } from "@/components/home/filter-bar"
 import { SkuSidebar } from "@/components/home/sku-sidebar"
 import { ProductHeader } from "@/components/home/product-header"
-import { SalsifyHeader, PdpHeader } from "@/components/home/content-headers"
-import { RightRail } from "@/components/home/right-rail"
 import { ProductTitleSection } from "@/components/home/title-section"
 import { ImageSection } from "@/components/home/image-section"
 import { BulletPointsSection } from "@/components/home/bullet-section"
 import { DescriptionSection } from "@/components/home/description-section"
-import { PdpReadOnlyContent } from "@/components/home/pdp-readonly"
 
+import { applyBulletRecommendation } from "@/lib/apply-bullet-recommendation"
 import {
   MOCK_SKUS,
   buildInitialState,
@@ -27,14 +24,13 @@ import {
   passesFilter,
   passesSearch,
 } from "@/components/home/data"
-import type { ContentState, SkuContent } from "@/components/home/types"
+import type { BulletRecommendation, ContentState, SkuContent } from "@/components/home/types"
 
 export default function Home() {
   const [selectedSkuId, setSelectedSkuId] = useState(MOCK_SKUS[0].id)
   const [search, setSearch] = useState("")
   const [filter, setFilter] = useState("all")
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
-  const [compareMode, setCompareMode] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [contentState, setContentState] = useState<ContentState>(() => buildInitialState())
 
@@ -62,7 +58,101 @@ export default function Home() {
     patch((prev) => ({ ...prev, title: original, titleStatus: "pending" }))
   }
 
+  function handleAcceptDescription() {
+    const recommended = content.descriptionRecommendation?.recommendedText
+    if (recommended) patch((prev) => ({ ...prev, description: recommended, descriptionStatus: "accepted" }))
+  }
+  function handleRejectDescription() {
+    patch((prev) => ({ ...prev, descriptionStatus: "rejected" }))
+  }
+  function handleRevertDescription() {
+    const original = makeInitialContent(selectedSku).description
+    patch((prev) => ({ ...prev, description: original, descriptionStatus: "pending" }))
+  }
+
   const pdp = content.pdpContent
+
+  const bulletOriginals = useMemo(() => {
+    const initial = makeInitialContent(selectedSku).bulletRecommendations
+    return Object.fromEntries(initial.map((r) => [r.id, r.recommendedText]))
+  }, [selectedSkuId])
+
+  function mapBulletReco(
+    prev: SkuContent,
+    mapper: (r: BulletRecommendation) => BulletRecommendation,
+  ): SkuContent {
+    return {
+      ...prev,
+      bulletRecommendations: prev.bulletRecommendations.map(mapper),
+    }
+  }
+
+  function handleBulletTextChange(id: string, text: string) {
+    patch((prev) => mapBulletReco(prev, (r) => (r.id === id ? { ...r, recommendedText: text } : r)))
+  }
+
+  function handleAcceptBullet(id: string) {
+    patch((prev) => {
+      const reco = prev.bulletRecommendations.find((r) => r.id === id)
+      if (!reco) return prev
+      const canAccept =
+        reco.status === "pending" ||
+        reco.footprint === "processing" ||
+        reco.footprint === "recently-updated"
+      if (!canAccept) return prev
+      return {
+        ...prev,
+        bullets: applyBulletRecommendation(prev.bullets, reco),
+        bulletRecommendations: prev.bulletRecommendations.map((r) =>
+          r.id === id
+            ? { ...r, status: "accepted" as const, footprint: "processing" as const }
+            : r,
+        ),
+      }
+    })
+  }
+
+  function handleRejectBullet(id: string) {
+    patch((prev) =>
+      mapBulletReco(prev, (r) => (r.id === id && r.status === "pending" ? { ...r, status: "rejected" } : r)),
+    )
+  }
+
+  function handleAcceptAllBullets() {
+    patch((prev) => {
+      let bullets = prev.bullets
+      const nextRecos = prev.bulletRecommendations.map((r) => {
+        if (r.status !== "pending") return r
+        bullets = applyBulletRecommendation(bullets, r)
+        return { ...r, status: "accepted" as const, footprint: "processing" as const }
+      })
+      return { ...prev, bullets, bulletRecommendations: nextRecos }
+    })
+  }
+
+  function handleRejectAllBullets() {
+    patch((prev) =>
+      mapBulletReco(prev, (r) => (r.status === "pending" ? { ...r, status: "rejected" } : r)),
+    )
+  }
+
+  function handleResetBullet(id: string) {
+    const original = bulletOriginals[id]
+    if (original === undefined) return
+    patch((prev) =>
+      mapBulletReco(prev, (r) => (r.id === id ? { ...r, recommendedText: original } : r)),
+    )
+  }
+
+  function handleResetAllBullets() {
+    patch((prev) =>
+      mapBulletReco(prev, (r) =>
+        bulletOriginals[r.id] !== undefined
+          ? { ...r, recommendedText: bulletOriginals[r.id] }
+          : r,
+      ),
+    )
+  }
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
@@ -78,17 +168,14 @@ export default function Home() {
       />
 
       <div className="flex min-h-0 flex-1">
-        {/* Sidebar shows collapsed strip when sidebarCollapsed; hidden only in compare mode */}
-        {!compareMode && (
-          <SkuSidebar
-            skus={filteredSkus}
-            selectedSkuId={selectedSkuId}
-            onSelect={setSelectedSkuId}
-            totalCount={MOCK_SKUS.length}
-            collapsed={sidebarCollapsed}
-            onToggle={() => setSidebarCollapsed((v) => !v)}
-          />
-        )}
+        <SkuSidebar
+          skus={filteredSkus}
+          selectedSkuId={selectedSkuId}
+          onSelect={setSelectedSkuId}
+          totalCount={MOCK_SKUS.length}
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed((v) => !v)}
+        />
 
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <ProductHeader
@@ -102,20 +189,21 @@ export default function Home() {
           />
 
           <div className="flex min-h-0 flex-1">
-            {/* Salsify editor pane */}
-            <section className={cn("flex min-w-0 flex-col", compareMode ? "w-1/2" : "flex-1")}>
-              <SalsifyHeader
-                date={selectedSku.lastUpdated}
-                issues={selectedSku.salsifyIssues}
-                compareMode={compareMode}
-                onToggleCompare={() => setCompareMode((v) => !v)}
-              />
+            <section className="flex min-w-0 flex-1 flex-col">
               <div className="space-y-4 overflow-y-auto p-5">
                 <ProductTitleSection
-                  title={content.title}
-                  onTitleChange={(v) => patch((prev) => ({ ...prev, title: v }))}
+                  pimTitle={content.title}
+                  pdpTitle={pdp.title}
                   status={content.titleStatus}
                   recommendation={content.titleRecommendation}
+                  onRecommendationChange={(text) =>
+                    patch((prev) => ({
+                      ...prev,
+                      titleRecommendation: prev.titleRecommendation
+                        ? { ...prev.titleRecommendation, recommendedText: text }
+                        : null,
+                    }))
+                  }
                   onAccept={handleAcceptTitle}
                   onReject={handleRejectTitle}
                   onRevert={handleRevertTitle}
@@ -130,33 +218,37 @@ export default function Home() {
                   }
                 />
                 <BulletPointsSection
-                  bullets={content.bullets}
-                  onChange={(next) => patch((prev) => ({ ...prev, bullets: next }))}
-                  recommendationCount={3}
+                  pimBullets={content.bullets}
+                  pdpBullets={pdp.bullets}
+                  recommendations={content.bulletRecommendations}
+                  originals={bulletOriginals}
+                  onRecommendationTextChange={handleBulletTextChange}
+                  onAccept={handleAcceptBullet}
+                  onReject={handleRejectBullet}
+                  onReset={handleResetBullet}
+                  onAcceptAll={handleAcceptAllBullets}
+                  onRejectAll={handleRejectAllBullets}
+                  onResetAll={handleResetAllBullets}
                 />
                 <DescriptionSection
-                  value={content.description}
-                  onChange={(v) => patch((prev) => ({ ...prev, description: v }))}
+                  pimDescription={content.description}
+                  pdpDescription={pdp.description}
+                  status={content.descriptionStatus}
+                  recommendation={content.descriptionRecommendation}
+                  onRecommendationChange={(text) =>
+                    patch((prev) => ({
+                      ...prev,
+                      descriptionRecommendation: prev.descriptionRecommendation
+                        ? { ...prev.descriptionRecommendation, recommendedText: text }
+                        : null,
+                    }))
+                  }
+                  onAccept={handleAcceptDescription}
+                  onReject={handleRejectDescription}
+                  onRevert={handleRevertDescription}
                 />
               </div>
             </section>
-
-            {/* PDP comparison pane (per-SKU) or right rail */}
-            {compareMode ? (
-              <section className="flex w-1/2 min-w-0 flex-col border-l border-slate-200">
-                <PdpHeader date={pdp.lastUpdated} />
-                <div className="flex-1 overflow-y-auto bg-slate-50/40">
-                  <PdpReadOnlyContent
-                    title={pdp.title}
-                    description={pdp.description}
-                    bullets={pdp.bullets}
-                    imageCount={pdp.imageCount}
-                  />
-                </div>
-              </section>
-            ) : (
-              <RightRail />
-            )}
           </div>
         </main>
       </div>

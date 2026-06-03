@@ -37,6 +37,26 @@ export type TitleRecommendation = {
 }
 
 export type TitleStatus = "pending" | "accepted" | "rejected"
+export type BulletRecoStatus = "pending" | "accepted" | "rejected"
+
+/** Post-accept lifecycle shown on the bullet slot (no new AI suggestion yet). */
+export type BulletRecoFootprint = "processing" | "recently-updated"
+
+export type BulletRecommendation = {
+  id: string
+  label: string
+  recommendedText: string
+  status: BulletRecoStatus
+  kind: "edit" | "add"
+  reasoning: ReasoningCategory[]
+  /** Index in PIM bullets to replace when kind is "edit" */
+  pimIndex?: number
+  /**
+   * When accepted: `processing` = propagating to channels (PIM/PDP cells show reco text).
+   * `recently-updated` = synced, no further AI optimization; last reco available to tweak.
+   */
+  footprint?: BulletRecoFootprint
+}
 
 export type PdpContent = {
   title: string
@@ -53,6 +73,9 @@ export type SkuContent = {
   images: ProductImage[]
   titleStatus: TitleStatus
   titleRecommendation: TitleRecommendation | null
+  descriptionStatus: TitleStatus
+  descriptionRecommendation: TitleRecommendation | null
+  bulletRecommendations: BulletRecommendation[]
   pdpContent: PdpContent
 }
 

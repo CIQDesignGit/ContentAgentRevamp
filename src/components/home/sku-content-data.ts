@@ -1,4 +1,16 @@
-import type { ProductImage, SkuContent, TitleRecommendation } from "./types"
+import type {
+  BulletRecommendation,
+  ProductImage,
+  SkuContent,
+  TitleRecommendation,
+  TitleStatus,
+} from "./types"
+
+/** Per-SKU seed data; description AI fields default in makeInitialContent. */
+export type SkuContentBundle = Omit<SkuContent, "descriptionStatus" | "descriptionRecommendation"> & {
+  descriptionStatus?: TitleStatus
+  descriptionRecommendation?: TitleRecommendation | null
+}
 
 // ─── Shared image helper ──────────────────────────────────────────────────────
 
@@ -48,7 +60,7 @@ function rec(
 
 // ─── Per-SKU content map ──────────────────────────────────────────────────────
 
-export const SKU_CONTENT: Record<string, SkuContent> = {
+export const SKU_CONTENT: Record<string, SkuContentBundle> = {
 
   "sku-1": {
     titleStatus: "pending",
@@ -76,6 +88,174 @@ export const SKU_CONTENT: Record<string, SkuContent> = {
       "Remove implicit filler phrasing",
       "The original title ends abruptly at '22 oz' — appending benefit descriptors adds value without triggering character-limit flags.",
     ),
+    descriptionStatus: "pending",
+    descriptionRecommendation: rec(
+      "Jessica",
+      "Indulge in Yankee Candle Black Cherry Large Jar Candle (22 oz)—a bold black cherry fragrance with warm spice and vanilla notes. Enjoy up to 150 hours of room-filling aroma with a premium paraffin blend and lead-free cotton wick for a clean, soot-minimizing burn. Perfect for gifting and everyday home fragrance.",
+      "Transport yourself to a lush summer orchard with the Yankee Candle Black Cherry Large Jar Candle. This iconic 22 oz jar is filled with a bold, sweet-meets-spicy cherry fragrance that evolves from top notes of fresh cherry to warm, velvety base notes of musk and sandalwood.",
+      "",
+      "",
+      "Front-load retailer scent keywords",
+      "Opens with 'black cherry' and burn-time benefits that match top Amazon description search queries.",
+      "Add quantified benefits",
+      "150-hour burn and clean-burn claims align with bullet and PDP language to improve conversion.",
+    ),
+    bulletRecommendations: [
+      {
+        id: "br-1",
+        label: "Bullet 1",
+        kind: "edit",
+        pimIndex: 0,
+        status: "pending",
+        recommendedText:
+          "RICH BLACK CHERRY FRAGRANCE — Deep, dark cherry with warm spice undertones for an indulgent, fruity-sweet room-filling aroma.",
+        reasoning: [
+          {
+            key: "seo",
+            label: "SEO",
+            reasons: [
+              {
+                type: "REPLACED",
+                summary: "Mirror retailer scent keywords",
+                detail: "Aligns with Amazon 'bold cherry' and 'warm spice' phrasing while keeping PIM brand voice.",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "br-2",
+        label: "Bullet 2",
+        kind: "edit",
+        pimIndex: 1,
+        status: "pending",
+        recommendedText:
+          "LONG BURN TIME — Up to 150 hours of fragrance from a single 22 oz jar for lasting home fragrance value.",
+        reasoning: [
+          {
+            key: "seo",
+            label: "SEO",
+            reasons: [
+              {
+                type: "ADDED",
+                summary: "Lead with quantified burn time",
+                detail: "Amazon shoppers filter by duration; '150 hours' matches top queries for jar candles.",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "br-3",
+        label: "Bullet 3",
+        kind: "edit",
+        pimIndex: 2,
+        status: "pending",
+        recommendedText:
+          "CLEAN BURN TECHNOLOGY — Lead-free cotton wick and premium paraffin blend for a consistent, soot-minimizing flame.",
+        reasoning: [
+          {
+            key: "compliance",
+            label: "Compliance",
+            reasons: [
+              {
+                type: "REPLACED",
+                summary: "Match retailer clean-burn claims",
+                detail: "Uses retailer-approved 'lead-free wick' language while retaining PIM technology framing.",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "br-4",
+        label: "Bullet 4",
+        kind: "edit",
+        pimIndex: 3,
+        status: "pending",
+        recommendedText:
+          "IDEAL GIFT — Signature Yankee Candle glass jar presentation perfect for birthdays, holidays, and housewarmings.",
+        reasoning: [
+          {
+            key: "compliance",
+            label: "Compliance",
+            reasons: [
+              {
+                type: "REPLACED",
+                summary: "Sharpen gift positioning",
+                detail: "Aligns with retailer gift-keyword patterns without exceeding character limits.",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "br-5",
+        label: "Bullet 5",
+        kind: "edit",
+        pimIndex: 4,
+        status: "pending",
+        recommendedText:
+          "LARGE 22 OZ JAR — Ideal size for medium and large rooms; hand-poured for even fragrance and a smooth finish.",
+        reasoning: [
+          {
+            key: "seo",
+            label: "SEO",
+            reasons: [
+              {
+                type: "REPLACED",
+                summary: "Replace hand-poured with size benefit",
+                detail: "Retailer bullet emphasizes 12 oz tumbler size; PIM should lead with 22 oz jar differentiator.",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "br-6",
+        label: "Bullet 6",
+        kind: "edit",
+        pimIndex: 5,
+        status: "pending",
+        recommendedText:
+          "REUSABLE GLASS JAR — Wide-mouth design for easy cleaning and repurposing as decorative home storage.",
+        reasoning: [
+          {
+            key: "aeo",
+            label: "AEO",
+            reasons: [
+              {
+                type: "REPLACED",
+                summary: "Clarify reuse benefit",
+                detail: "Adds explicit 'home storage' phrasing surfaced in voice-search bullet comparisons.",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "br-7",
+        label: "Bullet 7",
+        kind: "edit",
+        pimIndex: 6,
+        status: "pending",
+        recommendedText:
+          "AUTHENTIC YANKEE CANDLE — Genuine product backed by Yankee Candle quality standards and satisfaction guarantee.",
+        reasoning: [
+          {
+            key: "compliance",
+            label: "Compliance",
+            reasons: [
+              {
+                type: "REPLACED",
+                summary: "Tighten authenticity claim",
+                detail: "Shortens guarantee language to stay within retailer character limits while preserving trust signals.",
+              },
+            ],
+          },
+        ],
+      },
+    ] satisfies BulletRecommendation[],
     pdpContent: {
       title: "Yankee Candle Black Cherry Scented Candle | Large 2-Wick Tumbler Candle, 12 oz",
       bullets: [
@@ -118,12 +298,60 @@ export const SKU_CONTENT: Record<string, SkuContent> = {
       "Shorten generic descriptor",
       "'Digital Control Panel' is covered by the bullet points; replacing it with specific features improves title density.",
     ),
+    bulletRecommendations: [
+      {
+        id: "br-sku2-motor",
+        label: "Bullet 1",
+        kind: "edit",
+        pimIndex: 0,
+        status: "accepted",
+        footprint: "processing",
+        recommendedText:
+          "POWERFUL 500W MOTOR — Handles tough chopping, slicing, shredding, and pureeing with consistent high performance.",
+        reasoning: [
+          {
+            key: "seo",
+            label: "SEO",
+            reasons: [
+              {
+                type: "REPLACED",
+                summary: "Align motor wattage with PIM",
+                detail: "Retailer listed 300W; PIM spec is 500W — unified copy uses the authoritative wattage.",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "br-sku2-capacity",
+        label: "Bullet 3",
+        kind: "edit",
+        pimIndex: 2,
+        status: "accepted",
+        footprint: "recently-updated",
+        recommendedText:
+          "8-CUP CAPACITY — Generous bowl size handles family-sized recipes without multiple batches.",
+        reasoning: [
+          {
+            key: "compliance",
+            label: "Compliance",
+            reasons: [
+              {
+                type: "REPLACED",
+                summary: "Standardize capacity claim",
+                detail: "Matched retailer cup measurement to PIM 8-cup spec; both channels now in sync.",
+              },
+            ],
+          },
+        ],
+      },
+    ] satisfies BulletRecommendation[],
     pdpContent: {
       title: "NutriChef Kitchen Electric Food Processor, 1.5L, Chopper, Slicer",
       bullets: [
         "MULTI-FUNCTION: Chop, slice, shred, and blend with included attachments.",
         "MOTOR: 300W for everyday kitchen tasks.",
-        "CAPACITY: 1.5 liter bowl (approx. 6 cups).",
+        "8-CUP CAPACITY — Generous bowl size handles family-sized recipes without multiple batches.",
         "EASY CLEAN: Removable parts are dishwasher safe.",
         "COMPACT DESIGN: Small footprint, great for limited counter space.",
       ],
@@ -159,6 +387,7 @@ export const SKU_CONTENT: Record<string, SkuContent> = {
       "Replace vague superlative",
       "'Powerful Suction' is a compliance risk; measurable specs like '185 AW' remove ambiguity and meet marketplace standards.",
     ),
+    bulletRecommendations: [],
     pdpContent: {
       title: "Dyson V11 Torque Drive Cordless Vacuum Cleaner",
       bullets: [
@@ -201,6 +430,7 @@ export const SKU_CONTENT: Record<string, SkuContent> = {
       "Remove function word from title",
       "'with Wide Slots' is a weak connector; restructuring to an em-dash feature list aligns with marketplace title best practices.",
     ),
+    bulletRecommendations: [],
     pdpContent: {
       title: "Proctor Silex 22215 2 Slice Toaster with Wide Slots for Bread",
       bullets: [
@@ -242,6 +472,7 @@ export const SKU_CONTENT: Record<string, SkuContent> = {
       "Remove vague qualifier",
       "'Commercial Grade' without a spec is a compliance gray area; replacing with measurable specs reduces policy-flag risk.",
     ),
+    bulletRecommendations: [],
     pdpContent: {
       title: "Vevor Grain Grinder Mill, 700g Capacity, Stainless Steel Electric Grain Mill",
       bullets: [
@@ -283,6 +514,7 @@ export const SKU_CONTENT: Record<string, SkuContent> = {
       "Model numbers in consumer titles",
       "Marketplace guidelines recommend benefits over part numbers in the primary title — NV356E can stay in the detail section.",
     ),
+    bulletRecommendations: [],
     pdpContent: {
       title: "Shark NV356E Navigator Lift-Away Professional Upright Vacuum",
       bullets: [
@@ -325,6 +557,7 @@ export const SKU_CONTENT: Record<string, SkuContent> = {
       "Move model number out of title",
       "KSM150PS is a model number, not a consumer-facing feature; removing it reduces title length and shifts focus to benefits.",
     ),
+    bulletRecommendations: [],
     pdpContent: {
       title: "KitchenAid KSM150PSER Artisan Tilt-Head Stand Mixer, 5 quart, Empire Red",
       bullets: [
@@ -367,6 +600,7 @@ export const SKU_CONTENT: Record<string, SkuContent> = {
       "No compliance issues found",
       "Speed claim is substantiated in listing; recommend keeping it consistent across all placements.",
     ),
+    bulletRecommendations: [],
     pdpContent: {
       title: "Instant Pot Duo 7-in-1 Electric Pressure Cooker, Sterilizer, Slow Cooker, 6 Quart",
       bullets: [
@@ -409,6 +643,7 @@ export const SKU_CONTENT: Record<string, SkuContent> = {
       "Remove vague tier label",
       "'Professional Grade' without certification can trigger a quality-claim review; replacing it with verifiable specs removes the risk.",
     ),
+    bulletRecommendations: [],
     pdpContent: {
       title: "Vitamix E310 Explorian Blender, Variable Speed, 48-oz. Low-Profile Container",
       bullets: [
@@ -451,6 +686,7 @@ export const SKU_CONTENT: Record<string, SkuContent> = {
       "No compliance issues found",
       "All claims match verified product specs; no changes needed for compliance.",
     ),
+    bulletRecommendations: [],
     pdpContent: {
       title: "iRobot Roomba i3+ (3550) Robot Vacuum with Automatic Dirt Disposal",
       bullets: [

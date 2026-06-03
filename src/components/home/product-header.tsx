@@ -1,6 +1,6 @@
 "use client"
 
-import { BellPlus, BookmarkPlus, Search, ShieldCheck, Sparkles } from "lucide-react"
+import { BookmarkPlus, Search, ShieldCheck, Sparkles } from "lucide-react"
 import { MetricChip } from "./metric-chip"
 
 interface ProductHeaderProps {
@@ -36,13 +36,10 @@ export function ProductHeader({ title, asin, productId, brand, compliance, seo, 
 
       <div className="flex shrink-0 items-center gap-2">
         <button type="button" className="inline-flex h-8 items-center rounded-md bg-primary px-4 text-xs font-medium text-white hover:bg-violet-700">
-          Publish
+          Publish to PIM &amp; PDP
         </button>
         <button type="button" aria-label="Bookmark" title="Bookmark" className="grid size-8 place-items-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-100">
           <BookmarkPlus className="size-4" />
-        </button>
-        <button type="button" aria-label="More actions" title="More actions" className="grid size-8 place-items-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-100">
-          <BellPlus className="size-4" />
         </button>
       </div>
     </div>
