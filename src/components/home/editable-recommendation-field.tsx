@@ -48,12 +48,20 @@ const TONE_INNER_BORDER_CLASS: Record<RecommendationFieldTone, string> = {
   muted: "border-slate-200",
 }
 
+const TONE_INNER_BG_CLASS: Record<RecommendationFieldTone, string> = {
+  highlight: "bg-white",
+  success: "bg-white",
+  muted: "bg-slate-100",
+}
+
 interface EditableRecommendationFieldProps {
   value: string
   diff: DiffSegment[]
   originalValue: string
   onChange: (text: string) => void
   tone?: RecommendationFieldTone
+  showDiff?: boolean
+  readOnly?: boolean
   editAriaLabel?: string
   editRows?: number
   compact?: boolean
@@ -65,15 +73,35 @@ export function EditableRecommendationField({
   originalValue,
   onChange,
   tone = "highlight",
+  showDiff = true,
+  readOnly = false,
   editAriaLabel = "Edit AI recommendation",
   editRows = 3,
   compact = false,
 }: EditableRecommendationFieldProps) {
   const [isEditing, setIsEditing] = useState(false)
+  const canEdit = !readOnly
 
   useEffect(() => {
     if (value === originalValue) setIsEditing(false)
   }, [value, originalValue])
+
+  useEffect(() => {
+    if (readOnly) setIsEditing(false)
+  }, [readOnly])
+
+  const plainText = (
+    <p
+      className={cn(
+        "w-full text-sm leading-relaxed",
+        tone === "muted" ? "text-slate-500" : "text-slate-900",
+      )}
+    >
+      {value}
+    </p>
+  )
+
+  const displayContent = showDiff ? <DiffView diff={diff} /> : plainText
 
   return (
     <div
@@ -81,12 +109,13 @@ export function EditableRecommendationField({
     >
       <div
         className={cn(
-          "flex w-full min-w-0 flex-col rounded-md border bg-white px-3 py-2",
+          "flex w-full min-w-0 flex-col rounded-md border px-3 py-2",
+          TONE_INNER_BG_CLASS[tone],
           TONE_INNER_BORDER_CLASS[tone],
           isEditing && tone === "highlight" && "ring-2 ring-violet-200",
         )}
       >
-        {isEditing ? (
+        {isEditing && canEdit ? (
           <textarea
             value={value}
             onChange={(e) => onChange(e.target.value)}
@@ -96,15 +125,17 @@ export function EditableRecommendationField({
             aria-label={editAriaLabel}
             className="w-full resize-none border-0 bg-transparent p-0 text-sm leading-relaxed text-slate-900 focus:outline-none"
           />
-        ) : (
+        ) : canEdit ? (
           <button
             type="button"
             onClick={() => setIsEditing(true)}
             className="block w-full cursor-text text-left focus:outline-none"
             aria-label={editAriaLabel}
           >
-            <DiffView diff={diff} />
+            {displayContent}
           </button>
+        ) : (
+          displayContent
         )}
       </div>
     </div>

@@ -3,23 +3,29 @@
 import { useMemo, useState } from "react"
 import { AlignLeft, Columns2 } from "lucide-react"
 import { titleMatchPercent } from "@/lib/title-match"
+import { resolvePublishedSourceDisplay } from "@/lib/published-source-display"
 import {
   ContentRecommendationBody,
   ContentRecommendationHeader,
 } from "./content-recommendation-card"
 import type { FieldCompareTarget } from "./vertical-source-compare-grid"
 import { VerticalSourceCompareGrid } from "./vertical-source-compare-grid"
-import type { TitleRecommendation, TitleStatus } from "./types"
+import type { PublishBatch, TitleRecommendation, TitleStatus, SyncFootprint } from "./types"
 
 interface DescriptionSectionProps {
   pimDescription: string
   pdpDescription: string
   status: TitleStatus
   recommendation: TitleRecommendation | null
+  syncFootprint?: SyncFootprint
+  hasUnpublishedEdits?: boolean
+  activeBatch?: PublishBatch
   onRecommendationChange: (text: string) => void
   onAccept: () => void
   onReject: () => void
-  onRevert: () => void
+  onUndoAccept: () => void
+  onUndoReject: () => void
+  onPushUpdate?: () => void
 }
 
 export function DescriptionSection({
@@ -27,18 +33,36 @@ export function DescriptionSection({
   pdpDescription,
   status,
   recommendation,
+  syncFootprint,
+  hasUnpublishedEdits,
+  activeBatch,
   onRecommendationChange,
   onAccept,
   onReject,
-  onRevert,
+  onUndoAccept,
+  onUndoReject,
+  onPushUpdate,
 }: DescriptionSectionProps) {
   const [compareTarget, setCompareTarget] = useState<FieldCompareTarget>("pim")
   const [isOpen, setIsOpen] = useState(true)
   const [originalText] = useState(() => recommendation?.recommendedText ?? "")
 
+  const publishedText = recommendation?.recommendedText
+  const { pim: displayPim, pdp: displayPdp } = useMemo(
+    () =>
+      resolvePublishedSourceDisplay(
+        pimDescription,
+        pdpDescription,
+        publishedText,
+        syncFootprint,
+        activeBatch,
+      ),
+    [pimDescription, pdpDescription, publishedText, syncFootprint, activeBatch],
+  )
+
   const matchPercent = useMemo(
-    () => titleMatchPercent(pimDescription, pdpDescription),
-    [pimDescription, pdpDescription],
+    () => titleMatchPercent(displayPim, displayPdp),
+    [displayPim, displayPdp],
   )
 
   const showReco = Boolean(recommendation)
@@ -59,23 +83,22 @@ export function DescriptionSection({
       </header>
 
       <VerticalSourceCompareGrid
-        pimValue={pimDescription}
-        pdpValue={pdpDescription}
+        pimValue={displayPim}
+        pdpValue={displayPdp}
         compareTarget={compareTarget}
         recommendationHeader={
           showReco ? (
             <ContentRecommendationHeader
               labels={{
                 pending: "AI Recommended Description",
-                accepted: "Accepted AI recommended description",
-                rejected: "Rejected AI recommended description",
+                accepted: "Accepted",
+                rejected: "Rejected",
               }}
               status={status}
               compareTarget={compareTarget}
               onCompareTargetChange={setCompareTarget}
               isOpen={isOpen}
               onToggleOpen={() => setIsOpen((v) => !v)}
-              onRevert={onRevert}
             />
           ) : undefined
         }
@@ -84,15 +107,22 @@ export function DescriptionSection({
             <ContentRecommendationBody
               key={`${pimDescription}|${pdpDescription}`}
               recommendation={recommendation}
-              pimBaseline={pimDescription}
-              pdpBaseline={pdpDescription}
+              pimBaseline={displayPim}
+              pdpBaseline={displayPdp}
               originalText={originalText}
               compareTarget={compareTarget}
               status={status}
+              syncFootprint={syncFootprint}
+              hasUnpublishedEdits={hasUnpublishedEdits}
+              activeBatch={activeBatch}
+              fieldKey="description"
               onRecommendedTextChange={onRecommendationChange}
               onAccept={onAccept}
               onReject={onReject}
               onReset={() => onRecommendationChange(originalText)}
+              onUndoAccept={onUndoAccept}
+              onUndoReject={onUndoReject}
+              onPushUpdate={onPushUpdate}
               editAriaLabel="Edit AI recommended description"
               editRows={5}
             />

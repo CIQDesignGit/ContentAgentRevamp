@@ -4,9 +4,36 @@ High-level product behavior and domain rules for the Content Agent prototype.
 
 ---
 
+## Channels & terminology
+
+| Channel | What it is |
+|---------|------------|
+| **PIM** | Salsify (or equivalent) — internal product catalog and source of truth. Shown as **Salsify** in compare UI. |
+| **Retailer / PDP** | **The same thing.** The live product listing on the retailer site (e.g. Amazon product detail page). |
+
+**Retailer = PDP.** Use one mental model: copy is syndicated from PIM to the retailer, then verified on the **product detail page (PDP)**. In the UI you may see both words:
+
+- **“Retailer”** — compare column label, submission step (“Submitted to retailer”, “At retailer”)
+- **“PDP”** — verification and outcome (“PDP verifying”, “PDP updated”, “Live on PDP”)
+
+Those labels describe **phases on one channel**, not two separate destinations. When both are updated, the user’s change is reflected on the same Amazon (or other retailer) listing.
+
+The **Actions Log** still models **Retailer** and **PDP** as separate timeline stages (submission vs crawl/reflection). That split is operational (did the retailer accept the feed vs is the listing visible on the page), not two different places.
+
+### Home page (review & publish)
+
+1. **Review** — Accept / reject AI recommendations per field (title, bullets, description).
+2. **Publish** — Push accepted changes to PIM, then through the retailer/PDP pipeline.
+3. **Staged** — Accepted but not yet published (`Staged for publish · Not yet on PDP`).
+4. **Syndication** — After publish, per-field chips track PIM update → retailer submission → PDP verification → **PIM updated** + **PDP updated** when complete.
+
+---
+
 ## Actions Log
 
 The Actions Log tracks syndication of product content from PIM through retailer acceptance to PDP reflection. Each row represents one syndication action on a SKU.
+
+> **Retailer vs PDP in this table:** Same customer-facing listing; **Retailer** = feed/submission status, **PDP** = whether the page reflects the change (crawl/verification). See [Channels & terminology](#channels--terminology).
 
 ### Status vocabulary (use exactly)
 

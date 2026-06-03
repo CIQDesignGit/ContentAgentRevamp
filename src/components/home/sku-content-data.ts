@@ -273,7 +273,8 @@ export const SKU_CONTENT: Record<string, SkuContentBundle> = {
   },
 
   "sku-2": {
-    titleStatus: "pending",
+    titleStatus: "accepted",
+    titleSyncFootprint: "syncing",
     title: "NutriChef Food Processor - 8-Cup Capacity, Digital Control Panel",
     bullets: [
       "POWERFUL 500W MOTOR — Handles tough chopping, slicing, shredding, and pureeing with consistent high performance.",
@@ -298,54 +299,151 @@ export const SKU_CONTENT: Record<string, SkuContentBundle> = {
       "Shorten generic descriptor",
       "'Digital Control Panel' is covered by the bullet points; replacing it with specific features improves title density.",
     ),
+    descriptionStatus: "accepted",
+    descriptionSyncFootprint: "none",
     bulletRecommendations: [
       {
-        id: "br-sku2-motor",
-        label: "Bullet 1",
+        id: "br-sku2-staged",
+        label: "Bullet 1 · Staged",
         kind: "edit",
         pimIndex: 0,
         status: "accepted",
-        footprint: "processing",
+        syncFootprint: "none",
         recommendedText:
           "POWERFUL 500W MOTOR — Handles tough chopping, slicing, shredding, and pureeing with consistent high performance.",
         reasoning: [
           {
-            key: "seo",
-            label: "SEO",
+            key: "demo",
+            label: "Demo",
             reasons: [
               {
                 type: "REPLACED",
-                summary: "Align motor wattage with PIM",
-                detail: "Retailer listed 300W; PIM spec is 500W — unified copy uses the authoritative wattage.",
+                summary: "Accepted, not published",
+                detail: "Shows “Staged for publish · Not yet on PDP” after accept.",
               },
             ],
           },
         ],
       },
       {
-        id: "br-sku2-capacity",
-        label: "Bullet 3",
+        id: "br-sku2-pim",
+        label: "Bullet 2 · PIM",
+        kind: "edit",
+        pimIndex: 1,
+        status: "accepted",
+        syncFootprint: "syncing",
+        recommendedText:
+          "DIGITAL CONTROL PANEL — Intuitive LCD touch display lets you select speed and function with a single tap.",
+        reasoning: [
+          {
+            key: "demo",
+            label: "Demo",
+            reasons: [
+              {
+                type: "REPLACED",
+                summary: "PIM updating",
+                detail: "First step after publish — catalog update in progress.",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "br-sku2-retailer",
+        label: "Bullet 3 · Retailer",
         kind: "edit",
         pimIndex: 2,
         status: "accepted",
-        footprint: "recently-updated",
+        syncFootprint: "syncing",
         recommendedText:
           "8-CUP CAPACITY — Generous bowl size handles family-sized recipes without multiple batches.",
         reasoning: [
           {
-            key: "compliance",
-            label: "Compliance",
+            key: "demo",
+            label: "Demo",
             reasons: [
               {
                 type: "REPLACED",
-                summary: "Standardize capacity claim",
-                detail: "Matched retailer cup measurement to PIM 8-cup spec; both channels now in sync.",
+                summary: "Submitted to retailer",
+                detail: "PIM done; waiting for Amazon to accept the submission.",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "br-sku2-pdp",
+        label: "Bullet 4 · PDP verify",
+        kind: "edit",
+        pimIndex: 3,
+        status: "accepted",
+        syncFootprint: "syncing",
+        recommendedText:
+          "THREE BLADE ATTACHMENTS — Includes stainless steel S-blade, slicing disc, and shredding disc for maximum versatility.",
+        reasoning: [
+          {
+            key: "demo",
+            label: "Demo",
+            reasons: [
+              {
+                type: "REPLACED",
+                summary: "PDP verifying",
+                detail: "Retailer accepted; Amazon is checking the live listing (often hours).",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "br-sku2-live",
+        label: "Bullet 5 · Live",
+        kind: "edit",
+        pimIndex: 4,
+        status: "accepted",
+        syncFootprint: "synced",
+        recommendedText:
+          "BPA-FREE & DISHWASHER SAFE — All removable parts are top-rack dishwasher safe and certified BPA-free.",
+        reasoning: [
+          {
+            key: "demo",
+            label: "Demo",
+            reasons: [
+              {
+                type: "REPLACED",
+                summary: "Live on PDP",
+                detail: "Verification complete — copy is live on the product detail page.",
               },
             ],
           },
         ],
       },
     ] satisfies BulletRecommendation[],
+    publishBatches: [
+      {
+        id: "batch-sku2-pim",
+        startedAt: "2025-04-08T09:00:00.000Z",
+        fieldKeys: ["bullet:br-sku2-pim"],
+        pim: "pending",
+        retailer: "idle",
+        pdp: "not_run",
+      },
+      {
+        id: "batch-sku2-retailer",
+        startedAt: "2025-04-08T09:15:00.000Z",
+        fieldKeys: ["bullet:br-sku2-retailer"],
+        pim: "accepted",
+        retailer: "pending",
+        pdp: "not_run",
+      },
+      {
+        id: "batch-sku2-pdp",
+        startedAt: "2025-04-08T09:30:00.000Z",
+        fieldKeys: ["bullet:br-sku2-pdp", "title"],
+        pim: "accepted",
+        retailer: "accepted",
+        pdp: "pending",
+      },
+    ],
     pdpContent: {
       title: "NutriChef Kitchen Electric Food Processor, 1.5L, Chopper, Slicer",
       bullets: [

@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Loader2 } from "lucide-react"
+import { resolvePublishedSourceDisplay } from "@/lib/published-source-display"
+import { resolveBulletSyncFootprint } from "@/lib/sync-footprint"
 import {
   BulletRecommendationBody,
   BulletRecommendationHeader,
@@ -10,25 +11,33 @@ import {
 import type { FieldCompareTarget } from "./vertical-source-compare-grid"
 import { VerticalSourceCompareGrid } from "./vertical-source-compare-grid"
 import type { BulletSlot } from "@/lib/build-bullet-slots"
-import type { BulletRecommendation } from "./types"
+import type { BulletRecommendation, PublishBatch } from "./types"
 
 interface BulletSlotRowProps {
   slot: BulletSlot
   originals: Record<string, string>
+  getFieldPublishBatch?: (fieldKey: string) => PublishBatch | undefined
   onTextChange: (id: string, text: string) => void
   onAccept: (id: string) => void
   onReject: (id: string) => void
   onReset: (id: string) => void
+  onUndoAccept: (id: string) => void
+  onUndoReject: (id: string) => void
+  onPushUpdate: (id: string) => void
 }
 
 /** One bullet row inside the combined bullet points card. */
 export function BulletSlotRow({
   slot,
   originals,
+  getFieldPublishBatch,
   onTextChange,
   onAccept,
   onReject,
   onReset,
+  onUndoAccept,
+  onUndoReject,
+  onPushUpdate,
 }: BulletSlotRowProps) {
   const [compareTarget, setCompareTarget] = useState<BulletCompareTarget>("pim")
 
@@ -43,19 +52,26 @@ export function BulletSlotRow({
   const recommendation: BulletRecommendation | null =
     slot.kind === "indexed" ? slot.recommendation : slot.kind === "add" ? slot.recommendation : null
 
-  const isProcessing = recommendation?.footprint === "processing"
+  const fp = recommendation ? resolveBulletSyncFootprint(recommendation) : "none"
+  const fieldKey = recommendation ? `bullet:${recommendation.id}` : ""
+  const fieldPublishBatch = fieldKey ? getFieldPublishBatch?.(fieldKey) : undefined
+  const publishedText = recommendation?.recommendedText
+  const { pim: displayPim, pdp: displayPdp } = resolvePublishedSourceDisplay(
+    pimText,
+    pdpText,
+    publishedText,
+    fp,
+    fieldPublishBatch,
+  )
 
-  const displayPim = isProcessing && recommendation ? recommendation.recommendedText : pimText
-  const displayPdp = isProcessing && recommendation ? recommendation.recommendedText : pdpText
-
-  const pimBaseline = slot.kind === "add" ? "" : pimText
-  const pdpBaseline = slot.kind === "add" ? "" : pdpText
+  const pimBaseline = slot.kind === "add" ? "" : displayPim
+  const pdpBaseline = slot.kind === "add" ? "" : displayPdp
 
   const showAiBlock =
     recommendation &&
     (recommendation.status === "pending" ||
-      recommendation.footprint === "processing" ||
-      recommendation.footprint === "recently-updated")
+      recommendation.status === "accepted" ||
+      recommendation.status === "rejected")
 
   const showPimSource = slot.kind !== "retailer-only"
   const showPdpSource = slot.kind === "indexed" || slot.kind === "retailer-only"
@@ -87,6 +103,7 @@ export function BulletSlotRow({
             showAiBlock ? (
               <BulletRecommendationBody
                 item={recommendation}
+                activeBatch={fieldPublishBatch}
                 pimBaseline={pimBaseline}
                 pdpBaseline={pdpBaseline}
                 originalText={originals[recommendation.id] ?? recommendation.recommendedText}
@@ -95,18 +112,14 @@ export function BulletSlotRow({
                 onAccept={() => onAccept(recommendation.id)}
                 onReject={() => onReject(recommendation.id)}
                 onReset={() => onReset(recommendation.id)}
+                onUndoAccept={() => onUndoAccept(recommendation.id)}
+                onUndoReject={() => onUndoReject(recommendation.id)}
+                onPushUpdate={() => onPushUpdate(recommendation.id)}
               />
             ) : undefined
           }
         />
       )}
-
-      {isProcessing ? (
-        <p className="flex items-center gap-2 text-xs text-slate-500">
-          <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" aria-hidden />
-          Updates are being processed across PIM and retailer…
-        </p>
-      ) : null}
     </div>
   )
 }

@@ -1,3 +1,5 @@
+import type { PdpStatus, PimStatus, RetailerStatus } from "@/components/actions-log/types"
+
 export type Metrics = { compliance: number; seo: number; aeo: number }
 
 export type SalsifyIssue = {
@@ -39,8 +41,21 @@ export type TitleRecommendation = {
 export type TitleStatus = "pending" | "accepted" | "rejected"
 export type BulletRecoStatus = "pending" | "accepted" | "rejected"
 
-/** Post-accept lifecycle shown on the bullet slot (no new AI suggestion yet). */
+/** @deprecated Use syncFootprint — kept for mock data migration */
 export type BulletRecoFootprint = "processing" | "recently-updated"
+
+/** Per-field syndication lifecycle after publish */
+export type SyncFootprint = "none" | "syncing" | "synced" | "queued"
+
+export type PublishBatch = {
+  id: string
+  startedAt: string
+  fieldKeys: string[]
+  pim: PimStatus | "idle"
+  retailer: RetailerStatus | "idle"
+  pdp: PdpStatus
+  queuedFollowUp?: boolean
+}
 
 export type BulletRecommendation = {
   id: string
@@ -49,12 +64,10 @@ export type BulletRecommendation = {
   status: BulletRecoStatus
   kind: "edit" | "add"
   reasoning: ReasoningCategory[]
-  /** Index in PIM bullets to replace when kind is "edit" */
   pimIndex?: number
-  /**
-   * When accepted: `processing` = propagating to channels (PIM/PDP cells show reco text).
-   * `recently-updated` = synced, no further AI optimization; last reco available to tweak.
-   */
+  syncFootprint?: SyncFootprint
+  hasUnpublishedEdits?: boolean
+  /** @deprecated Use syncFootprint */
   footprint?: BulletRecoFootprint
 }
 
@@ -73,10 +86,16 @@ export type SkuContent = {
   images: ProductImage[]
   titleStatus: TitleStatus
   titleRecommendation: TitleRecommendation | null
+  titleSyncFootprint?: SyncFootprint
+  titleHasUnpublishedEdits?: boolean
   descriptionStatus: TitleStatus
   descriptionRecommendation: TitleRecommendation | null
+  descriptionSyncFootprint?: SyncFootprint
+  descriptionHasUnpublishedEdits?: boolean
   bulletRecommendations: BulletRecommendation[]
   pdpContent: PdpContent
+  publishBatches?: PublishBatch[]
+  isPublishing?: boolean
 }
 
 export type ContentState = Record<string, SkuContent>

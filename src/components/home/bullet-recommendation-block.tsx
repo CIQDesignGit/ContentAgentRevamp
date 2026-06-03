@@ -1,13 +1,15 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Check, RotateCcw, X } from "lucide-react"
+import { Check, RotateCcw, Undo2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { buildTitleDiff } from "@/lib/build-title-diff"
+import { isFieldInSyndication, resolveBulletSyncFootprint } from "@/lib/sync-footprint"
 import { AiRecommendationSparklesIcon, SourceChannelLabel } from "./bullet-source-cell"
 import { EditableRecommendationField } from "./editable-recommendation-field"
+import { FieldSyncStatusRow } from "./recommendation-sync-ui"
 import { ReasoningPanel, ToggleSwitch } from "./reasoning-ui"
-import type { BulletRecommendation } from "./types"
+import type { BulletRecommendation, PublishBatch } from "./types"
 
 export type BulletCompareTarget = "pim" | "pdp"
 
@@ -48,39 +50,7 @@ function CompareTabs({
   )
 }
 
-function headerMeta(item: BulletRecommendation): {
-  title: string
-  badge: string | null
-  badgeClass: string
-} {
-  if (item.status === "pending") {
-    return { title: "AI Recommendation", badge: null, badgeClass: "" }
-  }
-  if (item.footprint === "processing") {
-    return { title: "AI Recommendation", badge: "Processing", badgeClass: "bg-blue-100 text-blue-700" }
-  }
-  if (item.footprint === "recently-updated") {
-    return {
-      title: "Recently updated recommendation",
-      badge: "Synced",
-      badgeClass: "bg-success-100 text-success-700",
-    }
-  }
-  if (item.status === "accepted") {
-    return { title: "AI Recommendation", badge: "Accepted", badgeClass: "bg-success-100 text-success-700" }
-  }
-  return { title: "AI Recommendation", badge: "Rejected", badgeClass: "bg-slate-100 text-slate-600" }
-}
-
-function isTweakableReco(item: BulletRecommendation) {
-  return (
-    item.status === "pending" ||
-    item.footprint === "processing" ||
-    item.footprint === "recently-updated"
-  )
-}
-
-/** Title, badge, and PIM/PDP tabs — lives in the bullet row header. */
+/** Title, badge, and PIM/PDP tabs — aligned with source compare row. */
 export function BulletRecommendationHeader({
   item,
   compareTarget,
@@ -90,23 +60,12 @@ export function BulletRecommendationHeader({
   compareTarget: BulletCompareTarget
   onCompareTargetChange: (target: BulletCompareTarget) => void
 }) {
-  const { title, badge, badgeClass } = headerMeta(item)
-  const tweakable = isTweakableReco(item)
-
   return (
     <div className="flex w-full flex-wrap items-end justify-between gap-2">
-      <SourceChannelLabel
-        icon={<AiRecommendationSparklesIcon />}
-        label={title}
-        trailing={
-          badge ? (
-            <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium", badgeClass)}>
-              {badge}
-            </span>
-          ) : null
-        }
-      />
-      {tweakable ? (
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <SourceChannelLabel icon={<AiRecommendationSparklesIcon />} label="AI Recommendation" />
+        </div>
+      {item.status === "pending" ? (
         <CompareTabs value={compareTarget} onChange={onCompareTargetChange} />
       ) : null}
     </div>
@@ -123,6 +82,10 @@ interface BulletRecommendationBodyProps {
   onAccept: () => void
   onReject: () => void
   onReset: () => void
+  onUndoAccept?: () => void
+  onUndoReject?: () => void
+  onPushUpdate?: () => void
+  activeBatch?: PublishBatch
   className?: string
 }
 
@@ -137,12 +100,18 @@ export function BulletRecommendationBody({
   onAccept,
   onReject,
   onReset,
+  onUndoAccept,
+  onUndoReject,
+  onPushUpdate,
+  activeBatch,
   className,
 }: BulletRecommendationBodyProps) {
   const [showReasoning, setShowReasoning] = useState(false)
   const isModified = item.recommendedText !== originalText
-  const tweakable = isTweakableReco(item)
-  const acceptLabel = item.status === "pending" ? "Accept" : "Push updates"
+  const fp = resolveBulletSyncFootprint(item)
+  const isSyncing = fp === "syncing"
+  const showEditor =
+    item.status === "pending" || item.status === "accepted" || item.status === "rejected"
 
   const baseline = compareTarget === "pim" ? pimBaseline : pdpBaseline
   const compareDiff = useMemo(
@@ -151,75 +120,152 @@ export function BulletRecommendationBody({
   )
 
   const fieldTone =
-    item.status === "rejected"
-      ? "muted"
-      : item.footprint === "recently-updated"
-        ? "success"
-        : "highlight"
+    item.status === "rejected" ? "muted" : fp === "synced" ? "success" : "highlight"
+
+  if (!showEditor) {
+    return (
+      <div className={cn("w-full min-w-0 space-y-2", className)}>
+        <p className="text-sm leading-relaxed text-slate-700">{item.recommendedText}</p>
+        <button
+          type="button"
+          onClick={onAccept}
+          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
+        >
+          <Check className="size-4 text-success-600" /> Accept anyway
+        </button>
+      </div>
+    )
+  }
+
+  const showPushUpdate =
+    item.status === "accepted" &&
+    item.hasUnpublishedEdits &&
+    (isSyncing || fp === "queued") &&
+    onPushUpdate
+  const showAcceptedReviewActions =
+    item.status === "accepted" && !isFieldInSyndication(fp) && onUndoAccept
+  const inSyndication = item.status === "accepted" && isFieldInSyndication(fp)
 
   return (
     <div className={cn("w-full min-w-0", className)}>
-      {tweakable ? (
-        <div className="w-full space-y-2">
-          <EditableRecommendationField
-            value={item.recommendedText}
-            diff={compareDiff}
-            originalValue={originalText}
-            onChange={onTextChange}
-            tone={fieldTone}
-            compact
-          />
+      <div className="w-full space-y-2">
+        <EditableRecommendationField
+          value={item.recommendedText}
+          diff={compareDiff}
+          originalValue={originalText}
+          onChange={onTextChange}
+          tone={fieldTone}
+          showDiff={item.status !== "rejected"}
+          readOnly={item.status === "rejected"}
+          compact
+        />
 
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-primary">Show Reasoning</span>
-              <ToggleSwitch
-                checked={showReasoning}
-                onChange={setShowReasoning}
-                ariaLabel="Toggle reasoning"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              {isModified ? (
-                <button
-                  type="button"
-                  onClick={onReset}
-                  className="inline-flex h-8 items-center gap-1.5 px-1 text-xs font-medium text-slate-500 hover:text-slate-900"
-                >
-                  <RotateCcw className="size-3.5" />
-                  Reset recommendation
-                </button>
-              ) : null}
-              {item.status === "pending" ? (
-                <button
-                  type="button"
-                  onClick={onReject}
-                  aria-label="Reject recommendation"
-                  title="Reject"
-                  className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50"
-                >
-                  <X className="size-4 text-error-600" />
-                </button>
-              ) : null}
-              <button
-                type="button"
-                onClick={onAccept}
-                aria-label={acceptLabel}
-                title={acceptLabel}
-                className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50"
-              >
-                <Check className="size-4 text-success-600" />
-              </button>
-            </div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-primary">Show Reasoning</span>
+            <ToggleSwitch
+              checked={showReasoning}
+              onChange={setShowReasoning}
+              ariaLabel="Toggle reasoning"
+            />
           </div>
-
-          {showReasoning && item.reasoning.length > 0 ? (
-            <ReasoningPanel reasoning={item.reasoning} />
-          ) : null}
+          <div className="flex flex-col items-end gap-1">
+            {item.status === "pending" ||
+            showAcceptedReviewActions ||
+            showPushUpdate ||
+            (item.status === "rejected" && onUndoReject) ? (
+              <div className="flex items-center gap-2">
+                {isModified && !inSyndication ? (
+                  <button
+                    type="button"
+                    onClick={onReset}
+                    className="inline-flex h-8 items-center gap-1.5 px-1 text-xs font-medium text-slate-500 hover:text-slate-900"
+                  >
+                    <RotateCcw className="size-3.5" />
+                    Reset recommendation
+                  </button>
+                ) : null}
+                {item.status === "pending" ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={onReject}
+                      aria-label="Reject recommendation"
+                      title="Reject"
+                      className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                    >
+                      <X className="size-4 text-error-600" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onAccept}
+                      aria-label="Accept recommendation"
+                      title="Accept"
+                      className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                    >
+                      <Check className="size-4 text-success-600" />
+                    </button>
+                  </>
+                ) : null}
+                {showAcceptedReviewActions ? (
+                  <>
+                    <span
+                      className="inline-flex h-8 items-center gap-1.5 text-xs font-medium text-success-600"
+                      aria-label="Accepted"
+                    >
+                      <Check className="size-4 shrink-0" aria-hidden />
+                      Accepted
+                    </span>
+                    <button
+                      type="button"
+                      onClick={onUndoAccept}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
+                    >
+                      <Undo2 className="size-3.5" /> Undo accept
+                    </button>
+                  </>
+                ) : null}
+                {showPushUpdate ? (
+                  <button
+                    type="button"
+                    onClick={onPushUpdate}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
+                  >
+                    <Check className="size-4 text-success-600" /> Push update
+                  </button>
+                ) : null}
+                {item.status === "rejected" && onUndoReject ? (
+                  <>
+                    <span className="inline-flex h-8 items-center gap-1.5 text-xs font-medium text-slate-500">
+                      <X className="size-4 shrink-0" aria-hidden />
+                      Rejected
+                    </span>
+                    <button
+                      type="button"
+                      onClick={onUndoReject}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
+                    >
+                      <Undo2 className="size-3.5" /> Undo reject
+                    </button>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
+            {item.status === "accepted" ? (
+              <FieldSyncStatusRow
+                syncFootprint={fp}
+                hasUnpublishedEdits={item.hasUnpublishedEdits}
+                batch={activeBatch}
+                fieldKey={`bullet:${item.id}`}
+              />
+            ) : null}
+          </div>
         </div>
-      ) : (
-        <p className="text-sm leading-relaxed text-slate-700">{item.recommendedText}</p>
-      )}
+
+        {showReasoning && item.reasoning.length > 0 ? (
+          <ReasoningPanel reasoning={item.reasoning} />
+        ) : null}
+      </div>
     </div>
   )
 }

@@ -7,17 +7,21 @@ import { titleMatchPercent } from "@/lib/title-match"
 import { BulletBulkActions, bulletBulkPendingLabel } from "./bullet-bulk-actions"
 import { BulletCompareColumnHeaders } from "./bullet-source-cell"
 import { BulletSlotRow } from "./bullet-slot-card"
-import type { BulletRecommendation } from "./types"
+import type { BulletRecommendation, PublishBatch } from "./types"
 
 interface BulletPointsSectionProps {
   pimBullets: string[]
   pdpBullets: string[]
   recommendations: BulletRecommendation[]
   originals: Record<string, string>
+  getFieldPublishBatch?: (fieldKey: string) => PublishBatch | undefined
   onRecommendationTextChange: (id: string, text: string) => void
   onAccept: (id: string) => void
   onReject: (id: string) => void
   onReset: (id: string) => void
+  onUndoAccept: (id: string) => void
+  onUndoReject: (id: string) => void
+  onPushUpdate: (id: string) => void
   onAcceptAll: () => void
   onRejectAll: () => void
   onResetAll: () => void
@@ -28,10 +32,14 @@ export function BulletPointsSection({
   pdpBullets,
   recommendations,
   originals,
+  getFieldPublishBatch,
   onRecommendationTextChange,
   onAccept,
   onReject,
   onReset,
+  onUndoAccept,
+  onUndoReject,
+  onPushUpdate,
   onAcceptAll,
   onRejectAll,
   onResetAll,
@@ -86,10 +94,14 @@ export function BulletPointsSection({
             key={slot.id}
             slot={slot}
             originals={originals}
+            getFieldPublishBatch={getFieldPublishBatch}
             onTextChange={onRecommendationTextChange}
             onAccept={onAccept}
             onReject={onReject}
             onReset={onReset}
+            onUndoAccept={onUndoAccept}
+            onUndoReject={onUndoReject}
+            onPushUpdate={onPushUpdate}
           />
         ))}
         </div>
