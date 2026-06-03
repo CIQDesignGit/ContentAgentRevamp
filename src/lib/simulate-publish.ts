@@ -105,6 +105,9 @@ export function applyPublishPhase(
     batch.pim = "accepted"
     batch.retailer = "accepted"
     batch.pdp = "live"
+    if (!batch.completedAt) {
+      batch.completedAt = new Date().toISOString()
+    }
   }
 
   const nextBatches = [...batches]
@@ -146,13 +149,10 @@ export function applyPublishPhase(
   return next
 }
 
-/**
- * Prototype pacing: PIM and retailer advance in seconds; PDP stays pending much
- * longer (real verification often takes hours).
- */
+/** Prototype pacing — PDP verifying waits 5s after retailer step (production: often hours). */
 export const PUBLISH_PHASE_DELAYS_MS = {
   pim_done: 2500,
   retailer_done: 7000,
-  pdp_live: 45000,
-  done: 46000,
+  pdp_live: 12000,
+  done: 12500,
 } as const

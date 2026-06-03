@@ -20,3 +20,8 @@ export function getPublishBatchForField(
   const batches = content.publishBatches ?? []
   return [...batches].reverse().find((b) => b.fieldKeys.includes(fieldKey))
 }
+
+/** ISO time to show when changes were pushed (complete time, else publish start). */
+export function getFieldPublishedAt(batch?: PublishBatch): string | undefined {
+  return batch?.completedAt ?? batch?.startedAt
+}

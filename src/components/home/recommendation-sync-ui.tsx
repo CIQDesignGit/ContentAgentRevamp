@@ -9,7 +9,18 @@ import {
 } from "@/components/actions-log/status-styles"
 import type { PdpStatus, PimStatus, RetailerStatus } from "@/components/actions-log/types"
 import type { PublishBatch, SyncFootprint } from "./types"
+import { getFieldPublishedAt } from "@/lib/publish-batch"
 import { isFieldSyncing } from "@/lib/sync-footprint"
+
+export function formatPublishedTimestamp(iso: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(iso))
+}
 
 export function StagedForPublishChip() {
   return (
@@ -53,10 +64,13 @@ function MicroStatusChip({
 function SyncStatusCaption({
   syncFootprint,
   batch,
+  publishedAt,
 }: {
   syncFootprint: SyncFootprint
   batch?: PublishBatch
+  publishedAt?: string
 }) {
+  const pushedAt = publishedAt ?? getFieldPublishedAt(batch)
   if (syncFootprint === "none") {
     return (
       <p className="text-xs text-slate-500">
@@ -86,7 +100,15 @@ function SyncStatusCaption({
 
   if (syncFootprint === "synced") {
     return (
-      <p className="text-xs text-slate-500">Changes reflected on PIM and retailer PDP</p>
+      <p className="text-xs text-slate-500">
+        {pushedAt ? (
+          <>
+            Published at {formatPublishedTimestamp(pushedAt)}
+            <span aria-hidden="true"> · </span>
+          </>
+        ) : null}
+        Changes reflected on PIM and retailer PDP
+      </p>
     )
   }
 
@@ -108,6 +130,8 @@ export function FieldSyncStatusRow({
   batch?: PublishBatch
   fieldKey?: string
 }) {
+  const pushedAt = getFieldPublishedAt(batch)
+
   if (hasUnpublishedEdits && (isFieldSyncing(syncFootprint) || syncFootprint === "queued")) {
     return (
       <div className="flex flex-col items-end gap-1">
@@ -168,7 +192,7 @@ export function FieldSyncStatusRow({
           <MicroStatusChip status="accepted" label="PIM updated" />
           <MicroStatusChip status="accepted" label="PDP updated" />
         </div>
-        <SyncStatusCaption syncFootprint="synced" />
+        <SyncStatusCaption syncFootprint="synced" batch={batch} publishedAt={pushedAt} />
       </div>
     )
   }

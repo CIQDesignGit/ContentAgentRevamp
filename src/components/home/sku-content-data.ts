@@ -443,6 +443,15 @@ export const SKU_CONTENT: Record<string, SkuContentBundle> = {
         retailer: "accepted",
         pdp: "pending",
       },
+      {
+        id: "batch-sku2-live",
+        startedAt: "2025-04-08T10:00:00.000Z",
+        completedAt: "2025-04-08T14:30:00.000Z",
+        fieldKeys: ["bullet:br-sku2-live"],
+        pim: "accepted",
+        retailer: "accepted",
+        pdp: "live",
+      },
     ],
     pdpContent: {
       title: "NutriChef Kitchen Electric Food Processor, 1.5L, Chopper, Slicer",

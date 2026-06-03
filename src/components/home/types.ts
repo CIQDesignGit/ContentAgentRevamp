@@ -50,6 +50,8 @@ export type SyncFootprint = "none" | "syncing" | "synced" | "queued"
 export type PublishBatch = {
   id: string
   startedAt: string
+  /** When PIM + PDP both finished updating for this batch. */
+  completedAt?: string
   fieldKeys: string[]
   pim: PimStatus | "idle"
   retailer: RetailerStatus | "idle"
