@@ -77,16 +77,11 @@ export function EditableRecommendationField({
 
   return (
     <div
-      className={cn(
-        "w-full min-w-0 rounded-lg",
-        compact ? "p-0.5" : "p-1",
-        TONE_OUTER_CLASS[tone],
-      )}
+      className={cn("w-full min-w-0 rounded-lg px-1 py-1", TONE_OUTER_CLASS[tone])}
     >
       <div
         className={cn(
-          "flex w-full min-w-0 flex-col rounded-md border bg-white px-3",
-          compact ? "py-1.5" : "py-2",
+          "flex w-full min-w-0 flex-col rounded-md border bg-white px-3 py-2",
           TONE_INNER_BORDER_CLASS[tone],
           isEditing && tone === "highlight" && "ring-2 ring-violet-200",
         )}

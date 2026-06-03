@@ -1,15 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Undo2, X } from "lucide-react"
+import { Circle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { ReasonType, ReasoningCategory } from "./types"
 
-const REASON_ICONS: Record<ReasonType, React.ElementType> = {
-  ADDED: Plus,
-  REMOVED: X,
-  REPLACED: Undo2,
-}
 const REASON_COLORS: Record<ReasonType, string> = {
   ADDED: "text-success-600",
   REMOVED: "text-error-600",
@@ -40,18 +35,18 @@ export function ReasoningPanel({ reasoning }: { reasoning: ReasoningCategory[] }
         ))}
       </div>
       <ul className="space-y-3">
-        {active.reasons.map((r, idx) => {
-          const Icon = REASON_ICONS[r.type]
-          return (
+        {active.reasons.map((r, idx) => (
             <li key={idx} className="space-y-1">
               <div className="flex items-center gap-2">
-                <Icon className={cn("size-4", REASON_COLORS[r.type])} />
+                <Circle
+                  className={cn("size-2 shrink-0 fill-current", REASON_COLORS[r.type])}
+                  aria-hidden
+                />
                 <span className="text-sm font-medium text-slate-900">{r.summary}</span>
               </div>
               <p className="pl-6 text-xs leading-relaxed text-slate-500">{r.detail}</p>
             </li>
-          )
-        })}
+        ))}
       </ul>
     </div>
   )

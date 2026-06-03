@@ -1,11 +1,42 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { useState } from "react"
 import Image from "next/image"
-import { Check, Copy } from "lucide-react"
+import { Check, Copy, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { RETAILER_LOGO_SRC, SALSIFY_LOGO_SRC, logoBadgeClass } from "./source-logos"
 import { SourceCompareText } from "./source-compare-text"
+
+/** Sparkles icon for AI recommendation channel labels (20×20, 1.2px stroke). */
+export function AiRecommendationSparklesIcon({ className }: { className?: string }) {
+  return (
+    <Sparkles
+      className={cn("size-5 shrink-0 text-brand-500", className)}
+      strokeWidth={1.2}
+      aria-hidden
+    />
+  )
+}
+
+/** Shared label row for Salsify, Retailer, and AI recommendation channels. */
+export function SourceChannelLabel({
+  icon,
+  label,
+  trailing,
+}: {
+  icon: ReactNode
+  label: string
+  trailing?: ReactNode
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      {icon}
+      <span className="truncate text-xs text-slate-500">{label}</span>
+      {trailing}
+    </div>
+  )
+}
 
 interface BulletSourceCellProps {
   logoSrc: string
@@ -30,12 +61,14 @@ export function SourceCellLabel({
   sublabel: string
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className={logoBadgeClass(logoSrc)}>
-        <Image src={logoSrc} alt={logoAlt} width={20} height={20} className="size-5 object-contain" />
-      </span>
-      <span className="text-xs text-slate-500">{sublabel}</span>
-    </div>
+    <SourceChannelLabel
+      icon={
+        <span className={logoBadgeClass(logoSrc)}>
+          <Image src={logoSrc} alt={logoAlt} width={20} height={20} className="size-5 object-contain" />
+        </span>
+      }
+      label={sublabel}
+    />
   )
 }
 
@@ -64,10 +97,20 @@ export function BulletSourceCell({
   }
 
   return (
-    <div className={cn("flex w-full min-w-0 flex-col self-start", showLabel && "gap-2")}>
+    <div
+      className={cn(
+        "flex w-full min-w-0 flex-col",
+        showLabel ? "gap-2 self-start" : "h-full",
+      )}
+    >
       {showLabel ? <SourceCellLabel logoSrc={logoSrc} logoAlt={logoAlt} sublabel={sublabel} /> : null}
 
-      <div className="group relative flex w-full flex-col rounded-lg border border-slate-200 bg-slate-50">
+      <div
+        className={cn(
+          "group relative flex w-full flex-col rounded-lg border border-slate-200 bg-slate-50",
+          !showLabel && "h-full min-h-[4.5rem] flex-1",
+        )}
+      >
         {value.trim() ? (
           <SourceCompareText value={value} compareValue={compareValue} side={side} />
         ) : (
@@ -99,24 +142,8 @@ export function BulletSourceCell({
 export function BulletCompareColumnHeaders() {
   return (
     <div className="grid grid-cols-2 gap-3">
-      <div className="flex items-center gap-2">
-        <span className={logoBadgeClass(SALSIFY_LOGO_SRC)}>
-          <Image src={SALSIFY_LOGO_SRC} alt="Salsify" width={20} height={20} className="size-5 object-contain" />
-        </span>
-        <span className="text-xs text-slate-500">Salsify</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className={logoBadgeClass(RETAILER_LOGO_SRC)}>
-          <Image
-            src={RETAILER_LOGO_SRC}
-            alt="Amazon"
-            width={20}
-            height={20}
-            className="size-5 object-contain"
-          />
-        </span>
-        <span className="text-xs text-slate-500">Retailer</span>
-      </div>
+      <SourceCellLabel logoSrc={SALSIFY_LOGO_SRC} logoAlt="Salsify" sublabel="Salsify" />
+      <SourceCellLabel logoSrc={RETAILER_LOGO_SRC} logoAlt="Amazon" sublabel="Retailer" />
     </div>
   )
 }

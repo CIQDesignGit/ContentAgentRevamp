@@ -1,9 +1,10 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Check, ChevronDown, ChevronRight, RotateCcw, Sparkles, Undo2, X } from "lucide-react"
+import { Check, ChevronDown, ChevronRight, RotateCcw, Undo2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { buildTitleDiff } from "@/lib/build-title-diff"
+import { AiRecommendationSparklesIcon, SourceChannelLabel } from "./bullet-source-cell"
 import { EditableRecommendationField } from "./editable-recommendation-field"
 import { ReasoningPanel, ToggleSwitch } from "./reasoning-ui"
 import type { FieldCompareTarget } from "./vertical-source-compare-grid"
@@ -71,50 +72,50 @@ export function ContentRecommendationHeader({
   onRevert: () => void
 }) {
   return (
-    <div className="flex w-full flex-wrap items-center justify-between gap-2">
+    <div className="flex w-full flex-wrap items-end justify-between gap-2">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
-      <button
-        type="button"
-        onClick={onToggleOpen}
-        className="flex min-w-0 items-center gap-2 text-left"
-        aria-expanded={isOpen}
-      >
-        {status === "accepted" ? (
-          <span className="flex items-center gap-2">
-            <Check className="size-4 shrink-0 text-success-600" />
-            <span className="text-xs font-medium text-success-600">{labels.accepted}</span>
-          </span>
-        ) : status === "rejected" ? (
-          <span className="flex items-center gap-2">
-            <X className="size-4 shrink-0 text-slate-500" />
-            <span className="text-xs font-medium text-slate-500">{labels.rejected}</span>
-          </span>
-        ) : (
-          <span className="flex items-center gap-2">
-            <Sparkles className="size-4 shrink-0 text-brand-500" />
-            <span className="text-xs font-medium text-slate-700">{labels.pending}</span>
-          </span>
-        )}
-        {isOpen ? (
-          <ChevronDown
-            className={cn("size-4 shrink-0", status === "pending" ? "text-slate-700" : "text-slate-400")}
-          />
-        ) : (
-          <ChevronRight
-            className={cn("size-4 shrink-0", status === "pending" ? "text-slate-700" : "text-slate-400")}
-          />
-        )}
-      </button>
-
-      {status === "accepted" ? (
         <button
           type="button"
-          onClick={onRevert}
-          className="inline-flex h-7 items-center gap-1.5 px-2 text-xs font-medium text-slate-500 hover:text-slate-900"
+          onClick={onToggleOpen}
+          className="flex min-w-0 items-center gap-2 text-left"
+          aria-expanded={isOpen}
         >
-          <Undo2 className="size-3.5" /> Revert
+          {status === "accepted" ? (
+            <span className="flex items-center gap-2">
+              <Check className="size-4 shrink-0 text-success-600" />
+              <span className="text-xs font-medium text-success-600">{labels.accepted}</span>
+            </span>
+          ) : status === "rejected" ? (
+            <span className="flex items-center gap-2">
+              <X className="size-4 shrink-0 text-slate-500" />
+              <span className="text-xs font-medium text-slate-500">{labels.rejected}</span>
+            </span>
+          ) : (
+            <SourceChannelLabel
+              icon={<AiRecommendationSparklesIcon />}
+              label={labels.pending}
+            />
+          )}
+          {isOpen ? (
+            <ChevronDown
+              className={cn("size-4 shrink-0", status === "pending" ? "text-slate-500" : "text-slate-400")}
+            />
+          ) : (
+            <ChevronRight
+              className={cn("size-4 shrink-0", status === "pending" ? "text-slate-500" : "text-slate-400")}
+            />
+          )}
         </button>
-      ) : null}
+
+        {status === "accepted" ? (
+          <button
+            type="button"
+            onClick={onRevert}
+            className="inline-flex h-7 items-center gap-1.5 px-2 text-xs font-medium text-slate-500 hover:text-slate-900"
+          >
+            <Undo2 className="size-3.5" /> Revert
+          </button>
+        ) : null}
       </div>
 
       {status === "pending" && isOpen ? (

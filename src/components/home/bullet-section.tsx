@@ -5,6 +5,7 @@ import { Columns2, ListChecks } from "lucide-react"
 import { buildBulletSlots } from "@/lib/build-bullet-slots"
 import { titleMatchPercent } from "@/lib/title-match"
 import { BulletBulkActions, bulletBulkPendingLabel } from "./bullet-bulk-actions"
+import { BulletCompareColumnHeaders } from "./bullet-source-cell"
 import { BulletSlotRow } from "./bullet-slot-card"
 import type { BulletRecommendation } from "./types"
 
@@ -75,7 +76,11 @@ export function BulletPointsSection({
         />
       </header>
 
-      <div className="-mx-3 mt-3 divide-y-2 divide-slate-200">
+      <div className="-mx-3 mt-3">
+        <div className="px-3 pb-2">
+          <BulletCompareColumnHeaders />
+        </div>
+        <div className="divide-y divide-slate-200">
         {slots.map((slot) => (
           <BulletSlotRow
             key={slot.id}
@@ -87,6 +92,7 @@ export function BulletPointsSection({
             onReset={onReset}
           />
         ))}
+        </div>
       </div>
     </section>
   )

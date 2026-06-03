@@ -1,9 +1,10 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Check, RotateCcw, Sparkles, X } from "lucide-react"
+import { Check, RotateCcw, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { buildTitleDiff } from "@/lib/build-title-diff"
+import { AiRecommendationSparklesIcon, SourceChannelLabel } from "./bullet-source-cell"
 import { EditableRecommendationField } from "./editable-recommendation-field"
 import { ReasoningPanel, ToggleSwitch } from "./reasoning-ui"
 import type { BulletRecommendation } from "./types"
@@ -93,16 +94,18 @@ export function BulletRecommendationHeader({
   const tweakable = isTweakableReco(item)
 
   return (
-    <div className="flex w-full flex-wrap items-center justify-between gap-2">
-      <span className="flex min-w-0 items-center gap-2 text-xs font-medium text-slate-700">
-        <Sparkles className="size-4 shrink-0 text-brand-500" />
-        <span className="truncate">{title}</span>
-        {badge ? (
-          <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium", badgeClass)}>
-            {badge}
-          </span>
-        ) : null}
-      </span>
+    <div className="flex w-full flex-wrap items-end justify-between gap-2">
+      <SourceChannelLabel
+        icon={<AiRecommendationSparklesIcon />}
+        label={title}
+        trailing={
+          badge ? (
+            <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium", badgeClass)}>
+              {badge}
+            </span>
+          ) : null
+        }
+      />
       {tweakable ? (
         <CompareTabs value={compareTarget} onChange={onCompareTargetChange} />
       ) : null}
