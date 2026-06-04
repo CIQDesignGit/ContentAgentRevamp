@@ -72,13 +72,7 @@ function SyncStatusCaption({
 }) {
   const pushedAt = publishedAt ?? getFieldPublishedAt(batch)
   if (syncFootprint === "none") {
-    return (
-      <p className="text-xs text-slate-500">
-        Staged for publish
-        <span aria-hidden="true"> · </span>
-        Not yet on PDP
-      </p>
-    )
+    return <p className="text-xs text-slate-500">Not yet Published</p>
   }
 
   if (syncFootprint === "syncing" && batch) {

@@ -1,3 +1,4 @@
+import { applyBulletRecommendation } from "@/lib/apply-bullet-recommendation"
 import type { PublishBatch, SkuContent } from "@/components/home/types"
 
 function applySyncedFieldToPdp(
@@ -42,8 +43,14 @@ function applySyncedFieldToPdp(
 function captureFieldSnapshots(prev: SkuContent, fieldKeys: string[]): Record<string, string> {
   const snapshots: Record<string, string> = {}
   for (const key of fieldKeys) {
-    if (key === "title") snapshots.title = prev.title
-    if (key === "description") snapshots.description = prev.description
+    if (key === "title") {
+      snapshots.title =
+        prev.titleRecommendation?.recommendedText?.trim() || prev.title
+    }
+    if (key === "description") {
+      snapshots.description =
+        prev.descriptionRecommendation?.recommendedText?.trim() || prev.description
+    }
     if (key.startsWith("bullet:")) {
       const id = key.slice("bullet:".length)
       const reco = prev.bulletRecommendations.find((r) => r.id === id)
@@ -51,6 +58,32 @@ function captureFieldSnapshots(prev: SkuContent, fieldKeys: string[]): Record<st
     }
   }
   return snapshots
+}
+
+/** Applies accepted publish text to PIM catalog fields when PIM syndication completes. */
+function applySyncedFieldToPim(
+  prev: SkuContent,
+  fieldKey: string,
+  snapshotText?: string,
+): SkuContent {
+  if (fieldKey === "title") {
+    const title = snapshotText ?? prev.titleRecommendation?.recommendedText ?? prev.title
+    return { ...prev, title }
+  }
+  if (fieldKey === "description") {
+    const description =
+      snapshotText ?? prev.descriptionRecommendation?.recommendedText ?? prev.description
+    return { ...prev, description }
+  }
+  if (!fieldKey.startsWith("bullet:")) return prev
+
+  const id = fieldKey.slice("bullet:".length)
+  const reco = prev.bulletRecommendations.find((r) => r.id === id)
+  if (!reco) return prev
+
+  const text = snapshotText ?? reco.recommendedText
+  const bullets = applyBulletRecommendation(prev.bullets, { ...reco, recommendedText: text })
+  return { ...prev, bullets }
 }
 
 function hasPendingTitleBatches(batches: PublishBatch[], excludeId?: string): boolean {
@@ -236,6 +269,12 @@ export function applyPublishPhase(
     ...prev,
     publishBatches: nextBatches,
     isPublishing: phase !== "done",
+  }
+
+  if (phase === "pim_done") {
+    for (const fieldKey of fieldKeys) {
+      next = applySyncedFieldToPim(next, fieldKey, batch.fieldSnapshots?.[fieldKey])
+    }
   }
 
   if (markSynced) {

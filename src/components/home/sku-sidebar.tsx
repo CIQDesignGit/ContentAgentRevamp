@@ -71,7 +71,7 @@ export function SkuSidebar({ skus, selectedSkuId, onSelect, totalCount, collapse
       {skus.length === 0 ? (
         <p className="px-4 pb-4 text-xs text-slate-500">No SKUs match the current filter.</p>
       ) : (
-        <ul className="flex flex-col gap-2 overflow-y-auto px-3 pb-4">
+        <ul className="scrollbar-none flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pb-4">
           {skus.map((sku) => {
             const isActive = sku.id === selectedSkuId
             return (

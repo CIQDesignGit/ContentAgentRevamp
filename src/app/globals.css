@@ -272,6 +272,15 @@
 .scroll-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
 .scroll-thin::-webkit-scrollbar-track { background: transparent; }
 
+/* Scrollable area without visible scrollbar */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /* Drag-and-drop bullet states */
 .bullet-drag-over {
   outline: 2px dashed #875bf7;

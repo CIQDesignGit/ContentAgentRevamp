@@ -39,6 +39,9 @@ export type TitleRecommendation = {
 }
 
 export type TitleStatus = "pending" | "accepted" | "rejected"
+
+/** Whether the title workflow started from AI reco vs Add/Edit title. */
+export type TitleEditSource = "ai" | "manual"
 export type BulletRecoStatus = "pending" | "accepted" | "rejected"
 
 /** @deprecated Use syncFootprint — kept for mock data migration */
@@ -90,6 +93,7 @@ export type SkuContent = {
   images: ProductImage[]
   titleStatus: TitleStatus
   titleRecommendation: TitleRecommendation | null
+  titleEditSource?: TitleEditSource
   titleSyncFootprint?: SyncFootprint
   titleHasUnpublishedEdits?: boolean
   descriptionStatus: TitleStatus

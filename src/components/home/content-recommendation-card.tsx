@@ -21,6 +21,65 @@ import { ReasoningPanel, ToggleSwitch } from "./reasoning-ui"
 import type { FieldCompareTarget } from "./vertical-source-compare-grid"
 import type { PublishBatch, TitleRecommendation, TitleStatus, SyncFootprint } from "./types"
 
+/** Prevents textarea blur from stealing the first click on Accept / Cancel. */
+function keepFieldFocusOnPointerDown(e: React.MouseEvent) {
+  e.preventDefault()
+}
+
+function RecoActionButton({
+  onClick,
+  label,
+  icon,
+  iconOnly = false,
+  variant = "bordered",
+}: {
+  onClick: () => void
+  label: string
+  icon: ReactNode
+  iconOnly?: boolean
+  variant?: "bordered" | "ghost"
+}) {
+  if (iconOnly) {
+    return (
+      <button
+        type="button"
+        onMouseDown={keepFieldFocusOnPointerDown}
+        onClick={onClick}
+        aria-label={label}
+        className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+      >
+        {icon}
+      </button>
+    )
+  }
+
+  if (variant === "ghost") {
+    return (
+      <button
+        type="button"
+        onMouseDown={keepFieldFocusOnPointerDown}
+        onClick={onClick}
+        className="inline-flex h-8 items-center gap-1.5 px-1 text-xs font-medium text-slate-500 hover:text-slate-900"
+      >
+        {icon}
+        {label}
+      </button>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onMouseDown={keepFieldFocusOnPointerDown}
+      onClick={onClick}
+      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
+    >
+      {icon}
+      {label}
+    </button>
+  )
+}
+
 export type RecommendationLabels = {
   pending: string
   accepted: string
@@ -114,8 +173,8 @@ export function ContentRecommendationHeader({
   )
 
   return (
-    <div className="flex w-full flex-wrap items-end justify-between gap-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
+    <div className="flex min-h-[30px] w-full flex-nowrap items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           {collapsible ? (
             <button
               type="button"
@@ -139,9 +198,15 @@ export function ContentRecommendationHeader({
           )}
         </div>
 
-      {status === "pending" && isOpen ? (
+      <div
+        className={cn(
+          "flex h-[30px] w-[92px] shrink-0 items-center justify-end",
+          status === "pending" && isOpen ? "visible" : "invisible pointer-events-none",
+        )}
+        aria-hidden={!(status === "pending" && isOpen)}
+      >
         <CompareTabs value={compareTarget} onChange={onCompareTargetChange} />
-      ) : null}
+      </div>
     </div>
   )
 }
@@ -171,6 +236,8 @@ interface ContentRecommendationBodyProps {
   editAriaLabel?: string
   editRows?: number
   compact?: boolean
+  /** Icon-only bordered actions (e.g. per-bullet Accept / Reject). */
+  iconOnlyActions?: boolean
   /** Renders above the field in one group (gap-2 / 8px). */
   header?: ReactNode
 }
@@ -201,6 +268,7 @@ export function ContentRecommendationBody({
   editAriaLabel = "Edit AI recommendation",
   editRows = 3,
   compact = false,
+  iconOnlyActions = false,
   header,
 }: ContentRecommendationBodyProps) {
   const [showReasoning, setShowReasoning] = useState(false)
@@ -234,6 +302,7 @@ export function ContentRecommendationBody({
         </div>
         <button
           type="button"
+          onMouseDown={keepFieldFocusOnPointerDown}
           onClick={onAccept}
           className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
         >
@@ -308,7 +377,7 @@ export function ContentRecommendationBody({
                 />
               </div>
             )}
-            <div className="flex flex-col items-end gap-1">
+            <div className="flex min-h-[52px] flex-col items-end justify-end gap-1">
               {status === "pending" ||
               showReacceptActions ||
               showAcceptedReviewActions ||
@@ -317,95 +386,90 @@ export function ContentRecommendationBody({
                 <div className="flex items-center gap-2">
                   {showReacceptActions ? (
                     <>
-                      <button
-                        type="button"
+                      <RecoActionButton
                         onClick={onReset}
-                        className="inline-flex h-8 items-center gap-1.5 px-1 text-xs font-medium text-slate-500 hover:text-slate-900"
-                      >
-                        <RotateCcw className="size-3.5" />
-                        Reset Recommendation
-                      </button>
-                      <button
-                        type="button"
+                        label="Reset recommendation"
+                        icon={<RotateCcw className="size-3.5" />}
+                        iconOnly={iconOnlyActions}
+                        variant="ghost"
+                      />
+                      <RecoActionButton
                         onClick={onUndoAccept}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
-                      >
-                        <Undo2 className="size-3.5" /> Undo
-                      </button>
-                      <button
-                        type="button"
+                        label="Undo"
+                        icon={<Undo2 className="size-3.5" />}
+                        iconOnly={iconOnlyActions}
+                      />
+                      <RecoActionButton
                         onClick={onAccept}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
-                      >
-                        <Check className="size-4 text-success-600" /> Accept
-                      </button>
+                        label="Accept"
+                        icon={<Check className="size-4 text-success-600" />}
+                        iconOnly={iconOnlyActions}
+                      />
                     </>
                   ) : null}
                   {!showReacceptActions && isModified && !isFieldPublishingLocked(fp) ? (
-                    <button
-                      type="button"
+                    <RecoActionButton
                       onClick={handleResetRecommendation}
-                      className="inline-flex h-8 items-center gap-1.5 px-1 text-xs font-medium text-slate-500 hover:text-slate-900"
-                    >
-                      <RotateCcw className="size-3.5" />
-                      Reset Recommendation
-                    </button>
+                      label="Reset recommendation"
+                      icon={<RotateCcw className="size-3.5" />}
+                      iconOnly={iconOnlyActions}
+                      variant="ghost"
+                    />
                   ) : null}
                   {status === "pending" ? (
                     <>
-                      <button
-                        type="button"
+                      <RecoActionButton
                         onClick={onReject}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
-                      >
-                        <X className="size-4 text-error-600" /> {rejectLabel}
-                      </button>
-                      <button
-                        type="button"
+                        label={rejectLabel}
+                        icon={<X className="size-4 text-error-600" />}
+                        iconOnly={iconOnlyActions}
+                      />
+                      <RecoActionButton
                         onClick={onAccept}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
-                      >
-                        <Check className="size-4 text-success-600" /> Accept
-                      </button>
+                        label="Accept"
+                        icon={<Check className="size-4 text-success-600" />}
+                        iconOnly={iconOnlyActions}
+                      />
                     </>
                   ) : null}
                   {showAcceptedReviewActions ? (
                     <>
-                      <span className="inline-flex h-8 items-center gap-1.5 text-xs font-medium text-success-600">
-                        <Check className="size-4 shrink-0" aria-hidden />
-                        Accepted
-                      </span>
-                      <button
-                        type="button"
+                      {!iconOnlyActions ? (
+                        <span className="inline-flex h-8 items-center gap-1.5 text-xs font-medium text-success-600">
+                          <Check className="size-4 shrink-0" aria-hidden />
+                          Accepted
+                        </span>
+                      ) : null}
+                      <RecoActionButton
                         onClick={onUndoAccept}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
-                      >
-                        <Undo2 className="size-3.5" /> Undo accept
-                      </button>
+                        label="Undo accept"
+                        icon={<Undo2 className="size-3.5" />}
+                        iconOnly={iconOnlyActions}
+                      />
                     </>
                   ) : null}
                   {showPushUpdate ? (
-                    <button
-                      type="button"
-                      onClick={onPushUpdate}
-                      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
-                    >
-                      <Check className="size-4 text-success-600" /> Push update
-                    </button>
+                    <RecoActionButton
+                      onClick={onPushUpdate!}
+                      label="Accept"
+                      icon={<Check className="size-4 text-success-600" />}
+                      iconOnly={iconOnlyActions}
+                    />
                   ) : null}
                   {status === "rejected" && onUndoReject ? (
                     <>
-                      <span className="inline-flex h-8 items-center gap-1.5 text-xs font-medium text-slate-500">
-                        <X className="size-4 shrink-0" aria-hidden />
-                        Rejected
-                      </span>
-                      <button
-                        type="button"
+                      {!iconOnlyActions ? (
+                        <span className="inline-flex h-8 items-center gap-1.5 text-xs font-medium text-slate-500">
+                          <X className="size-4 shrink-0" aria-hidden />
+                          Rejected
+                        </span>
+                      ) : null}
+                      <RecoActionButton
                         onClick={onUndoReject}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
-                      >
-                        <Undo2 className="size-3.5" /> Undo reject
-                      </button>
+                        label="Undo reject"
+                        icon={<Undo2 className="size-3.5" />}
+                        iconOnly={iconOnlyActions}
+                      />
                     </>
                   ) : null}
                 </div>

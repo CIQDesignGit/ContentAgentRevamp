@@ -24,11 +24,11 @@ export function AiRecommendationSparklesIcon({ className }: { className?: string
   )
 }
 
-/** Clock-arrow-up icon for queued / in-flight published changes (20×20, 1.2px stroke). */
+/** Clock-arrow-up icon for queued / in-flight published changes (18×18, 1.2px stroke). */
 export function QueuedChangesTimerIcon({ className }: { className?: string }) {
   return (
     <ClockArrowUp
-      className={cn("size-5 shrink-0 text-slate-500", className)}
+      className={cn("size-[18px] shrink-0 text-slate-500", className)}
       strokeWidth={1.2}
       aria-hidden
     />
@@ -128,7 +128,7 @@ export function BulletSourceCell({
       <div
         className={cn(
           "group relative flex w-full flex-col rounded-lg border border-slate-200 bg-slate-50",
-          "h-full min-h-[4.5rem] flex-1",
+          "h-full min-h-18 flex-1",
         )}
       >
         {value.trim() ? (

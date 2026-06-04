@@ -84,3 +84,74 @@ export function getPublishSummary(content: SkuContent): PublishSummary {
 export function canPublish(content: SkuContent): boolean {
   return getPublishSummary(content).publishable.length > 0
 }
+
+/** Reverts accepted-but-unpublished fields back to pending (used when leaving without publishing). */
+export function revertUnpublishedAcceptedChanges(
+  content: SkuContent,
+  initial: SkuContent,
+  bulletOriginals: Record<string, string>,
+): SkuContent {
+  if (!canPublish(content)) return content
+
+  let next: SkuContent = { ...content }
+
+  if (titleIsPublishable(content)) {
+    next = {
+      ...next,
+      title: initial.title,
+      titleStatus: "pending",
+      titleSyncFootprint: undefined,
+      titleHasUnpublishedEdits: false,
+      titleRecommendation: next.titleRecommendation
+        ? {
+            ...next.titleRecommendation,
+            recommendedText:
+              initial.titleRecommendation?.recommendedText ??
+              next.titleRecommendation.recommendedText,
+          }
+        : null,
+    }
+  }
+
+  if (descriptionIsPublishable(content)) {
+    next = {
+      ...next,
+      description: initial.description,
+      descriptionStatus: "pending",
+      descriptionSyncFootprint: undefined,
+      descriptionHasUnpublishedEdits: false,
+      descriptionRecommendation: next.descriptionRecommendation
+        ? {
+            ...next.descriptionRecommendation,
+            recommendedText:
+              initial.descriptionRecommendation?.recommendedText ??
+              next.descriptionRecommendation.recommendedText,
+          }
+        : null,
+    }
+  }
+
+  const publishableBulletIds = content.bulletRecommendations
+    .filter(bulletIsPublishable)
+    .map((r) => r.id)
+
+  if (publishableBulletIds.length > 0) {
+    next = {
+      ...next,
+      bullets: [...initial.bullets],
+      bulletRecommendations: content.bulletRecommendations.map((r) => {
+        if (!publishableBulletIds.includes(r.id)) return r
+        return {
+          ...r,
+          status: "pending" as const,
+          syncFootprint: undefined,
+          hasUnpublishedEdits: false,
+          footprint: undefined,
+          recommendedText: bulletOriginals[r.id] ?? r.recommendedText,
+        }
+      }),
+    }
+  }
+
+  return next
+}

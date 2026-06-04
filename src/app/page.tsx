@@ -3,6 +3,7 @@
 export const dynamic = "force-static"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 
 import { AppHeader } from "@/components/home/app-header"
 import { FilterBar } from "@/components/home/filter-bar"
@@ -13,11 +14,11 @@ import { ImageSection } from "@/components/home/image-section"
 import { BulletPointsSection } from "@/components/home/bullet-section"
 import { DescriptionSection } from "@/components/home/description-section"
 import { PublishConfirmDialog } from "@/components/home/publish-confirm-dialog"
+import { UnpublishedChangesGuardDialog } from "@/components/home/unpublished-changes-guard-dialog"
 
-import { applyBulletRecommendation } from "@/lib/apply-bullet-recommendation"
 import { getFieldPublishQueue } from "@/lib/build-field-publish-queue"
 import { getActivePublishBatch, getPublishBatchForField } from "@/lib/publish-batch"
-import { getPublishSummary } from "@/lib/publish-changes"
+import { getPublishSummary, revertUnpublishedAcceptedChanges } from "@/lib/publish-changes"
 import {
   activateDeferredBatch,
   applyPublishPhase,
@@ -35,7 +36,12 @@ import {
 } from "@/components/home/data"
 import type { BulletRecommendation, ContentState, SkuContent } from "@/components/home/types"
 
+type PendingNavigation =
+  | { kind: "sku"; skuId: string }
+  | { kind: "route"; path: string }
+
 export default function Home() {
+  const router = useRouter()
   const [selectedSkuId, setSelectedSkuId] = useState(MOCK_SKUS[0].id)
   const [search, setSearch] = useState("")
   const [filter, setFilter] = useState("all")
@@ -43,6 +49,8 @@ export default function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [contentState, setContentState] = useState<ContentState>(() => buildInitialState())
   const [publishDialogOpen, setPublishDialogOpen] = useState(false)
+  const [unpublishedGuardOpen, setUnpublishedGuardOpen] = useState(false)
+  const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null)
   const publishTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   const filteredSkus = useMemo(
@@ -80,6 +88,52 @@ export default function Home() {
     if (hasPublishable) return "ready"
     return "disabled"
   }, [content.isPublishing, activeBatch, publishSummary.publishable.length])
+
+  const hasUnpublishedAcceptedChanges = publishSummary.publishable.length > 0
+
+  function applyNavigation(nav: PendingNavigation) {
+    if (nav.kind === "sku") {
+      setSelectedSkuId(nav.skuId)
+      return
+    }
+    router.push(nav.path)
+  }
+
+  function requestNavigation(nav: PendingNavigation) {
+    if (nav.kind === "sku" && nav.skuId === selectedSkuId) return
+    if (!hasUnpublishedAcceptedChanges) {
+      applyNavigation(nav)
+      return
+    }
+    setPendingNavigation(nav)
+    setUnpublishedGuardOpen(true)
+  }
+
+  function handleUnpublishedGuardStay() {
+    setPendingNavigation(null)
+    setUnpublishedGuardOpen(false)
+  }
+
+  function handleUnpublishedGuardLeave() {
+    const nav = pendingNavigation
+    const skuId = selectedSkuId
+    setPendingNavigation(null)
+    setUnpublishedGuardOpen(false)
+
+    if (hasUnpublishedAcceptedChanges) {
+      const sku = MOCK_SKUS.find((s) => s.id === skuId) ?? MOCK_SKUS[0]
+      setContentState((prev) => ({
+        ...prev,
+        [skuId]: revertUnpublishedAcceptedChanges(
+          prev[skuId],
+          makeInitialContent(sku),
+          bulletOriginals,
+        ),
+      }))
+    }
+
+    if (nav) applyNavigation(nav)
+  }
 
   function patch(updater: (prev: SkuContent) => SkuContent) {
     setContentState((prev) => ({ ...prev, [selectedSkuId]: updater(prev[selectedSkuId]) }))
@@ -184,8 +238,8 @@ export default function Home() {
     if (!recommended) return
     patch((prev) => ({
       ...prev,
-      title: recommended,
       titleStatus: "accepted",
+      titleEditSource: "ai",
       titleSyncFootprint: "none",
       titleHasUnpublishedEdits: false,
     }))
@@ -197,19 +251,36 @@ export default function Home() {
 
   function handleUndoAcceptTitle() {
     const initial = makeInitialContent(selectedSku)
-    patch((prev) => ({
-      ...prev,
-      title: initial.title,
-      titleStatus: "pending",
-      titleSyncFootprint: undefined,
-      titleHasUnpublishedEdits: false,
-      titleRecommendation: prev.titleRecommendation
-        ? {
-            ...prev.titleRecommendation,
-            recommendedText: titleOriginal || prev.titleRecommendation.recommendedText,
-          }
-        : null,
-    }))
+    patch((prev) => {
+      if (prev.titleEditSource === "manual") {
+        const text = prev.titleRecommendation?.recommendedText ?? prev.title
+        return {
+          ...prev,
+          title: initial.title,
+          titleStatus: "pending",
+          titleSyncFootprint: undefined,
+          titleHasUnpublishedEdits: false,
+          titleEditSource: "manual",
+          titleRecommendation: prev.titleRecommendation
+            ? { ...prev.titleRecommendation, recommendedText: text }
+            : null,
+        }
+      }
+      return {
+        ...prev,
+        title: initial.title,
+        titleStatus: "pending",
+        titleSyncFootprint: undefined,
+        titleHasUnpublishedEdits: false,
+        titleEditSource: "ai",
+        titleRecommendation: prev.titleRecommendation
+          ? {
+              ...prev.titleRecommendation,
+              recommendedText: titleOriginal || prev.titleRecommendation.recommendedText,
+            }
+          : null,
+      }
+    })
   }
 
   function handleUndoRejectTitle() {
@@ -227,8 +298,8 @@ export default function Home() {
   function handleAcceptNewTitleDraft(text: string) {
     patch((prev) => ({
       ...prev,
-      title: text,
       titleStatus: "accepted",
+      titleEditSource: "manual",
       titleRecommendation: prev.titleRecommendation
         ? { ...prev.titleRecommendation, recommendedText: text }
         : null,
@@ -282,7 +353,6 @@ export default function Home() {
     if (!recommended) return
     patch((prev) => ({
       ...prev,
-      description: recommended,
       descriptionStatus: "accepted",
       descriptionSyncFootprint: "none",
       descriptionHasUnpublishedEdits: false,
@@ -324,10 +394,30 @@ export default function Home() {
     }))
   }
 
+  function handleAcceptNewBulletDraft(id: string, text: string) {
+    patch((prev) => {
+      const fieldKey = `bullet:${id}`
+      const hasInFlightPublish = (prev.publishBatches ?? []).some(
+        (b) => b.fieldKeys.includes(fieldKey) && !b.completedAt,
+      )
+      return mapBulletReco(prev, (r) =>
+        r.id === id
+          ? {
+              ...r,
+              recommendedText: text,
+              status: "accepted" as const,
+              syncFootprint: hasInFlightPublish ? ("queued" as const) : ("none" as const),
+              hasUnpublishedEdits: false,
+              footprint: undefined,
+            }
+          : r,
+      )
+    })
+  }
+
   function handleAcceptNewDescriptionDraft(text: string) {
     patch((prev) => ({
       ...prev,
-      description: text,
       descriptionStatus: "accepted",
       descriptionRecommendation: prev.descriptionRecommendation
         ? { ...prev.descriptionRecommendation, recommendedText: text }
@@ -357,6 +447,11 @@ export default function Home() {
     patch((prev) => {
       const reco = prev.bulletRecommendations.find((r) => r.id === id)
       if (!reco) return prev
+      const fieldKey = `bullet:${id}`
+      const hasInFlightPublish = (prev.publishBatches ?? []).some(
+        (b) => b.fieldKeys.includes(fieldKey) && !b.completedAt,
+      )
+
       if (reco.status === "rejected") {
         return mapBulletReco(prev, (r) =>
           r.id === id
@@ -370,10 +465,23 @@ export default function Home() {
             : r,
         )
       }
+
+      if (reco.status === "accepted" && reco.hasUnpublishedEdits) {
+        return mapBulletReco(prev, (r) =>
+          r.id === id
+            ? {
+                ...r,
+                hasUnpublishedEdits: false,
+                syncFootprint: hasInFlightPublish ? ("queued" as const) : (r.syncFootprint ?? "none"),
+                footprint: undefined,
+              }
+            : r,
+        )
+      }
+
       if (reco.status !== "pending" && reco.status !== "accepted") return prev
       return {
         ...prev,
-        bullets: applyBulletRecommendation(prev.bullets, reco),
         bulletRecommendations: prev.bulletRecommendations.map((r) =>
           r.id === id
             ? {
@@ -431,35 +539,40 @@ export default function Home() {
   }
 
   function handlePushUpdateBullet(id: string) {
-    patch((prev) =>
-      mapBulletReco(prev, (r) => {
+    patch((prev) => {
+      const fieldKey = `bullet:${id}`
+      const hasInFlightPublish = (prev.publishBatches ?? []).some(
+        (b) => b.fieldKeys.includes(fieldKey) && !b.completedAt,
+      )
+      return mapBulletReco(prev, (r) => {
         if (r.id !== id) return r
         const fp = resolveBulletSyncFootprint(r)
+        const queueFollowUp = hasInFlightPublish || fp === "syncing" || fp === "synced"
         return {
           ...r,
-          hasUnpublishedEdits: true,
-          syncFootprint: fp === "syncing" || fp === "synced" ? "queued" : r.syncFootprint,
-        }
-      }),
-    )
-  }
-
-  function handleAcceptAllBullets() {
-    patch((prev) => {
-      let bullets = prev.bullets
-      const nextRecos = prev.bulletRecommendations.map((r) => {
-        if (r.status !== "pending") return r
-        bullets = applyBulletRecommendation(bullets, r)
-        return {
-          ...r,
-          status: "accepted" as const,
-          syncFootprint: "none" as const,
           hasUnpublishedEdits: false,
+          syncFootprint: queueFollowUp ? ("queued" as const) : (r.syncFootprint ?? "none"),
           footprint: undefined,
         }
       })
-      return { ...prev, bullets, bulletRecommendations: nextRecos }
     })
+  }
+
+  function handleAcceptAllBullets() {
+    patch((prev) => ({
+      ...prev,
+      bulletRecommendations: prev.bulletRecommendations.map((r) =>
+        r.status !== "pending"
+          ? r
+          : {
+              ...r,
+              status: "accepted" as const,
+              syncFootprint: "none" as const,
+              hasUnpublishedEdits: false,
+              footprint: undefined,
+            },
+      ),
+    }))
   }
 
   function handleRejectAllBullets() {
@@ -499,13 +612,14 @@ export default function Home() {
         selectedBrands={selectedBrands}
         onBrandsChange={setSelectedBrands}
         matchCount={filteredSkus.length}
+        onActivityLogClick={() => requestNavigation({ kind: "route", path: "/actions-log" })}
       />
 
       <div className="flex min-h-0 flex-1">
         <SkuSidebar
           skus={filteredSkus}
           selectedSkuId={selectedSkuId}
-          onSelect={setSelectedSkuId}
+          onSelect={(skuId) => requestNavigation({ kind: "sku", skuId })}
           totalCount={MOCK_SKUS.length}
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed((v) => !v)}
@@ -522,14 +636,20 @@ export default function Home() {
             aeo={selectedSku.metrics.aeo}
             publishState={publishBarState}
             publishableCount={publishSummary.publishable.length}
-            pendingReviewCount={publishSummary.pendingReviewCount}
-            queuedFollowUpCount={publishSummary.queuedFollowUpCount}
-            activeBatch={activeBatch}
             onPublishClick={() => {
               if (publishSummary.publishable.length > 0) {
                 setPublishDialogOpen(true)
               }
             }}
+          />
+
+          <UnpublishedChangesGuardDialog
+            open={unpublishedGuardOpen}
+            onOpenChange={(open) => {
+              if (!open) handleUnpublishedGuardStay()
+            }}
+            onStay={handleUnpublishedGuardStay}
+            onLeave={handleUnpublishedGuardLeave}
           />
 
           <PublishConfirmDialog
@@ -547,6 +667,7 @@ export default function Home() {
                   pimTitle={content.title}
                   pdpTitle={pdp.title}
                   status={content.titleStatus}
+                  titleEditSource={content.titleEditSource}
                   recommendation={content.titleRecommendation}
                   syncFootprint={content.titleSyncFootprint}
                   hasUnpublishedEdits={content.titleHasUnpublishedEdits}
@@ -576,6 +697,9 @@ export default function Home() {
                   recommendations={content.bulletRecommendations}
                   originals={bulletOriginals}
                   getFieldPublishBatch={(fieldKey) => getPublishBatchForField(content, fieldKey)}
+                  getBulletPublishQueue={(bulletId) =>
+                    getFieldPublishQueue(content, `bullet:${bulletId}`)
+                  }
                   onRecommendationTextChange={handleBulletTextChange}
                   onAccept={handleAcceptBullet}
                   onReject={handleRejectBullet}
@@ -586,6 +710,7 @@ export default function Home() {
                   onAcceptAll={handleAcceptAllBullets}
                   onRejectAll={handleRejectAllBullets}
                   onResetAll={handleResetAllBullets}
+                  onAcceptNewDraft={handleAcceptNewBulletDraft}
                 />
                 <DescriptionSection
                   pimDescription={content.description}

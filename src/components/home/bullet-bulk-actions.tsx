@@ -1,7 +1,23 @@
 "use client"
 
 import { Check, RotateCcw, X } from "lucide-react"
+import { cn } from "@/lib/utils"
 import type { BulletRecommendation } from "./types"
+
+/** Keeps header height stable before any bullets are accepted or rejected. */
+function ReviewedSummaryLabel({ summary }: { summary: string | null }) {
+  return (
+    <span
+      className={cn(
+        "min-h-4 text-xs leading-4 text-slate-500",
+        !summary && "invisible select-none",
+      )}
+      aria-hidden={!summary}
+    >
+      {summary ?? "0 accepted"}
+    </span>
+  )
+}
 
 function buildReviewedSummary(recommendations: BulletRecommendation[]): string | null {
   const acceptedCount = recommendations.filter((r) => r.status === "accepted").length
@@ -67,9 +83,7 @@ export function BulletBulkActions({
     </div>
   )
 
-  const reviewedLabel = reviewedSummary ? (
-    <span className="text-xs text-slate-500">{reviewedSummary}</span>
-  ) : null
+  const reviewedLabel = <ReviewedSummaryLabel summary={reviewedSummary} />
 
   if (actionsOnly) {
     return (

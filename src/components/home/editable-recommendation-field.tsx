@@ -119,7 +119,6 @@ export function EditableRecommendationField({
           <textarea
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            onBlur={() => setIsEditing(false)}
             rows={editRows}
             autoFocus
             aria-label={editAriaLabel}

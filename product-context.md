@@ -24,7 +24,7 @@ The **Actions Log** still models **Retailer** and **PDP** as separate timeline s
 
 1. **Review** — Accept / reject AI recommendations per field (title, bullets, description).
 2. **Publish** — Push accepted changes to PIM, then through the retailer/PDP pipeline.
-3. **Staged** — Accepted but not yet published (`Staged for publish · Not yet on PDP`).
+3. **Staged** — Accepted but not yet published (`Not yet Published`).
 4. **Syndication** — After publish, per-field chips track PIM update → retailer submission → PDP verification → **PIM updated** + **PDP updated** when complete.
 
 ---

@@ -1,22 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import type { FieldPublishQueueItem } from "@/lib/build-field-publish-queue"
 import { resolvePublishedSourceDisplay } from "@/lib/published-source-display"
 import { resolveBulletSyncFootprint } from "@/lib/sync-footprint"
 import {
-  BulletRecommendationBody,
-  BulletRecommendationHeader,
-  type BulletCompareTarget,
-} from "./bullet-recommendation-block"
-import type { FieldCompareTarget } from "./vertical-source-compare-grid"
+  useBulletRecommendationView,
+  type BulletRecommendationSlotProps,
+} from "./bullet-recommendation-slot"
 import { VerticalSourceCompareGrid } from "./vertical-source-compare-grid"
 import type { BulletSlot } from "@/lib/build-bullet-slots"
-import type { BulletRecommendation, PublishBatch } from "./types"
+import type { PublishBatch } from "./types"
 
 interface BulletSlotRowProps {
   slot: BulletSlot
+  /** 1-based row label shown above the compare grid (e.g. "Bullet 2"). */
+  bulletNumber: number
+  /** Salsify / Retailer labels only on the first bullet row in the section. */
+  showColumnLabels?: boolean
   originals: Record<string, string>
-  getFieldPublishBatch?: (fieldKey: string) => PublishBatch | undefined
+  publishQueue: FieldPublishQueueItem[]
+  activeBatch?: PublishBatch
   onTextChange: (id: string, text: string) => void
   onAccept: (id: string) => void
   onReject: (id: string) => void
@@ -24,13 +27,48 @@ interface BulletSlotRowProps {
   onUndoAccept: (id: string) => void
   onUndoReject: (id: string) => void
   onPushUpdate: (id: string) => void
+  onAcceptNewDraft?: (id: string, text: string) => void
+}
+
+function BulletSlotRecoGrid({
+  displayPim,
+  displayPdp,
+  showPim,
+  showPdp,
+  showColumnLabels,
+  slotProps,
+}: {
+  displayPim: string
+  displayPdp: string
+  showPim: boolean
+  showPdp: boolean
+  showColumnLabels: boolean
+  slotProps: BulletRecommendationSlotProps
+}) {
+  const { compareTarget, gridHeader, gridBody } = useBulletRecommendationView(slotProps)
+
+  return (
+    <VerticalSourceCompareGrid
+      pimValue={showPim ? displayPim : ""}
+      pdpValue={showPdp ? displayPdp : ""}
+      compareTarget={compareTarget}
+      showPim={showPim}
+      showPdp={showPdp}
+      showColumnLabels={showColumnLabels}
+      recommendationHeader={gridHeader ?? undefined}
+      recommendationBody={gridBody ?? undefined}
+    />
+  )
 }
 
 /** One bullet row inside the combined bullet points card. */
 export function BulletSlotRow({
   slot,
+  bulletNumber,
+  showColumnLabels = false,
   originals,
-  getFieldPublishBatch,
+  publishQueue,
+  activeBatch,
   onTextChange,
   onAccept,
   onReject,
@@ -38,9 +76,8 @@ export function BulletSlotRow({
   onUndoAccept,
   onUndoReject,
   onPushUpdate,
+  onAcceptNewDraft,
 }: BulletSlotRowProps) {
-  const [compareTarget, setCompareTarget] = useState<BulletCompareTarget>("pim")
-
   const pimText = slot.kind === "indexed" ? slot.pimText : ""
   const pdpText =
     slot.kind === "indexed"
@@ -49,23 +86,18 @@ export function BulletSlotRow({
         ? slot.pdpText
         : ""
 
-  const recommendation: BulletRecommendation | null =
+  const recommendation =
     slot.kind === "indexed" ? slot.recommendation : slot.kind === "add" ? slot.recommendation : null
 
   const fp = recommendation ? resolveBulletSyncFootprint(recommendation) : "none"
-  const fieldKey = recommendation ? `bullet:${recommendation.id}` : ""
-  const fieldPublishBatch = fieldKey ? getFieldPublishBatch?.(fieldKey) : undefined
   const publishedText = recommendation?.recommendedText
   const { pim: displayPim, pdp: displayPdp } = resolvePublishedSourceDisplay(
     pimText,
     pdpText,
     publishedText,
     fp,
-    fieldPublishBatch,
+    activeBatch,
   )
-
-  const pimBaseline = slot.kind === "add" ? "" : displayPim
-  const pdpBaseline = slot.kind === "add" ? "" : displayPdp
 
   const showAiBlock =
     recommendation &&
@@ -76,46 +108,50 @@ export function BulletSlotRow({
   const showPimSource = slot.kind !== "retailer-only"
   const showPdpSource = slot.kind === "indexed" || slot.kind === "retailer-only"
 
-  const gridCompareTarget: FieldCompareTarget = compareTarget
-  const pimDisplay = showPimSource ? displayPim : ""
-  const pdpDisplay = showPdpSource ? displayPdp : ""
+  if (!showPimSource && !showPdpSource) return null
+
+  const slotProps: BulletRecommendationSlotProps | null =
+    showAiBlock && recommendation
+      ? {
+          item: recommendation,
+          pimBaseline: slot.kind === "add" ? "" : displayPim,
+          pdpBaseline: slot.kind === "add" ? "" : displayPdp,
+          originalText: originals[recommendation.id] ?? recommendation.recommendedText,
+          publishQueue,
+          activeBatch,
+          onTextChange: (text) => onTextChange(recommendation.id, text),
+          onAccept: () => onAccept(recommendation.id),
+          onReject: () => onReject(recommendation.id),
+          onReset: () => onReset(recommendation.id),
+          onUndoAccept: () => onUndoAccept(recommendation.id),
+          onUndoReject: () => onUndoReject(recommendation.id),
+          onPushUpdate: () => onPushUpdate(recommendation.id),
+          onAcceptNewDraft: onAcceptNewDraft
+            ? (text) => onAcceptNewDraft(recommendation.id, text)
+            : undefined,
+        }
+      : null
 
   return (
-    <div className="space-y-2 px-3 py-5">
-      {(showPimSource || showPdpSource) && (
-        <VerticalSourceCompareGrid
-          pimValue={pimDisplay}
-          pdpValue={pdpDisplay}
-          compareTarget={gridCompareTarget}
+    <div className="space-y-2 px-3 py-4">
+      <h3 className="text-xs font-semibold text-slate-700">Bullet {bulletNumber}</h3>
+      {slotProps ? (
+        <BulletSlotRecoGrid
+          displayPim={displayPim}
+          displayPdp={displayPdp}
           showPim={showPimSource}
           showPdp={showPdpSource}
-          showColumnLabels
-          recommendationBody={
-            showAiBlock ? (
-              <BulletRecommendationBody
-                header={
-                  <BulletRecommendationHeader
-                    item={recommendation}
-                    compareTarget={compareTarget}
-                    onCompareTargetChange={setCompareTarget}
-                  />
-                }
-                item={recommendation}
-                activeBatch={fieldPublishBatch}
-                pimBaseline={pimBaseline}
-                pdpBaseline={pdpBaseline}
-                originalText={originals[recommendation.id] ?? recommendation.recommendedText}
-                compareTarget={compareTarget}
-                onTextChange={(text) => onTextChange(recommendation.id, text)}
-                onAccept={() => onAccept(recommendation.id)}
-                onReject={() => onReject(recommendation.id)}
-                onReset={() => onReset(recommendation.id)}
-                onUndoAccept={() => onUndoAccept(recommendation.id)}
-                onUndoReject={() => onUndoReject(recommendation.id)}
-                onPushUpdate={() => onPushUpdate(recommendation.id)}
-              />
-            ) : undefined
-          }
+          showColumnLabels={showColumnLabels}
+          slotProps={slotProps}
+        />
+      ) : (
+        <VerticalSourceCompareGrid
+          pimValue={showPimSource ? displayPim : ""}
+          pdpValue={showPdpSource ? displayPdp : ""}
+          compareTarget="pim"
+          showPim={showPimSource}
+          showPdp={showPdpSource}
+          showColumnLabels={showColumnLabels}
         />
       )}
     </div>

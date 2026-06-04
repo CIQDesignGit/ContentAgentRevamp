@@ -319,7 +319,7 @@ export const SKU_CONTENT: Record<string, SkuContentBundle> = {
               {
                 type: "REPLACED",
                 summary: "Accepted, not published",
-                detail: "Shows “Staged for publish · Not yet on PDP” after accept.",
+                detail: "Shows “Not yet Published” after accept.",
               },
             ],
           },

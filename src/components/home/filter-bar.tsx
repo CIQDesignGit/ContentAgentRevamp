@@ -201,11 +201,12 @@ interface FilterBarProps {
   selectedBrands: string[]
   onBrandsChange: (brands: string[]) => void
   matchCount: number
+  onActivityLogClick?: () => void
 }
 
 export function FilterBar({
   search, onSearchChange, activeFilter, onFilterChange,
-  selectedBrands, onBrandsChange, matchCount,
+  selectedBrands, onBrandsChange, matchCount, onActivityLogClick,
 }: FilterBarProps) {
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(search.length > 0)
@@ -311,7 +312,7 @@ export function FilterBar({
           type="button"
           aria-label="Activity log"
           title="Recent activity"
-          onClick={() => router.push("/actions-log")}
+          onClick={() => onActivityLogClick?.() ?? router.push("/actions-log")}
           className="relative grid size-8 place-items-center rounded-md text-slate-500 hover:bg-slate-100"
         >
           <History className="size-4" />

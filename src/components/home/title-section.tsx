@@ -13,12 +13,19 @@ import {
 import { PublishQueueList } from "./publish-queue-list"
 import type { FieldCompareTarget } from "./vertical-source-compare-grid"
 import { VerticalSourceCompareGrid } from "./vertical-source-compare-grid"
-import type { PublishBatch, TitleRecommendation, TitleStatus, SyncFootprint } from "./types"
+import type {
+  PublishBatch,
+  TitleEditSource,
+  TitleRecommendation,
+  TitleStatus,
+  SyncFootprint,
+} from "./types"
 
 interface ProductTitleSectionProps {
   pimTitle: string
   pdpTitle: string
   status: TitleStatus
+  titleEditSource?: TitleEditSource
   recommendation: TitleRecommendation | null
   syncFootprint?: SyncFootprint
   hasUnpublishedEdits?: boolean
@@ -38,6 +45,7 @@ export function ProductTitleSection({
   pimTitle,
   pdpTitle,
   status,
+  titleEditSource = "ai",
   recommendation,
   syncFootprint,
   hasUnpublishedEdits,
@@ -87,6 +95,7 @@ export function ProductTitleSection({
     (syncFootprint === "none" || syncFootprint === undefined)
   const isFullySynced =
     status === "accepted" && syncFootprint === "synced" && !hasPublishQueue
+  const isManualTitleEdit = titleEditSource === "manual"
 
   function handleAddNewTitle() {
     setDraftText(pimTitle)
@@ -152,7 +161,7 @@ export function ProductTitleSection({
             <ContentRecommendationHeader
               labels={{
                 pending: "New title",
-                accepted: "Accepted",
+                accepted: "Accepted Title",
                 rejected: "Rejected",
               }}
               status="accepted"
@@ -177,9 +186,9 @@ export function ProductTitleSection({
           onAccept={onAccept}
           onReject={onReject}
           onReset={() => onRecommendationChange(recommendation.recommendedText)}
-          onUndoAccept={onUndoStagedNewTitle ?? onUndoAccept}
+          onUndoAccept={onUndoAccept}
           hideReasoning
-          editAriaLabel="Edit new title"
+          editAriaLabel="Edit title"
         />
       </div>
     ) : null
@@ -188,8 +197,8 @@ export function ProductTitleSection({
     showReco && !isFullySynced ? (
       <ContentRecommendationHeader
         labels={{
-          pending: "AI Recommended Title",
-          accepted: "Accepted",
+          pending: isManualTitleEdit ? "Edit title" : "AI Recommended Title",
+          accepted: "Accepted Title",
           rejected: "Rejected",
           queued: "Changes queued",
         }}
@@ -199,6 +208,7 @@ export function ProductTitleSection({
         onCompareTargetChange={setCompareTarget}
         isOpen={isOpen}
         onToggleOpen={() => setIsOpen((v) => !v)}
+        isAiRecommendation={!isManualTitleEdit}
       />
     ) : null
 
@@ -278,9 +288,12 @@ export function ProductTitleSection({
                 onUndoAccept={onUndoAccept}
                 onUndoReject={onUndoReject}
                 onPushUpdate={onPushUpdate}
+                hideReasoning={isManualTitleEdit}
                 addNewLabel={isAddingNew ? undefined : "Add New Title"}
                 onAddNew={isAddingNew ? undefined : handleAddNewTitle}
-                editAriaLabel="Edit AI recommended title"
+                editAriaLabel={
+                  isManualTitleEdit ? "Edit title" : "Edit AI recommended title"
+                }
               />
               {draftBlock}
             </div>

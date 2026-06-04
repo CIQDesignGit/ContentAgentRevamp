@@ -20,8 +20,16 @@ function resolveBatchQueueFootprint(
 function fieldText(content: SkuContent, fieldKey: string, batch: PublishBatch): string {
   const snapshot = batch.fieldSnapshots?.[fieldKey]
   if (snapshot) return snapshot
-  if (fieldKey === "title") return content.title
-  if (fieldKey === "description") return content.description
+  if (fieldKey === "title") {
+    return content.titleRecommendation?.recommendedText?.trim() || content.title
+  }
+  if (fieldKey === "description") {
+    return content.descriptionRecommendation?.recommendedText?.trim() || content.description
+  }
+  if (fieldKey.startsWith("bullet:")) {
+    const id = fieldKey.slice("bullet:".length)
+    return content.bulletRecommendations.find((r) => r.id === id)?.recommendedText ?? ""
+  }
   return ""
 }
 
