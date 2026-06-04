@@ -24,7 +24,7 @@ export function formatPublishedTimestamp(iso: string): string {
 
 export function StagedForPublishChip() {
   return (
-    <span className="inline-flex shrink-0 items-center rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+    <span className="inline-flex shrink-0 items-center rounded-md border border-brand-200 bg-brand-50 px-1.5 py-0.5 text-[10px] font-medium text-primary">
       Staged for publish
     </span>
   )

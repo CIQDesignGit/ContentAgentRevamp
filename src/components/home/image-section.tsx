@@ -70,7 +70,7 @@ export function ImageSection({ images, onDelete, readOnly }: ImageSectionProps) 
           </span>
         </div>
         {!readOnly && (
-          <button type="button" className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-primary hover:bg-violet-50">
+          <button type="button" className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-primary hover:bg-brand-50">
             <ImagePlus className="size-4" /> Add image
           </button>
         )}

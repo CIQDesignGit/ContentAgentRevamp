@@ -34,22 +34,25 @@ function DiffView({ diff }: { diff: DiffSegment[] }) {
 }
 
 /** Visual tone for the AI recommendation text container only. */
-export type RecommendationFieldTone = "highlight" | "success" | "muted"
+export type RecommendationFieldTone = "highlight" | "accepted" | "success" | "muted"
 
 const TONE_OUTER_CLASS: Record<RecommendationFieldTone, string> = {
-  highlight: "bg-violet-50",
+  highlight: "bg-brand-50",
+  accepted: "bg-brand-50",
   success: "bg-success-50",
   muted: "bg-slate-50",
 }
 
 const TONE_INNER_BORDER_CLASS: Record<RecommendationFieldTone, string> = {
-  highlight: "border-violet-300",
+  highlight: "border-brand-300",
+  accepted: "border-brand-200",
   success: "border-success-200",
   muted: "border-slate-200",
 }
 
 const TONE_INNER_BG_CLASS: Record<RecommendationFieldTone, string> = {
   highlight: "bg-white",
+  accepted: "bg-brand-25",
   success: "bg-white",
   muted: "bg-slate-100",
 }
@@ -105,14 +108,17 @@ export function EditableRecommendationField({
 
   return (
     <div
-      className={cn("w-full min-w-0 rounded-lg px-1 py-1", TONE_OUTER_CLASS[tone])}
+      data-recommendation-tone={tone}
+      className={cn("w-full min-w-0 rounded-lg px-0.5 py-0.5", TONE_OUTER_CLASS[tone])}
     >
       <div
         className={cn(
           "flex w-full min-w-0 flex-col rounded-md border px-3 py-2",
           TONE_INNER_BG_CLASS[tone],
           TONE_INNER_BORDER_CLASS[tone],
-          isEditing && tone === "highlight" && "ring-2 ring-violet-200",
+          isEditing &&
+            (tone === "highlight" || tone === "accepted") &&
+            "ring-2 ring-brand-200",
         )}
       >
         {isEditing && canEdit ? (
@@ -128,7 +134,7 @@ export function EditableRecommendationField({
           <button
             type="button"
             onClick={() => setIsEditing(true)}
-            className="block w-full cursor-text text-left focus:outline-none"
+            className="block w-full cursor-text bg-transparent text-left focus:outline-none"
             aria-label={editAriaLabel}
           >
             {displayContent}

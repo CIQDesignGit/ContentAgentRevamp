@@ -27,18 +27,18 @@ interface PublishConfirmDialogProps {
   hasActiveBatch: boolean
 }
 
-type NoticeCardTone = "violet" | "warning" | "slate" | "info"
+type NoticeCardTone = "brand" | "warning" | "slate" | "info"
 
 const NOTICE_CARD_TONE: Record<
   NoticeCardTone,
   { shell: string; icon: string }
 > = {
-  violet: {
-    shell: "border-violet-200 bg-violet-50",
-    icon: "text-violet-600",
+  brand: {
+    shell: "border-brand-200 bg-brand-50",
+    icon: "text-brand-600",
   },
   warning: {
-    shell: "border-warning-200 bg-warning-50",
+    shell: "border-slate-200 bg-white",
     icon: "text-warning-600",
   },
   slate: {
@@ -51,7 +51,7 @@ const NOTICE_CARD_TONE: Record<
   },
 }
 
-/** Shared card shell: icon column + title row, body aligned under title. */
+/** Shared card shell: header row (icon + title), then body block below. */
 function NoticeCard({
   tone,
   icon,
@@ -67,12 +67,14 @@ function NoticeCard({
 
   return (
     <div className={cn("rounded-lg border p-3", styles.shell)}>
-      <div className="grid grid-cols-[1rem_minmax(0,1fr)] gap-x-2.5 gap-y-2">
-        <div className={cn("flex size-4 items-center justify-center", styles.icon)}>{icon}</div>
-        <p className="text-sm font-semibold leading-4 text-slate-900">{title}</p>
-        <div className="col-start-2 min-w-0 space-y-2 text-sm leading-relaxed text-slate-600">
-          {children}
+      <div className="flex flex-col gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className={cn("flex size-4 shrink-0 items-center justify-center", styles.icon)}>
+            {icon}
+          </div>
+          <p className="min-w-0 text-sm font-semibold leading-4 text-slate-700">{title}</p>
         </div>
+        <div className="min-w-0 space-y-2 text-sm leading-relaxed text-slate-600">{children}</div>
       </div>
     </div>
   )
@@ -83,7 +85,7 @@ function PublishingFieldsCard({ fields }: { fields: PublishableField[] }) {
 
   return (
     <NoticeCard
-      tone="violet"
+      tone="brand"
       title="Ready to publish"
       icon={<CheckCircle2 className="size-4 shrink-0" aria-hidden />}
     >
@@ -95,7 +97,7 @@ function PublishingFieldsCard({ fields }: { fields: PublishableField[] }) {
         {fields.map((field) => (
           <li
             key={field.key}
-            className="rounded-md border border-violet-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-800"
+            className="rounded-md border border-brand-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600"
           >
             {field.label}
           </li>
@@ -144,10 +146,10 @@ function SyndicationTimeline({ followUp }: { followUp: boolean }) {
     >
       <ul className="space-y-2">
         <li>
-          <span className="font-medium text-slate-800">PIM</span> — usually updates in a few minutes
+          <span className="font-medium text-slate-700">PIM</span> — usually updates in a few minutes
         </li>
         <li>
-          <span className="font-medium text-slate-800">PDP</span> — verification can take several
+          <span className="font-medium text-slate-700">PDP</span> — verification can take several
           hours
         </li>
       </ul>
@@ -167,13 +169,13 @@ export function PublishConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
-        <DialogHeader className="gap-1 border-b border-slate-200 p-5">
+      <DialogContent className="gap-0 overflow-hidden p-0 text-slate-900 ring-slate-200 sm:max-w-md">
+        <DialogHeader className="gap-1 border-b border-slate-200 p-4">
           <DialogTitle className="text-lg font-semibold leading-tight text-slate-900">
             Publish to PIM &amp; PDP
           </DialogTitle>
           <p className="text-sm leading-relaxed text-slate-500">
-            Confirm before syndicating accepted content to Salsify and the retailer listing.
+            Confirm before syndicating
           </p>
           <DialogDescription className="sr-only">
             Publishing {count} {count === 1 ? "field" : "fields"}: {fieldNames}.
@@ -183,7 +185,7 @@ export function PublishConfirmDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-3 p-5">
+        <div className="flex flex-col gap-3 p-4">
           <PublishingFieldsCard fields={summary.publishable} />
           {summary.pendingReviewCount > 0 ? (
             <PendingReviewNotice count={summary.pendingReviewCount} />
@@ -191,11 +193,11 @@ export function PublishConfirmDialog({
           <SyndicationTimeline followUp={hasActiveBatch} />
         </div>
 
-        <DialogFooter className="mx-0 mb-0 flex flex-col-reverse gap-2 rounded-b-xl border-t border-slate-200 bg-white p-5 sm:flex-row sm:justify-end">
+        <DialogFooter className="mx-0 mb-0 flex flex-col-reverse gap-2 rounded-b-xl border-t border-slate-200 bg-white p-4 sm:flex-row sm:justify-end">
           <Button
             type="button"
             variant="outline"
-            className="w-full sm:w-auto"
+            className="w-full border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 sm:w-auto"
             onClick={() => onOpenChange(false)}
           >
             Cancel

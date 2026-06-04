@@ -16,7 +16,7 @@ export function ReasoningPanel({ reasoning }: { reasoning: ReasoningCategory[] }
   const active = reasoning.find((r) => r.key === activeKey) ?? reasoning[0]
   if (!active) return null
   return (
-    <div className="rounded-lg bg-violet-100 p-3">
+    <div className="rounded-lg bg-brand-25 p-3">
       <div className="mb-3 flex flex-wrap gap-1.5">
         {reasoning.map((cat) => (
           <button
@@ -27,7 +27,7 @@ export function ReasoningPanel({ reasoning }: { reasoning: ReasoningCategory[] }
               "rounded-md border px-2 py-1 text-xs font-medium",
               cat.key === activeKey
                 ? "border-primary bg-white text-primary"
-                : "border-violet-200 bg-violet-50 text-primary hover:bg-violet-100",
+                : "border-brand-200 bg-brand-50 text-primary hover:bg-brand-100",
             )}
           >
             {cat.label}

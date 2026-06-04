@@ -26,27 +26,28 @@ export function UnpublishedChangesGuardDialog({
 }: UnpublishedChangesGuardDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md gap-4">
-        <DialogHeader className="gap-3">
-          <div className="flex items-start gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-warning-100">
-              <AlertTriangle className="size-5 text-warning-600" aria-hidden />
-            </span>
-            <div className="space-y-1.5">
-              <DialogTitle>Heads up!</DialogTitle>
-              <DialogDescription className="text-sm leading-relaxed text-slate-600">
-                You have some accepted changes that are not published yet. If you move away,
-                they will be lost.
-              </DialogDescription>
-            </div>
+      <DialogContent className="max-w-md gap-4 text-slate-900 ring-slate-200">
+        <DialogHeader className="gap-2">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="size-5 shrink-0 text-warning-600" aria-hidden />
+            <DialogTitle className="text-slate-900">Heads up!</DialogTitle>
           </div>
+          <DialogDescription className="text-sm leading-relaxed text-slate-600">
+            You have some accepted changes that are not published yet. If you move away, they
+            will be lost.
+          </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-2">
-          <Button type="button" variant="outline" onClick={onLeave}>
+        <DialogFooter className="gap-2 bg-transparent sm:gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+            onClick={onLeave}
+          >
             Leave anyway
           </Button>
           <Button type="button" onClick={onStay}>
-            Stay on this product
+            Stay on this SKU
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -82,7 +82,7 @@ export function SkuSidebar({ skus, selectedSkuId, onSelect, totalCount, collapse
                   className={cn(
                     "flex w-full flex-col gap-3 rounded-xl border p-3.5 text-left transition-colors",
                     isActive
-                      ? "border-primary bg-violet-50"
+                      ? "border-primary bg-brand-25"
                       : "border-slate-200 bg-white hover:bg-slate-50",
                   )}
                 >

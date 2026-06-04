@@ -62,7 +62,7 @@ export function ProductHeader({
               disabled={!canPublish}
               className={cn(
                 "inline-flex h-8 items-center gap-2 rounded-md px-4 text-xs font-medium text-white",
-                canPublish ? "bg-primary hover:bg-violet-700" : "cursor-not-allowed bg-slate-300",
+                canPublish ? "bg-primary hover:bg-brand-700" : "cursor-not-allowed bg-slate-300",
               )}
             >
               Publish to PIM &amp; PDP

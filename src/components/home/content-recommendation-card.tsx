@@ -14,7 +14,7 @@ import {
   QueuedChangesTimerIcon,
   SourceChannelLabel,
 } from "./bullet-source-cell"
-import { fieldLabelContentStack } from "./field-layout"
+import { fieldLabelContentStack, FIELD_RECO_HEADER_GAP } from "./field-layout"
 import { EditableRecommendationField } from "./editable-recommendation-field"
 import { FieldSyncStatusRow } from "./recommendation-sync-ui"
 import { ReasoningPanel, ToggleSwitch } from "./reasoning-ui"
@@ -115,7 +115,7 @@ function CompareTabs({
           onClick={() => onChange(opt.key)}
           className={cn(
             "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-            value === opt.key ? "bg-violet-100 text-primary" : "text-slate-600 hover:bg-slate-50",
+            value === opt.key ? "bg-brand-100 text-primary" : "text-slate-600 hover:bg-slate-50",
           )}
         >
           {opt.label}
@@ -238,7 +238,7 @@ interface ContentRecommendationBodyProps {
   compact?: boolean
   /** Icon-only bordered actions (e.g. per-bullet Accept / Reject). */
   iconOnlyActions?: boolean
-  /** Renders above the field in one group (gap-2 / 8px). */
+  /** Renders above the field in one group (gap-1 / 4px). */
   header?: ReactNode
 }
 
@@ -288,7 +288,9 @@ export function ContentRecommendationBody({
       ? "muted"
       : fp === "synced"
         ? "success"
-        : "highlight"
+        : status === "accepted"
+          ? "accepted"
+          : "highlight"
 
   function handleResetRecommendation() {
     onRecommendedTextChange(originalText)
@@ -331,7 +333,7 @@ export function ContentRecommendationBody({
       originalValue={originalText}
       onChange={onRecommendedTextChange}
       tone={fieldTone}
-      showDiff={!isPublishedLocked && status !== "rejected"}
+      showDiff={status === "pending"}
       readOnly={status === "rejected" || isPublishedLocked}
       editAriaLabel={editAriaLabel}
       editRows={editRows}
@@ -343,7 +345,7 @@ export function ContentRecommendationBody({
     <div className="w-full min-w-0">
       <div className={fieldLabelContentStack("w-full")}>
         {header ? (
-          <div className={fieldLabelContentStack("w-full")}>
+          <div className={cn("flex w-full flex-col", FIELD_RECO_HEADER_GAP)}>
             {header}
             {recommendationField}
           </div>

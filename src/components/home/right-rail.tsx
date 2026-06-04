@@ -17,7 +17,7 @@ export function RightRail() {
         type="button"
         aria-label="Impact Dashboard"
         title="Impact Dashboard"
-        className="grid size-9 place-items-center rounded-md border border-primary bg-violet-50 text-primary hover:bg-violet-100"
+        className="grid size-9 place-items-center rounded-md border border-primary bg-brand-50 text-primary hover:bg-brand-100"
       >
         <LayoutDashboard className="size-4" />
       </button>

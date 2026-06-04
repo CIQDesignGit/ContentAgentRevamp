@@ -83,7 +83,7 @@ export function ActionsLogTable({
     <div className="relative min-h-0 flex-1 overflow-hidden bg-white">
       <div className="h-full overflow-auto">
       <table className="w-full min-w-[1000px] border-collapse text-left text-sm">
-        <thead className="sticky top-0 z-10 bg-violet-50">
+        <thead className="sticky top-0 z-10 bg-brand-50">
           <tr>
             {COLUMNS.map((col) => (
               <th

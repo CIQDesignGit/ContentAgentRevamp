@@ -80,8 +80,11 @@
   --shadow-inner:    inset 0 2px 4px 0 rgb(0 0 0 / 0.06);
 
   /* ── Brand — Purple (Figma Purple/500 = #875BF7) ── */
-  --color-brand-50:  #faf5ff;
-  --color-brand-100: #f3e8ff;
+  /* Figma Purple/25 — lightest tint (inner accepted field, reasoning panel). */
+  --color-brand-25:  #faf5ff;
+  /* Figma Purple/50 — stronger tint (outer accepted field frame, selected SKU). */
+  --color-brand-50:  #f3e8ff;
+  --color-brand-100: #ede9fe;
   --color-brand-200: #ddd6fe;  /* Figma Purple/200 */
   --color-brand-300: #c4b5fd;
   --color-brand-400: #a78bfa;
@@ -283,9 +286,9 @@
 
 /* Drag-and-drop bullet states */
 .bullet-drag-over {
-  outline: 2px dashed #875bf7;
+  outline: 2px dashed var(--color-brand-500);
   outline-offset: -2px;
-  background: #ede9fe;
+  background: var(--color-brand-100);
   border-radius: 8px;
 }
 .dragging { opacity: 0.4; }
