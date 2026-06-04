@@ -67,14 +67,11 @@ export function getPublishSummary(content: SkuContent): PublishSummary {
     (b) => b.pim === "pending" || b.retailer === "pending" || b.pdp === "pending",
   )
 
-  const queuedFollowUpCount =
-    (content.titleHasUnpublishedEdits && content.titleSyncFootprint === "syncing" ? 1 : 0) +
-    (content.descriptionHasUnpublishedEdits && content.descriptionSyncFootprint === "syncing"
-      ? 1
-      : 0) +
-    content.bulletRecommendations.filter(
-      (r) => r.hasUnpublishedEdits && resolveBulletSyncFootprint(r) === "syncing",
-    ).length
+  const deferredBatchCount = (content.publishBatches ?? []).filter(
+    (b) => b.queuedFollowUp && b.pim === "idle",
+  ).length
+
+  const queuedFollowUpCount = deferredBatchCount
 
   return {
     publishable,
@@ -85,5 +82,5 @@ export function getPublishSummary(content: SkuContent): PublishSummary {
 }
 
 export function canPublish(content: SkuContent): boolean {
-  return getPublishSummary(content).publishable.length > 0 && !content.isPublishing
+  return getPublishSummary(content).publishable.length > 0
 }

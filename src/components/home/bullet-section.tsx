@@ -4,8 +4,7 @@ import { useMemo } from "react"
 import { Columns2, ListChecks } from "lucide-react"
 import { buildBulletSlots } from "@/lib/build-bullet-slots"
 import { titleMatchPercent } from "@/lib/title-match"
-import { BulletBulkActions, bulletBulkPendingLabel } from "./bullet-bulk-actions"
-import { BulletCompareColumnHeaders } from "./bullet-source-cell"
+import { BulletBulkActions } from "./bullet-bulk-actions"
 import { BulletSlotRow } from "./bullet-slot-card"
 import type { BulletRecommendation, PublishBatch } from "./types"
 
@@ -54,8 +53,6 @@ export function BulletPointsSection({
     [pimBullets, pdpBullets, recommendations],
   )
 
-  const pendingLabel = bulletBulkPendingLabel(recommendations)
-
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
       <header className="flex flex-wrap items-center justify-between gap-3 px-1 py-2">
@@ -69,9 +66,6 @@ export function BulletPointsSection({
           <span className="text-xs text-slate-400">
             {pimBullets.length} PIM · {pdpBullets.length} PDP
           </span>
-          {pendingLabel ? (
-            <span className="text-xs text-slate-500">{pendingLabel}</span>
-          ) : null}
         </div>
 
         <BulletBulkActions
@@ -84,11 +78,7 @@ export function BulletPointsSection({
         />
       </header>
 
-      <div className="-mx-3 mt-3">
-        <div className="px-3 pb-2">
-          <BulletCompareColumnHeaders />
-        </div>
-        <div className="divide-y divide-slate-200">
+      <div className="-mx-3 mt-3 divide-y divide-slate-200">
         {slots.map((slot) => (
           <BulletSlotRow
             key={slot.id}
@@ -104,7 +94,6 @@ export function BulletPointsSection({
             onPushUpdate={onPushUpdate}
           />
         ))}
-        </div>
       </div>
     </section>
   )

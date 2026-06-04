@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
 import { Check, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { logoBadgeClass, RETAILER_LOGO_SRC, SALSIFY_LOGO_SRC } from "./source-logos"
+import { RETAILER_LOGO_SRC, SALSIFY_LOGO_SRC } from "./source-logos"
+import { SourceLogoBadge } from "./bullet-source-cell"
+import { fieldLabelContentStack } from "./field-layout"
 import { SourceCompareText } from "./source-compare-text"
 
 function SourceColumn({
@@ -39,18 +40,16 @@ function SourceColumn({
   }
 
   return (
-    <div className="flex h-full min-w-0 flex-1 flex-col gap-2">
+    <div className={fieldLabelContentStack("h-full min-w-0 flex-1")}>
       <div className="flex items-center gap-2">
-        <span className={logoBadgeClass(logoSrc)}>
-          <Image src={logoSrc} alt={logoAlt} width={20} height={20} className="size-5 object-contain" />
-        </span>
-        <span className="text-xs text-slate-500">{sublabel}</span>
+        <SourceLogoBadge src={logoSrc} alt={logoAlt} />
+        <span className="text-xs font-medium text-slate-700">{sublabel}</span>
       </div>
 
       <div
         className={cn(
           "group relative flex flex-1 flex-col rounded-lg border border-slate-200 bg-slate-50",
-          cellClassName ?? "min-h-[4.5rem]",
+          cellClassName ?? "min-h-18",
         )}
       >
         <SourceCompareText value={value} compareValue={compareValue} side={side} />
@@ -87,7 +86,7 @@ export function SourceCompareGrid({
   cellClassName,
 }: SourceCompareGridProps) {
   return (
-    <div className="grid grid-cols-2 items-stretch gap-3">
+    <div className="grid grid-cols-2 items-stretch gap-x-3">
       <SourceColumn
         logoSrc={SALSIFY_LOGO_SRC}
         logoAlt="Salsify"

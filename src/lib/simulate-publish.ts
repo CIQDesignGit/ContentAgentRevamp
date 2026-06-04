@@ -1,15 +1,24 @@
 import type { PublishBatch, SkuContent } from "@/components/home/types"
-function applySyncedFieldToPdp(prev: SkuContent, fieldKey: string): SkuContent {
+
+function applySyncedFieldToPdp(
+  prev: SkuContent,
+  fieldKey: string,
+  snapshotText?: string,
+): SkuContent {
   if (fieldKey === "title") {
+    const title = snapshotText ?? prev.title
     return {
       ...prev,
-      pdpContent: { ...prev.pdpContent, title: prev.title },
+      title,
+      pdpContent: { ...prev.pdpContent, title },
     }
   }
   if (fieldKey === "description") {
+    const description = snapshotText ?? prev.description
     return {
       ...prev,
-      pdpContent: { ...prev.pdpContent, description: prev.description },
+      description,
+      pdpContent: { ...prev.pdpContent, description },
     }
   }
   if (!fieldKey.startsWith("bullet:")) return prev
@@ -18,37 +27,143 @@ function applySyncedFieldToPdp(prev: SkuContent, fieldKey: string): SkuContent {
   const reco = prev.bulletRecommendations.find((r) => r.id === id)
   if (!reco) return prev
 
+  const text = snapshotText ?? reco.recommendedText
   let pdpBullets = prev.pdpContent.bullets
   if (reco.kind === "add") {
-    pdpBullets = [...pdpBullets, reco.recommendedText]
+    pdpBullets = [...pdpBullets, text]
   } else if (reco.pimIndex !== undefined && reco.pimIndex < pdpBullets.length) {
     pdpBullets = pdpBullets.slice()
-    pdpBullets[reco.pimIndex] = reco.recommendedText
+    pdpBullets[reco.pimIndex] = text
   }
 
   return { ...prev, pdpContent: { ...prev.pdpContent, bullets: pdpBullets } }
 }
 
+function captureFieldSnapshots(prev: SkuContent, fieldKeys: string[]): Record<string, string> {
+  const snapshots: Record<string, string> = {}
+  for (const key of fieldKeys) {
+    if (key === "title") snapshots.title = prev.title
+    if (key === "description") snapshots.description = prev.description
+    if (key.startsWith("bullet:")) {
+      const id = key.slice("bullet:".length)
+      const reco = prev.bulletRecommendations.find((r) => r.id === id)
+      if (reco) snapshots[key] = reco.recommendedText
+    }
+  }
+  return snapshots
+}
+
+function hasPendingTitleBatches(batches: PublishBatch[], excludeId?: string): boolean {
+  return batches.some(
+    (b) => b.fieldKeys.includes("title") && !b.completedAt && b.id !== excludeId,
+  )
+}
+
 export function createPublishBatch(fieldKeys: string[], queuedFollowUp = false): PublishBatch {
   return {
-    id: `batch-${Date.now()}`,
+    id: `batch-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     startedAt: new Date().toISOString(),
     fieldKeys,
-    pim: "pending",
+    fieldSnapshots: {},
+    pim: queuedFollowUp ? "idle" : "pending",
     retailer: "idle",
     pdp: "not_run",
     queuedFollowUp,
   }
 }
 
-/** Marks published fields as syncing and appends a new batch. */
-export function applyPublishStart(prev: SkuContent, fieldKeys: string[], queuedFollowUp: boolean): SkuContent {
-  const batch = createPublishBatch(fieldKeys, queuedFollowUp)
+/** Next follow-up batch waiting to start after the current one finishes. */
+export function getNextDeferredBatch(
+  content: SkuContent,
+  afterBatchId: string,
+): PublishBatch | undefined {
+  const batches = content.publishBatches ?? []
+  const idx = batches.findIndex((b) => b.id === afterBatchId)
+  if (idx < 0) return undefined
+  return batches.slice(idx + 1).find((b) => b.queuedFollowUp && b.pim === "idle")
+}
+
+/** Starts a deferred batch that was queued behind an in-flight publish. */
+export function activateDeferredBatch(prev: SkuContent, batchId: string): SkuContent {
+  const batches = prev.publishBatches ?? []
+  const idx = batches.findIndex((b) => b.id === batchId)
+  if (idx < 0) return prev
+
+  const batch = { ...batches[idx], pim: "pending" as const }
+  const fieldKeys = batch.fieldKeys
+  const nextBatches = [...batches]
+  nextBatches[idx] = batch
+
   let next: SkuContent = {
     ...prev,
+    publishBatches: nextBatches,
     isPublishing: true,
+  }
+
+  if (fieldKeys.includes("title")) {
+    next = { ...next, titleSyncFootprint: "syncing", titleHasUnpublishedEdits: false }
+  }
+  if (fieldKeys.includes("description")) {
+    next = {
+      ...next,
+      descriptionSyncFootprint: "syncing",
+      descriptionHasUnpublishedEdits: false,
+    }
+  }
+  next = {
+    ...next,
+    bulletRecommendations: next.bulletRecommendations.map((r) => {
+      const key = `bullet:${r.id}`
+      if (!fieldKeys.includes(key)) return r
+      return {
+        ...r,
+        syncFootprint: "syncing" as const,
+        hasUnpublishedEdits: false,
+        footprint: undefined,
+      }
+    }),
+  }
+
+  return next
+}
+
+/** Marks published fields as syncing and appends a new batch. */
+export function applyPublishStart(
+  prev: SkuContent,
+  fieldKeys: string[],
+  queuedFollowUp: boolean,
+): SkuContent {
+  const batch = createPublishBatch(fieldKeys, queuedFollowUp)
+  batch.fieldSnapshots = captureFieldSnapshots(prev, fieldKeys)
+
+  let next: SkuContent = {
+    ...prev,
     publishBatches: [...(prev.publishBatches ?? []), batch],
   }
+
+  if (queuedFollowUp) {
+    if (fieldKeys.includes("title")) {
+      next = { ...next, titleSyncFootprint: "queued", titleHasUnpublishedEdits: false }
+    }
+    if (fieldKeys.includes("description")) {
+      next = {
+        ...next,
+        descriptionSyncFootprint: "queued",
+        descriptionHasUnpublishedEdits: false,
+      }
+    }
+    next = {
+      ...next,
+      bulletRecommendations: next.bulletRecommendations.map((r) => {
+        const key = `bullet:${r.id}`
+        if (!fieldKeys.includes(key)) return r
+        return { ...r, syncFootprint: "queued" as const, hasUnpublishedEdits: false }
+      }),
+    }
+    return next
+  }
+
+  next = { ...next, isPublishing: true }
 
   if (fieldKeys.includes("title")) {
     next = {
@@ -115,6 +230,7 @@ export function applyPublishPhase(
 
   const fieldKeys = batch.fieldKeys
   const markSynced = phase === "pdp_live" || phase === "done"
+  const moreTitlePending = hasPendingTitleBatches(nextBatches, batchId)
 
   let next: SkuContent = {
     ...prev,
@@ -124,35 +240,62 @@ export function applyPublishPhase(
 
   if (markSynced) {
     if (fieldKeys.includes("title")) {
-      next = { ...next, titleSyncFootprint: "synced" }
+      const snap = batch.fieldSnapshots?.title
+      next = {
+        ...next,
+        titleSyncFootprint: moreTitlePending ? "queued" : "synced",
+      }
+      next = applySyncedFieldToPdp(next, "title", snap)
     }
     if (fieldKeys.includes("description")) {
-      next = { ...next, descriptionSyncFootprint: "synced" }
+      const snap = batch.fieldSnapshots?.description
+      const moreDesc = nextBatches.some(
+        (b) => b.fieldKeys.includes("description") && !b.completedAt && b.id !== batchId,
+      )
+      next = {
+        ...next,
+        descriptionSyncFootprint: moreDesc ? "queued" : "synced",
+      }
+      next = applySyncedFieldToPdp(next, "description", snap)
     }
     next = {
       ...next,
       bulletRecommendations: next.bulletRecommendations.map((r) => {
         const key = `bullet:${r.id}`
         if (!fieldKeys.includes(key)) return r
-        return { ...r, syncFootprint: "synced" as const, footprint: "recently-updated" }
+        const moreBullet = nextBatches.some(
+          (b) => b.fieldKeys.includes(key) && !b.completedAt && b.id !== batchId,
+        )
+        return {
+          ...r,
+          syncFootprint: moreBullet ? "queued" : ("synced" as const),
+          footprint: moreBullet ? undefined : "recently-updated",
+        }
       }),
     }
     for (const fieldKey of fieldKeys) {
-      next = applySyncedFieldToPdp(next, fieldKey)
+      if (fieldKey === "title" || fieldKey === "description") continue
+      next = applySyncedFieldToPdp(next, fieldKey, batch.fieldSnapshots?.[fieldKey])
     }
   }
 
   if (phase === "done") {
-    next.isPublishing = false
+    const stillActive = nextBatches.some(
+      (b) => b.pim === "pending" || b.retailer === "pending" || b.pdp === "pending",
+    )
+    next.isPublishing = stillActive
   }
 
   return next
 }
 
-/** Prototype pacing — PDP verifying waits 5s after retailer step (production: often hours). */
+/**
+ * Prototype pacing — absolute ms from publish start (production: often hours).
+ * ~12s between each step so PIM → retailer → PDP chips are easy to read.
+ */
 export const PUBLISH_PHASE_DELAYS_MS = {
-  pim_done: 2500,
-  retailer_done: 7000,
-  pdp_live: 12000,
-  done: 12500,
+  pim_done: 12_000,
+  retailer_done: 24_000,
+  pdp_live: 36_000,
+  done: 48_000,
 } as const

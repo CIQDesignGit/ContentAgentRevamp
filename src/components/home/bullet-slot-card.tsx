@@ -89,19 +89,17 @@ export function BulletSlotRow({
           compareTarget={gridCompareTarget}
           showPim={showPimSource}
           showPdp={showPdpSource}
-          showColumnLabels={false}
-          recommendationHeader={
-            showAiBlock ? (
-              <BulletRecommendationHeader
-                item={recommendation}
-                compareTarget={compareTarget}
-                onCompareTargetChange={setCompareTarget}
-              />
-            ) : undefined
-          }
+          showColumnLabels
           recommendationBody={
             showAiBlock ? (
               <BulletRecommendationBody
+                header={
+                  <BulletRecommendationHeader
+                    item={recommendation}
+                    compareTarget={compareTarget}
+                    onCompareTargetChange={setCompareTarget}
+                  />
+                }
                 item={recommendation}
                 activeBatch={fieldPublishBatch}
                 pimBaseline={pimBaseline}

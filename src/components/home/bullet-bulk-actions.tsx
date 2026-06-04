@@ -3,6 +3,15 @@
 import { Check, RotateCcw, X } from "lucide-react"
 import type { BulletRecommendation } from "./types"
 
+function buildReviewedSummary(recommendations: BulletRecommendation[]): string | null {
+  const acceptedCount = recommendations.filter((r) => r.status === "accepted").length
+  const rejectedCount = recommendations.filter((r) => r.status === "rejected").length
+  const parts: string[] = []
+  if (acceptedCount > 0) parts.push(`${acceptedCount} accepted`)
+  if (rejectedCount > 0) parts.push(`${rejectedCount} rejected`)
+  return parts.length > 0 ? parts.join(", ") : null
+}
+
 interface BulletBulkActionsProps {
   recommendations: BulletRecommendation[]
   originals: Record<string, string>
@@ -22,6 +31,7 @@ export function BulletBulkActions({
   actionsOnly = false,
 }: BulletBulkActionsProps) {
   const pendingCount = recommendations.filter((r) => r.status === "pending").length
+  const reviewedSummary = buildReviewedSummary(recommendations)
   const isAnyModified = recommendations.some((r) => r.recommendedText !== originals[r.id])
 
   if (recommendations.length === 0) return null
@@ -52,30 +62,28 @@ export function BulletBulkActions({
         onClick={onAcceptAll}
         className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-40"
       >
-        <Check className="size-4 text-success-600" /> Accept all
+        <Check className="size-4 text-success-600" /> Accept all {pendingCount}
       </button>
     </div>
   )
 
-  if (actionsOnly) return buttons
+  const reviewedLabel = reviewedSummary ? (
+    <span className="text-xs text-slate-500">{reviewedSummary}</span>
+  ) : null
+
+  if (actionsOnly) {
+    return (
+      <div className="flex flex-col items-end gap-1">
+        {buttons}
+        {reviewedLabel}
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 px-3 py-2">
-      <span className="text-xs text-slate-500">
-        {pendingCount > 0
-          ? `${pendingCount} AI recommendation${pendingCount === 1 ? "" : "s"} pending`
-          : "All AI recommendations reviewed"}
-      </span>
+      {reviewedLabel}
       {buttons}
     </div>
   )
-}
-
-export function bulletBulkPendingLabel(recommendations: BulletRecommendation[]): string | null {
-  if (recommendations.length === 0) return null
-  const pendingCount = recommendations.filter((r) => r.status === "pending").length
-  if (pendingCount > 0) {
-    return `${pendingCount} AI recommendation${pendingCount === 1 ? "" : "s"} pending`
-  }
-  return "All AI recommendations reviewed"
 }

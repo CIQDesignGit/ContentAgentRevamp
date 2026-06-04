@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
+import { fieldLabelContentStack, fieldSectionStack } from "./field-layout"
 import { BulletSourceCell, SourceCellLabel } from "./bullet-source-cell"
 import { RETAILER_LOGO_SRC, SALSIFY_LOGO_SRC } from "./source-logos"
 
@@ -27,6 +28,28 @@ function sourceColumnClass(showPim: boolean, showPdp: boolean) {
   return showPim && showPdp ? "grid-cols-2" : "grid-cols-1"
 }
 
+/** Label + source text box grouped with gap-2 (8px). */
+function SourceCompareColumn({
+  showLabel,
+  label,
+  children,
+}: {
+  showLabel: boolean
+  label: ReactNode
+  children: ReactNode
+}) {
+  if (!showLabel) {
+    return <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
+  }
+
+  return (
+    <div className={fieldLabelContentStack("min-h-0 min-w-0")}>
+      {label}
+      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+    </div>
+  )
+}
+
 /** PIM and retailer side by side; AI recommendation spans full width below. */
 export function VerticalSourceCompareGrid({
   pimValue,
@@ -41,53 +64,62 @@ export function VerticalSourceCompareGrid({
   const columnClass = sourceColumnClass(showPim, showPdp)
   const hasRecommendation = Boolean(recommendationHeader || recommendationBody)
 
-  return (
-    <div className="flex w-full flex-col gap-2">
-      {showColumnLabels ? (
-        <div className={cn("grid items-center gap-x-3 gap-y-2", columnClass)}>
-          {showPim ? (
-            <SourceCellLabel logoSrc={SALSIFY_LOGO_SRC} logoAlt="Salsify" sublabel="Salsify" />
-          ) : null}
-          {showPdp ? (
-            <SourceCellLabel logoSrc={RETAILER_LOGO_SRC} logoAlt="Amazon" sublabel="Retailer" />
-          ) : null}
-        </div>
-      ) : null}
+  const recommendationGrouped =
+    recommendationHeader && recommendationBody ? (
+      <div className={fieldLabelContentStack("w-full min-w-0")}>
+        {recommendationHeader}
+        {recommendationBody}
+      </div>
+    ) : (
+      <>
+        {recommendationHeader ? (
+          <div className="flex w-full min-w-0">{recommendationHeader}</div>
+        ) : null}
+        {recommendationBody ? <div className="w-full min-w-0">{recommendationBody}</div> : null}
+      </>
+    )
 
-      <div className={cn("grid items-stretch gap-x-3 gap-y-2", columnClass)}>
+  return (
+    <div className={fieldSectionStack("w-full")}>
+      <div className={cn("grid items-stretch gap-x-3", columnClass)}>
         {showPim ? (
-          <BulletSourceCell
-            logoSrc={SALSIFY_LOGO_SRC}
-            logoAlt="Salsify"
-            sublabel="Salsify"
-            value={pimValue}
-            compareValue={pdpValue}
-            side="pim"
-            emptyLabel={pimEmptyLabel}
-            showLabel={false}
-          />
+          <SourceCompareColumn
+            showLabel={showColumnLabels}
+            label={<SourceCellLabel logoSrc={SALSIFY_LOGO_SRC} logoAlt="Salsify" sublabel="Salsify" />}
+          >
+            <BulletSourceCell
+              logoSrc={SALSIFY_LOGO_SRC}
+              logoAlt="Salsify"
+              sublabel="Salsify"
+              value={pimValue}
+              compareValue={pdpValue}
+              side="pim"
+              emptyLabel={pimEmptyLabel}
+              showLabel={false}
+            />
+          </SourceCompareColumn>
         ) : null}
         {showPdp ? (
-          <BulletSourceCell
-            logoSrc={RETAILER_LOGO_SRC}
-            logoAlt="Amazon"
-            sublabel="Retailer"
-            value={pdpValue}
-            compareValue={pimValue}
-            side="pdp"
-            showLabel={false}
-          />
+          <SourceCompareColumn
+            showLabel={showColumnLabels}
+            label={
+              <SourceCellLabel logoSrc={RETAILER_LOGO_SRC} logoAlt="Amazon" sublabel="Retailer" />
+            }
+          >
+            <BulletSourceCell
+              logoSrc={RETAILER_LOGO_SRC}
+              logoAlt="Amazon"
+              sublabel="Retailer"
+              value={pdpValue}
+              compareValue={pimValue}
+              side="pdp"
+              showLabel={false}
+            />
+          </SourceCompareColumn>
         ) : null}
       </div>
 
-      {hasRecommendation ? (
-        <div className="flex flex-col gap-2">
-          {recommendationHeader ? (
-            <div className="flex w-full items-end">{recommendationHeader}</div>
-          ) : null}
-          {recommendationBody ? <div className="w-full min-w-0">{recommendationBody}</div> : null}
-        </div>
-      ) : null}
+      {hasRecommendation ? recommendationGrouped : null}
     </div>
   )
 }

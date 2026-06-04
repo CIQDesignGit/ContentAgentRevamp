@@ -1,11 +1,20 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 import { Check, ChevronDown, ChevronRight, RotateCcw, Undo2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { buildTitleDiff } from "@/lib/build-title-diff"
-import { isFieldInSyndication, resolveFieldSyncFootprint } from "@/lib/sync-footprint"
-import { AiRecommendationSparklesIcon, SourceChannelLabel } from "./bullet-source-cell"
+import {
+  isFieldInSyndication,
+  isFieldPublishingLocked,
+  resolveFieldSyncFootprint,
+} from "@/lib/sync-footprint"
+import {
+  AiRecommendationSparklesIcon,
+  QueuedChangesTimerIcon,
+  SourceChannelLabel,
+} from "./bullet-source-cell"
+import { fieldLabelContentStack } from "./field-layout"
 import { EditableRecommendationField } from "./editable-recommendation-field"
 import { FieldSyncStatusRow } from "./recommendation-sync-ui"
 import { ReasoningPanel, ToggleSwitch } from "./reasoning-ui"
@@ -16,6 +25,8 @@ export type RecommendationLabels = {
   pending: string
   accepted: string
   rejected: string
+  /** Shown after publish when the field is in syndication. */
+  queued?: string
 }
 
 function CompareTabs({
@@ -59,41 +70,73 @@ function CompareTabs({
 export function ContentRecommendationHeader({
   labels,
   status,
+  syncFootprint,
   compareTarget,
   onCompareTargetChange,
   isOpen,
   onToggleOpen,
+  collapsible = true,
+  isAiRecommendation = true,
 }: {
   labels: RecommendationLabels
   status: TitleStatus
+  syncFootprint?: SyncFootprint
   compareTarget: FieldCompareTarget
   onCompareTargetChange: (target: FieldCompareTarget) => void
   isOpen: boolean
   onToggleOpen: () => void
+  /** When false, label is static (no expand/collapse chevron). */
+  collapsible?: boolean
+  /** Sparkles icon is shown only for AI-generated recommendations. */
+  isAiRecommendation?: boolean
 }) {
+  const fp = resolveFieldSyncFootprint(syncFootprint)
+  const isPublishedLocked = status === "accepted" && isFieldPublishingLocked(fp)
+  const headerLabel = isPublishedLocked
+    ? (labels.queued ?? "Changes queued")
+    : status === "accepted"
+      ? labels.accepted
+      : status === "rejected"
+        ? labels.rejected
+        : labels.pending
+
+  const labelRow = (
+    <SourceChannelLabel
+      icon={
+        isPublishedLocked ? (
+          <QueuedChangesTimerIcon />
+        ) : isAiRecommendation ? (
+          <AiRecommendationSparklesIcon />
+        ) : null
+      }
+      label={headerLabel}
+    />
+  )
+
   return (
     <div className="flex w-full flex-wrap items-end justify-between gap-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={onToggleOpen}
-            className="flex min-w-0 items-center gap-2 text-left"
-            aria-expanded={isOpen}
-          >
-            <SourceChannelLabel
-              icon={<AiRecommendationSparklesIcon />}
-              label={labels.pending}
-            />
-            {isOpen ? (
-              <ChevronDown
-                className={cn("size-4 shrink-0", status === "pending" ? "text-slate-500" : "text-slate-400")}
-              />
-            ) : (
-              <ChevronRight
-                className={cn("size-4 shrink-0", status === "pending" ? "text-slate-500" : "text-slate-400")}
-              />
-            )}
-          </button>
+          {collapsible ? (
+            <button
+              type="button"
+              onClick={onToggleOpen}
+              className="flex min-w-0 items-center gap-2 text-left"
+              aria-expanded={isOpen}
+            >
+              {labelRow}
+              {isOpen ? (
+                <ChevronDown
+                  className={cn("size-4 shrink-0", status === "pending" ? "text-slate-500" : "text-slate-400")}
+                />
+              ) : (
+                <ChevronRight
+                  className={cn("size-4 shrink-0", status === "pending" ? "text-slate-500" : "text-slate-400")}
+                />
+              )}
+            </button>
+          ) : (
+            labelRow
+          )}
         </div>
 
       {status === "pending" && isOpen ? (
@@ -121,9 +164,15 @@ interface ContentRecommendationBodyProps {
   onUndoAccept: () => void
   onUndoReject?: () => void
   onPushUpdate?: () => void
+  addNewLabel?: string
+  onAddNew?: () => void
+  hideReasoning?: boolean
+  rejectLabel?: string
   editAriaLabel?: string
   editRows?: number
   compact?: boolean
+  /** Renders above the field in one group (gap-2 / 8px). */
+  header?: ReactNode
 }
 
 /** Recommendation field and actions — aligned beside the active source text row. */
@@ -145,14 +194,20 @@ export function ContentRecommendationBody({
   onUndoAccept,
   onUndoReject,
   onPushUpdate,
+  addNewLabel,
+  onAddNew,
+  hideReasoning = false,
+  rejectLabel = "Reject",
   editAriaLabel = "Edit AI recommendation",
   editRows = 3,
   compact = false,
+  header,
 }: ContentRecommendationBodyProps) {
   const [showReasoning, setShowReasoning] = useState(false)
   const isModified = recommendation.recommendedText !== originalText
   const fp = resolveFieldSyncFootprint(syncFootprint)
   const isSyncing = fp === "syncing"
+  const isPublishedLocked = status === "accepted" && isFieldPublishingLocked(fp)
   const showEditor = status === "pending" || status === "accepted" || status === "rejected"
   const baseline = compareTarget === "pim" ? pimBaseline : pdpBaseline
   const compareDiff = useMemo(
@@ -161,7 +216,11 @@ export function ContentRecommendationBody({
   )
 
   const fieldTone =
-    status === "rejected" ? "muted" : fp === "synced" ? "success" : "highlight"
+    status === "rejected" || isPublishedLocked
+      ? "muted"
+      : fp === "synced"
+        ? "success"
+        : "highlight"
 
   function handleResetRecommendation() {
     onRecommendedTextChange(originalText)
@@ -185,50 +244,111 @@ export function ContentRecommendationBody({
   }
 
   const showPushUpdate =
-    status === "accepted" && hasUnpublishedEdits && (isSyncing || fp === "queued") && onPushUpdate
-  const showAcceptedReviewActions = status === "accepted" && !isFieldInSyndication(fp)
+    !isPublishedLocked &&
+    status === "accepted" &&
+    hasUnpublishedEdits &&
+    (isSyncing || fp === "queued") &&
+    onPushUpdate
   const inSyndication = status === "accepted" && isFieldInSyndication(fp)
+  const showReacceptActions =
+    status === "accepted" && !inSyndication && Boolean(hasUnpublishedEdits)
+  const showAcceptedReviewActions =
+    status === "accepted" && !isFieldInSyndication(fp) && !showReacceptActions
+
+  const recommendationField = (
+    <EditableRecommendationField
+      value={recommendation.recommendedText}
+      diff={compareDiff}
+      originalValue={originalText}
+      onChange={onRecommendedTextChange}
+      tone={fieldTone}
+      showDiff={!isPublishedLocked && status !== "rejected"}
+      readOnly={status === "rejected" || isPublishedLocked}
+      editAriaLabel={editAriaLabel}
+      editRows={editRows}
+      compact={compact}
+    />
+  )
 
   return (
     <div className="w-full min-w-0">
-      <div className="w-full space-y-2">
-        <EditableRecommendationField
-          value={recommendation.recommendedText}
-          diff={compareDiff}
-          originalValue={originalText}
-          onChange={onRecommendedTextChange}
-          tone={fieldTone}
-          showDiff={status !== "rejected"}
-          readOnly={status === "rejected"}
-          editAriaLabel={editAriaLabel}
-          editRows={editRows}
-          compact={compact}
-        />
+      <div className={fieldLabelContentStack("w-full")}>
+        {header ? (
+          <div className={fieldLabelContentStack("w-full")}>
+            {header}
+            {recommendationField}
+          </div>
+        ) : (
+          recommendationField
+        )}
 
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-primary">Show Reasoning</span>
-              <ToggleSwitch
-                checked={showReasoning}
-                onChange={setShowReasoning}
-                ariaLabel="Toggle reasoning"
-              />
-            </div>
+            {isPublishedLocked ? (
+              addNewLabel && onAddNew ? (
+                <button
+                  type="button"
+                  onClick={onAddNew}
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  {addNewLabel}
+                </button>
+              ) : (
+                <span />
+              )
+            ) : hideReasoning ? (
+              <span />
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-primary">Show Reasoning</span>
+                <ToggleSwitch
+                  checked={showReasoning}
+                  onChange={setShowReasoning}
+                  ariaLabel="Toggle reasoning"
+                />
+              </div>
+            )}
             <div className="flex flex-col items-end gap-1">
               {status === "pending" ||
+              showReacceptActions ||
               showAcceptedReviewActions ||
               showPushUpdate ||
               (status === "rejected" && onUndoReject) ? (
                 <div className="flex items-center gap-2">
-                  {isModified && !inSyndication ? (
+                  {showReacceptActions ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={onReset}
+                        className="inline-flex h-8 items-center gap-1.5 px-1 text-xs font-medium text-slate-500 hover:text-slate-900"
+                      >
+                        <RotateCcw className="size-3.5" />
+                        Reset Recommendation
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onUndoAccept}
+                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
+                      >
+                        <Undo2 className="size-3.5" /> Undo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onAccept}
+                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
+                      >
+                        <Check className="size-4 text-success-600" /> Accept
+                      </button>
+                    </>
+                  ) : null}
+                  {!showReacceptActions && isModified && !isFieldPublishingLocked(fp) ? (
                     <button
                       type="button"
                       onClick={handleResetRecommendation}
                       className="inline-flex h-8 items-center gap-1.5 px-1 text-xs font-medium text-slate-500 hover:text-slate-900"
                     >
                       <RotateCcw className="size-3.5" />
-                      Reset recommendation
+                      Reset Recommendation
                     </button>
                   ) : null}
                   {status === "pending" ? (
@@ -238,7 +358,7 @@ export function ContentRecommendationBody({
                         onClick={onReject}
                         className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
                       >
-                        <X className="size-4 text-error-600" /> Reject
+                        <X className="size-4 text-error-600" /> {rejectLabel}
                       </button>
                       <button
                         type="button"
@@ -301,7 +421,9 @@ export function ContentRecommendationBody({
             </div>
           </div>
         </div>
-        {showReasoning && <ReasoningPanel reasoning={recommendation.reasoning} />}
+        {!isPublishedLocked && !hideReasoning && showReasoning ? (
+          <ReasoningPanel reasoning={recommendation.reasoning} />
+        ) : null}
       </div>
     </div>
   )

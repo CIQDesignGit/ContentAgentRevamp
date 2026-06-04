@@ -1,11 +1,12 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 import { Check, RotateCcw, Undo2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { buildTitleDiff } from "@/lib/build-title-diff"
 import { isFieldInSyndication, resolveBulletSyncFootprint } from "@/lib/sync-footprint"
 import { AiRecommendationSparklesIcon, SourceChannelLabel } from "./bullet-source-cell"
+import { fieldLabelContentStack } from "./field-layout"
 import { EditableRecommendationField } from "./editable-recommendation-field"
 import { FieldSyncStatusRow } from "./recommendation-sync-ui"
 import { ReasoningPanel, ToggleSwitch } from "./reasoning-ui"
@@ -87,6 +88,8 @@ interface BulletRecommendationBodyProps {
   onPushUpdate?: () => void
   activeBatch?: PublishBatch
   className?: string
+  /** Renders above the field with standard label-to-content spacing (gap-2). */
+  header?: ReactNode
 }
 
 /** Editable recommendation field and actions — aligned beside the active source row. */
@@ -105,6 +108,7 @@ export function BulletRecommendationBody({
   onPushUpdate,
   activeBatch,
   className,
+  header,
 }: BulletRecommendationBodyProps) {
   const [showReasoning, setShowReasoning] = useState(false)
   const isModified = item.recommendedText !== originalText
@@ -142,23 +146,39 @@ export function BulletRecommendationBody({
     item.hasUnpublishedEdits &&
     (isSyncing || fp === "queued") &&
     onPushUpdate
-  const showAcceptedReviewActions =
-    item.status === "accepted" && !isFieldInSyndication(fp) && onUndoAccept
   const inSyndication = item.status === "accepted" && isFieldInSyndication(fp)
+  const showReacceptActions =
+    item.status === "accepted" &&
+    !inSyndication &&
+    Boolean(item.hasUnpublishedEdits) &&
+    onUndoAccept
+  const showAcceptedReviewActions =
+    item.status === "accepted" && !isFieldInSyndication(fp) && onUndoAccept && !showReacceptActions
+
+  const recommendationField = (
+    <EditableRecommendationField
+      value={item.recommendedText}
+      diff={compareDiff}
+      originalValue={originalText}
+      onChange={onTextChange}
+      tone={fieldTone}
+      showDiff={item.status !== "rejected"}
+      readOnly={item.status === "rejected"}
+      compact
+    />
+  )
 
   return (
     <div className={cn("w-full min-w-0", className)}>
-      <div className="w-full space-y-2">
-        <EditableRecommendationField
-          value={item.recommendedText}
-          diff={compareDiff}
-          originalValue={originalText}
-          onChange={onTextChange}
-          tone={fieldTone}
-          showDiff={item.status !== "rejected"}
-          readOnly={item.status === "rejected"}
-          compact
-        />
+      <div className={fieldLabelContentStack("w-full")}>
+        {header ? (
+          <div className={fieldLabelContentStack("w-full")}>
+            {header}
+            {recommendationField}
+          </div>
+        ) : (
+          recommendationField
+        )}
 
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -171,18 +191,47 @@ export function BulletRecommendationBody({
           </div>
           <div className="flex flex-col items-end gap-1">
             {item.status === "pending" ||
+            showReacceptActions ||
             showAcceptedReviewActions ||
             showPushUpdate ||
             (item.status === "rejected" && onUndoReject) ? (
               <div className="flex items-center gap-2">
-                {isModified && !inSyndication ? (
+                {showReacceptActions ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={onReset}
+                      className="inline-flex h-8 items-center gap-1.5 px-1 text-xs font-medium text-slate-500 hover:text-slate-900"
+                    >
+                      <RotateCcw className="size-3.5" />
+                      Reset Recommendation
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onUndoAccept}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
+                    >
+                      <Undo2 className="size-3.5" /> Undo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onAccept}
+                      aria-label="Accept recommendation"
+                      title="Accept"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
+                    >
+                      <Check className="size-4 text-success-600" /> Accept
+                    </button>
+                  </>
+                ) : null}
+                {!showReacceptActions && isModified && !inSyndication ? (
                   <button
                     type="button"
                     onClick={onReset}
                     className="inline-flex h-8 items-center gap-1.5 px-1 text-xs font-medium text-slate-500 hover:text-slate-900"
                   >
                     <RotateCcw className="size-3.5" />
-                    Reset recommendation
+                    Reset Recommendation
                   </button>
                 ) : null}
                 {item.status === "pending" ? (

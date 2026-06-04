@@ -1,14 +1,16 @@
 export const SALSIFY_LOGO_SRC = "/logos/salsify.png"
 export const RETAILER_LOGO_SRC = "/logos/retailer-amazon.png"
 
-/** Circular logo chip used beside Salsify / retailer labels. */
+/** Square logo chip — rounded-xl (12px), 2px inset padding on each side. */
 export const SOURCE_LOGO_BADGE_CLASS =
-  "inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-slate-100 bg-white"
+  "inline-flex size-6 shrink-0 rounded-lg border border-1 border-slate-200 bg-white p-[2px]"
 
-/** Amazon logo chip — white background so the mark reads clearly on light UI. */
-export const RETAILER_LOGO_BADGE_CLASS =
-  "inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-slate-100 bg-white p-1"
+/** Inner frame for the logo; parent badge supplies padding. */
+export const SOURCE_LOGO_FRAME_CLASS = "relative block size-full overflow-hidden rounded-[10px]"
 
-export function logoBadgeClass(logoSrc: string): string {
-  return logoSrc === RETAILER_LOGO_SRC ? RETAILER_LOGO_BADGE_CLASS : SOURCE_LOGO_BADGE_CLASS
+/** Fit inside the padded frame without cropping. */
+export const SOURCE_LOGO_IMAGE_CLASS = "object-contain"
+
+export function logoBadgeClass(_logoSrc?: string): string {
+  return SOURCE_LOGO_BADGE_CLASS
 }

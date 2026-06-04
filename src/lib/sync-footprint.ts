@@ -22,3 +22,8 @@ export function isFieldSyncing(footprint: SyncFootprint): boolean {
 export function isFieldInSyndication(footprint: SyncFootprint): boolean {
   return footprint === "syncing" || footprint === "synced" || footprint === "queued"
 }
+
+/** In-flight publish — show Changes queued UI until PIM and PDP both reflect. */
+export function isFieldPublishingLocked(footprint: SyncFootprint): boolean {
+  return footprint === "syncing" || footprint === "queued"
+}

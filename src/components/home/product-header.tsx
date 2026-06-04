@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { BookmarkPlus, Clock, Loader2, Search, ShieldCheck, Sparkles } from "lucide-react"
+import { BookmarkPlus, Clock, Search, ShieldCheck, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MetricChip } from "./metric-chip"
 import type { PublishBatch } from "./types"
@@ -30,7 +30,7 @@ function syndicationStatusLine(
   publishableCount?: number,
   queuedFollowUpCount?: number,
 ): string {
-  if (state === "disabled") return "Accept or edit recommendations to publish"
+  if (state === "disabled") return ""
   if (state === "ready") {
     return `${publishableCount} ${publishableCount === 1 ? "change" : "changes"} ready to publish`
   }
@@ -41,6 +41,11 @@ function syndicationStatusLine(
     else if (activeBatch.pim === "accepted") parts.push("PIM updated")
     if (activeBatch.retailer === "pending") parts.push("submitted to retailer")
     if (activeBatch.pdp === "pending") parts.push("PDP verification pending")
+    if (publishableCount && publishableCount > 0) {
+      parts.push(
+        `${publishableCount} more ${publishableCount === 1 ? "change" : "changes"} ready to publish`,
+      )
+    }
     if (queuedFollowUpCount && queuedFollowUpCount > 0) {
       parts.push(`${queuedFollowUpCount} update${queuedFollowUpCount === 1 ? "" : "s"} queued`)
     }
@@ -72,6 +77,7 @@ export function ProductHeader({
     publishableCount,
     queuedFollowUpCount,
   )
+  const showStatusBar = publishState !== "disabled"
 
   return (
     <div className="flex shrink-0 flex-col border-b border-slate-200 bg-white">
@@ -105,9 +111,6 @@ export function ProductHeader({
                 canPublish ? "bg-primary hover:bg-violet-700" : "cursor-not-allowed bg-slate-300",
               )}
             >
-              {publishState === "publishing" || publishState === "syncing" ? (
-                <Loader2 className="size-3.5 animate-spin" aria-hidden />
-              ) : null}
               Publish to PIM &amp; PDP
             </button>
             <button
@@ -122,27 +125,30 @@ export function ProductHeader({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50 px-6 py-2">
-        <p className="flex min-w-0 items-center gap-2 text-xs text-slate-600">
-          {(publishState === "syncing" || publishState === "publishing") && (
-            <Clock className="size-3.5 shrink-0 text-info-600" aria-hidden />
+      {showStatusBar ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50 px-6 py-2">
+          <p className="flex min-w-0 items-center gap-2 text-xs text-slate-600">
+            {(publishState === "syncing" || publishState === "publishing") && (
+              <Clock className="size-3.5 shrink-0 text-info-600" aria-hidden />
+            )}
+            {statusLine ? <span>{statusLine}</span> : null}
+            {pendingReviewCount > 0 ? (
+              <span className="text-slate-400">
+                {statusLine ? " · " : null}
+                {pendingReviewCount} awaiting review
+              </span>
+            ) : null}
+          </p>
+          {(publishState === "syncing" || publishState === "complete") && (
+            <Link
+              href="/actions-log"
+              className="shrink-0 text-xs font-medium text-primary hover:underline"
+            >
+              View in Actions Log
+            </Link>
           )}
-          <span>{statusLine}</span>
-          {pendingReviewCount > 0 && publishState !== "disabled" ? (
-            <span className="text-slate-400">
-              · {pendingReviewCount} awaiting review
-            </span>
-          ) : null}
-        </p>
-        {(publishState === "syncing" || publishState === "complete") && (
-          <Link
-            href="/actions-log"
-            className="shrink-0 text-xs font-medium text-primary hover:underline"
-          >
-            View in Actions Log
-          </Link>
-        )}
-      </div>
+        </div>
+      ) : null}
     </div>
   )
 }

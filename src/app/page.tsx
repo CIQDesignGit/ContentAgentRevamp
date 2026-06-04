@@ -15,11 +15,14 @@ import { DescriptionSection } from "@/components/home/description-section"
 import { PublishConfirmDialog } from "@/components/home/publish-confirm-dialog"
 
 import { applyBulletRecommendation } from "@/lib/apply-bullet-recommendation"
+import { getFieldPublishQueue } from "@/lib/build-field-publish-queue"
 import { getActivePublishBatch, getPublishBatchForField } from "@/lib/publish-batch"
-import { canPublish, getPublishSummary } from "@/lib/publish-changes"
+import { getPublishSummary } from "@/lib/publish-changes"
 import {
+  activateDeferredBatch,
   applyPublishPhase,
   applyPublishStart,
+  getNextDeferredBatch,
   PUBLISH_PHASE_DELAYS_MS,
 } from "@/lib/simulate-publish"
 import { resolveBulletSyncFootprint } from "@/lib/sync-footprint"
@@ -52,19 +55,29 @@ export default function Home() {
 
   const publishSummary = useMemo(() => getPublishSummary(content), [content])
   const activeBatch = useMemo(() => getActivePublishBatch(content), [content])
-  const titlePublishBatch = useMemo(
-    () => getPublishBatchForField(content, "title"),
+  const titlePublishQueue = useMemo(
+    () => getFieldPublishQueue(content, "title"),
     [content],
   )
+  const titlePublishBatch = useMemo(() => {
+    const active = getActivePublishBatch(content)
+    if (active?.fieldKeys.includes("title")) return active
+    return getPublishBatchForField(content, "title")
+  }, [content])
   const descriptionPublishBatch = useMemo(
     () => getPublishBatchForField(content, "description"),
     [content],
   )
 
   const publishBarState: PublishBarState = useMemo(() => {
-    if (content.isPublishing) return "publishing"
-    if (activeBatch) return "syncing"
-    if (publishSummary.publishable.length > 0) return "ready"
+    const hasPublishable = publishSummary.publishable.length > 0
+    const inFlight = Boolean(activeBatch) || Boolean(content.isPublishing)
+
+    if (inFlight) {
+      // Keep publish enabled when more accepted changes are staged during an active sync.
+      return hasPublishable ? "syncing" : "publishing"
+    }
+    if (hasPublishable) return "ready"
     return "disabled"
   }, [content.isPublishing, activeBatch, publishSummary.publishable.length])
 
@@ -86,11 +99,20 @@ export default function Home() {
   }, [selectedSkuId, clearPublishTimers])
 
   function schedulePublishSimulation(skuId: string, batchId: string) {
-    clearPublishTimers()
     const phases = ["pim_done", "retailer_done", "pdp_live", "done"] as const
     phases.forEach((phase) => {
       const timer = setTimeout(() => {
-        patchSku(skuId, (prev) => applyPublishPhase(prev, batchId, phase))
+        patchSku(skuId, (prev) => {
+          let next = applyPublishPhase(prev, batchId, phase)
+          if (phase === "done") {
+            const deferred = getNextDeferredBatch(next, batchId)
+            if (deferred) {
+              next = activateDeferredBatch(next, deferred.id)
+              schedulePublishSimulation(skuId, deferred.id)
+            }
+          }
+          return next
+        })
       }, PUBLISH_PHASE_DELAYS_MS[phase])
       publishTimersRef.current.push(timer)
     })
@@ -104,7 +126,9 @@ export default function Home() {
     patch((prev) => {
       const next = applyPublishStart(prev, fieldKeys, queuedFollowUp)
       const batch = next.publishBatches?.[next.publishBatches.length - 1]
-      if (batch) schedulePublishSimulation(selectedSkuId, batch.id)
+      if (batch && !batch.queuedFollowUp) {
+        schedulePublishSimulation(selectedSkuId, batch.id)
+      }
       return next
     })
   }
@@ -200,6 +224,38 @@ export default function Home() {
     }))
   }
 
+  function handleAcceptNewTitleDraft(text: string) {
+    patch((prev) => ({
+      ...prev,
+      title: text,
+      titleStatus: "accepted",
+      titleRecommendation: prev.titleRecommendation
+        ? { ...prev.titleRecommendation, recommendedText: text }
+        : null,
+      titleHasUnpublishedEdits: false,
+      // Same as first accept — staged for publish; queue updates only after Publish.
+      titleSyncFootprint: "none",
+    }))
+  }
+
+  function handleUndoStagedNewTitle() {
+    patch((prev) => {
+      const queue = getFieldPublishQueue(prev, "title")
+      const revertText = queue.at(-1)?.text ?? prev.title
+
+      return {
+        ...prev,
+        title: revertText,
+        titleStatus: "accepted",
+        titleRecommendation: prev.titleRecommendation
+          ? { ...prev.titleRecommendation, recommendedText: revertText }
+          : null,
+        titleHasUnpublishedEdits: false,
+        titleSyncFootprint: "none",
+      }
+    })
+  }
+
   function markDescriptionEdits(prev: SkuContent, text: string): SkuContent {
     if (prev.descriptionStatus !== "accepted") {
       return {
@@ -265,6 +321,19 @@ export default function Home() {
       descriptionHasUnpublishedEdits: true,
       descriptionSyncFootprint:
         prev.descriptionSyncFootprint === "syncing" ? "queued" : prev.descriptionSyncFootprint,
+    }))
+  }
+
+  function handleAcceptNewDescriptionDraft(text: string) {
+    patch((prev) => ({
+      ...prev,
+      description: text,
+      descriptionStatus: "accepted",
+      descriptionRecommendation: prev.descriptionRecommendation
+        ? { ...prev.descriptionRecommendation, recommendedText: text }
+        : null,
+      descriptionHasUnpublishedEdits: false,
+      descriptionSyncFootprint: "none",
     }))
   }
 
@@ -457,7 +526,7 @@ export default function Home() {
             queuedFollowUpCount={publishSummary.queuedFollowUpCount}
             activeBatch={activeBatch}
             onPublishClick={() => {
-              if (canPublish(content) || (publishBarState === "syncing" && publishSummary.publishable.length > 0)) {
+              if (publishSummary.publishable.length > 0) {
                 setPublishDialogOpen(true)
               }
             }}
@@ -482,12 +551,15 @@ export default function Home() {
                   syncFootprint={content.titleSyncFootprint}
                   hasUnpublishedEdits={content.titleHasUnpublishedEdits}
                   activeBatch={titlePublishBatch}
+                  publishQueue={titlePublishQueue}
                   onRecommendationChange={(text) => patch((prev) => markTitleEdits(prev, text))}
                   onAccept={handleAcceptTitle}
                   onReject={handleRejectTitle}
                   onUndoAccept={handleUndoAcceptTitle}
                   onUndoReject={handleUndoRejectTitle}
                   onPushUpdate={handlePushUpdateTitle}
+                  onAcceptNewDraft={handleAcceptNewTitleDraft}
+                  onUndoStagedNewTitle={handleUndoStagedNewTitle}
                 />
                 <ImageSection
                   images={content.images}
@@ -529,6 +601,7 @@ export default function Home() {
                   onUndoAccept={handleUndoAcceptDescription}
                   onUndoReject={handleUndoRejectDescription}
                   onPushUpdate={handlePushUpdateDescription}
+                  onAcceptNewDraft={handleAcceptNewDescriptionDraft}
                 />
               </div>
             </section>

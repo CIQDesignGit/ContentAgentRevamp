@@ -53,6 +53,8 @@ export type PublishBatch = {
   /** When PIM + PDP both finished updating for this batch. */
   completedAt?: string
   fieldKeys: string[]
+  /** Text captured at publish time, keyed by field (e.g. title, description). */
+  fieldSnapshots?: Record<string, string>
   pim: PimStatus | "idle"
   retailer: RetailerStatus | "idle"
   pdp: PdpStatus
