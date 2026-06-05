@@ -21,6 +21,7 @@ export interface BulletRecommendationSlotProps {
   pimBaseline: string
   pdpBaseline: string
   originalText: string
+  compareTarget: FieldCompareTarget
   publishQueue: FieldPublishQueueItem[]
   activeBatch?: PublishBatch
   onTextChange: (text: string) => void
@@ -39,6 +40,7 @@ export function useBulletRecommendationView({
   pimBaseline,
   pdpBaseline,
   originalText,
+  compareTarget,
   publishQueue,
   activeBatch,
   onTextChange,
@@ -50,8 +52,6 @@ export function useBulletRecommendationView({
   onPushUpdate,
   onAcceptNewDraft,
 }: BulletRecommendationSlotProps) {
-  const [compareTarget, setCompareTarget] = useState<FieldCompareTarget>("pim")
-  const [draftCompareTarget, setDraftCompareTarget] = useState<FieldCompareTarget>("pim")
   const [isOpen, setIsOpen] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [draftText, setDraftText] = useState("")
@@ -74,7 +74,6 @@ export function useBulletRecommendationView({
   function handleStartEditBullet() {
     setDraftText(item.recommendedText)
     setDraftOriginalText(originalText)
-    setDraftCompareTarget("pim")
     setIsEditing(true)
   }
 
@@ -91,9 +90,11 @@ export function useBulletRecommendationView({
       status={item.status}
       syncFootprint={fp}
       compareTarget={compareTarget}
-      onCompareTargetChange={setCompareTarget}
+      onCompareTargetChange={() => undefined}
       isOpen={isOpen}
       onToggleOpen={() => setIsOpen((v) => !v)}
+      hideCompareTabs
+      isAiRecommendation={false}
     />
   ) : null
 
@@ -111,19 +112,20 @@ export function useBulletRecommendationView({
                 rejected: "Rejected",
               }}
               status="pending"
-              compareTarget={draftCompareTarget}
-              onCompareTargetChange={setDraftCompareTarget}
+              compareTarget={compareTarget}
+              onCompareTargetChange={() => undefined}
               isOpen
               collapsible={false}
               onToggleOpen={() => undefined}
               isAiRecommendation={false}
+              hideCompareTabs
             />
           }
           recommendation={draftRecommendation}
           pimBaseline={pimBaseline}
           pdpBaseline={pdpBaseline}
           originalText={draftOriginalText}
-          compareTarget={draftCompareTarget}
+          compareTarget={compareTarget}
           status="pending"
           syncFootprint="none"
           onRecommendedTextChange={setDraftText}
@@ -191,8 +193,22 @@ export function useBulletRecommendationView({
   }
 
   return {
-    compareTarget,
     gridHeader: showHeaderInGrid ? recommendationHeaderEl : null,
     gridBody,
+    isFullySynced,
   }
+}
+
+/** AI recommendation block for one bullet — used below the unified compare grid. */
+export function BulletRecommendationBlock(props: BulletRecommendationSlotProps) {
+  const { gridHeader, gridBody, isFullySynced } = useBulletRecommendationView(props)
+
+  if (isFullySynced || (!gridHeader && !gridBody)) return null
+
+  return (
+    <div className={fieldLabelContentStack("w-full min-w-0 py-3")}>
+      {gridHeader}
+      {gridBody}
+    </div>
+  )
 }

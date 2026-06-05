@@ -683,7 +683,8 @@ export default function Home() {
                   onUndoStagedNewTitle={handleUndoStagedNewTitle}
                 />
                 <ImageSection
-                  images={content.images}
+                  pimImages={content.images}
+                  pdpImages={pdp.images ?? []}
                   onDelete={(id) =>
                     patch((prev) => ({
                       ...prev,

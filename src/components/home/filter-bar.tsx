@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Check, ChevronDown, FunnelPlus, History, Search, Sparkles, X } from "lucide-react"
+import { BrainCircuit, Check, ChevronDown, FunnelPlus, History, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { COLUMNS, ColumnFilterPanel, type ColumnFilters } from "./column-filter-dialog"
@@ -91,7 +91,7 @@ function TypeFilterDropdown({
   return (
     <Popover>
       <DropdownTrigger
-        field="Type"
+        field="Task type"
         value={selected?.label ?? "All"}
       />
       <PopoverContent align="start" className="w-40 p-1">
@@ -305,8 +305,14 @@ export function FilterBar({
       </div>
 
       <div className="flex items-center gap-2">
-        <button type="button" aria-label="AI suggestions" title="AI suggestions" className="grid size-8 place-items-center rounded-md text-slate-500 hover:bg-slate-100">
-          <Sparkles className="size-4" />
+        <button
+          type="button"
+          aria-label="Agent network"
+          title="Agent network"
+          onClick={() => router.push("/agent")}
+          className="grid size-8 place-items-center rounded-md text-slate-500 hover:bg-slate-100"
+        >
+          <BrainCircuit className="size-4" />
         </button>
         <button
           type="button"

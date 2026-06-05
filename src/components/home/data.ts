@@ -1,3 +1,4 @@
+import { makePdpImagesFromPim } from "@/lib/image-match"
 import type { ContentState, Sku, SkuContent } from "./types"
 import { SKU_CONTENT } from "./sku-content-data"
 
@@ -140,8 +141,12 @@ export const MOCK_SKUS: Sku[] = [
 
 export function makeInitialContent(sku: Sku): SkuContent {
   const bundle = SKU_CONTENT[sku.id] ?? SKU_CONTENT["sku-1"]
+  const pdpImages =
+    bundle.pdpContent.images ??
+    makePdpImagesFromPim(bundle.images, bundle.pdpContent.imageCount)
   return {
     ...bundle,
+    pdpContent: { ...bundle.pdpContent, images: pdpImages },
     descriptionStatus: bundle.descriptionStatus ?? "pending",
     descriptionRecommendation: bundle.descriptionRecommendation ?? null,
   }

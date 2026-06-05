@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Check, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { RETAILER_LOGO_SRC, SALSIFY_LOGO_SRC } from "./source-logos"
+import { PIM_CHANNEL_LABEL, PIM_LOGO_ALT, RETAILER_LOGO_SRC, SALSIFY_LOGO_SRC } from "./source-logos"
 import { SourceLogoBadge } from "./bullet-source-cell"
 import { fieldLabelContentStack } from "./field-layout"
 import { SourceCompareText } from "./source-compare-text"
@@ -89,8 +89,8 @@ export function SourceCompareGrid({
     <div className="grid grid-cols-2 items-stretch gap-x-3">
       <SourceColumn
         logoSrc={SALSIFY_LOGO_SRC}
-        logoAlt="Salsify"
-        sublabel="Salsify"
+        logoAlt={PIM_LOGO_ALT}
+        sublabel={PIM_CHANNEL_LABEL}
         value={pimValue}
         compareValue={pdpValue}
         side="pim"

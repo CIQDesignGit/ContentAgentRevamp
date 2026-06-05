@@ -8,7 +8,7 @@ High-level product behavior and domain rules for the Content Agent prototype.
 
 | Channel | What it is |
 |---------|------------|
-| **PIM** | Salsify (or equivalent) — internal product catalog and source of truth. Shown as **Salsify** in compare UI. |
+| **PIM** | Salsify (or equivalent) — internal product catalog and source of truth. Shown as **PIM** in compare UI (Salsify logo retained). |
 | **Retailer / PDP** | **The same thing.** The live product listing on the retailer site (e.g. Amazon product detail page). |
 
 **Retailer = PDP.** Use one mental model: copy is syndicated from PIM to the retailer, then verified on the **product detail page (PDP)**. In the UI you may see both words:

@@ -46,7 +46,7 @@ export function SourceLogoBadge({ src, alt }: { src: string; alt: string }) {
   )
 }
 
-/** Shared label row for Salsify, Retailer, and AI recommendation channels. */
+/** Shared label row for PIM, Retailer, and AI recommendation channels. */
 export function SourceChannelLabel({
   icon,
   label,

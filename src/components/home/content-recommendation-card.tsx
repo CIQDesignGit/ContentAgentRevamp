@@ -88,7 +88,7 @@ export type RecommendationLabels = {
   queued?: string
 }
 
-function CompareTabs({
+export function CompareTabs({
   value,
   onChange,
 }: {
@@ -136,6 +136,7 @@ export function ContentRecommendationHeader({
   onToggleOpen,
   collapsible = true,
   isAiRecommendation = true,
+  hideCompareTabs = false,
 }: {
   labels: RecommendationLabels
   status: TitleStatus
@@ -148,6 +149,8 @@ export function ContentRecommendationHeader({
   collapsible?: boolean
   /** Sparkles icon is shown only for AI-generated recommendations. */
   isAiRecommendation?: boolean
+  /** When true, PIM/PDP tabs are omitted (controlled by a parent toolbar). */
+  hideCompareTabs?: boolean
 }) {
   const fp = resolveFieldSyncFootprint(syncFootprint)
   const isPublishedLocked = status === "accepted" && isFieldPublishingLocked(fp)
@@ -198,15 +201,17 @@ export function ContentRecommendationHeader({
           )}
         </div>
 
-      <div
-        className={cn(
-          "flex h-[30px] w-[92px] shrink-0 items-center justify-end",
-          status === "pending" && isOpen ? "visible" : "invisible pointer-events-none",
-        )}
-        aria-hidden={!(status === "pending" && isOpen)}
-      >
-        <CompareTabs value={compareTarget} onChange={onCompareTargetChange} />
-      </div>
+      {!hideCompareTabs ? (
+        <div
+          className={cn(
+            "flex h-[30px] w-[92px] shrink-0 items-center justify-end",
+            status === "pending" && isOpen ? "visible" : "invisible pointer-events-none",
+          )}
+          aria-hidden={!(status === "pending" && isOpen)}
+        >
+          <CompareTabs value={compareTarget} onChange={onCompareTargetChange} />
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -379,7 +384,7 @@ export function ContentRecommendationBody({
                 />
               </div>
             )}
-            <div className="flex min-h-[52px] flex-col items-end justify-end gap-1">
+            <div className="flex shrink-0 flex-col items-end justify-center gap-1">
               {status === "pending" ||
               showReacceptActions ||
               showAcceptedReviewActions ||

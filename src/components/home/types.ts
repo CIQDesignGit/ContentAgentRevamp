@@ -82,7 +82,10 @@ export type PdpContent = {
   title: string
   bullets: string[]
   description: string
+  /** Number of images present on the live PDP (legacy; prefer `images`). */
   imageCount: number
+  /** Live retailer image slots — derived from `imageCount` when omitted in seed data. */
+  images?: ProductImage[]
   lastUpdated: string
 }
 

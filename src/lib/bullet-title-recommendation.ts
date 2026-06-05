@@ -15,11 +15,10 @@ export function bulletAsTitleRecommendation(
 export function bulletRecommendationLabels(
   bullet: BulletRecommendation,
 ): RecommendationLabels {
-  const pendingLabel =
-    bullet.kind === "add" ? "AI Recommended Bullet" : `AI Recommended ${bullet.label}`
+  const itemLabel = bullet.label
   return {
-    pending: pendingLabel,
-    accepted: `Accepted ${bullet.label}`,
+    pending: itemLabel,
+    accepted: `Accepted ${itemLabel}`,
     rejected: "Rejected",
     queued: "Changes queued",
   }

@@ -4,7 +4,7 @@ import { Check, RotateCcw, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { BulletRecommendation } from "./types"
 
-/** Keeps header height stable before any bullets are accepted or rejected. */
+/** Keeps toolbar height stable before any bullets are accepted or rejected. */
 function ReviewedSummaryLabel({ summary }: { summary: string | null }) {
   return (
     <span
@@ -34,8 +34,6 @@ interface BulletBulkActionsProps {
   onAcceptAll: () => void
   onRejectAll: () => void
   onResetAll: () => void
-  /** When true, only action buttons (for the section header toolbar). */
-  actionsOnly?: boolean
 }
 
 export function BulletBulkActions({
@@ -44,7 +42,6 @@ export function BulletBulkActions({
   onAcceptAll,
   onRejectAll,
   onResetAll,
-  actionsOnly = false,
 }: BulletBulkActionsProps) {
   const pendingCount = recommendations.filter((r) => r.status === "pending").length
   const reviewedSummary = buildReviewedSummary(recommendations)
@@ -85,17 +82,8 @@ export function BulletBulkActions({
 
   const reviewedLabel = <ReviewedSummaryLabel summary={reviewedSummary} />
 
-  if (actionsOnly) {
-    return (
-      <div className="flex flex-col items-end gap-1">
-        {buttons}
-        {reviewedLabel}
-      </div>
-    )
-  }
-
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 px-3 py-2">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3">
       {reviewedLabel}
       {buttons}
     </div>

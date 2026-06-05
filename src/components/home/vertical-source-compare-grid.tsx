@@ -4,7 +4,7 @@ import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { fieldLabelContentStack, fieldSectionStack } from "./field-layout"
 import { BulletSourceCell, SourceCellLabel } from "./bullet-source-cell"
-import { RETAILER_LOGO_SRC, SALSIFY_LOGO_SRC } from "./source-logos"
+import { PIM_CHANNEL_LABEL, PIM_LOGO_ALT, RETAILER_LOGO_SRC, SALSIFY_LOGO_SRC } from "./source-logos"
 
 export type FieldCompareTarget = "pim" | "pdp"
 
@@ -18,6 +18,10 @@ interface VerticalSourceCompareGridProps {
   pimEmptyLabel?: string
   /** When false, column labels are omitted (e.g. shared headers on the parent section). */
   showColumnLabels?: boolean
+  /** When set, replaces the default text cell for the PIM column. */
+  pimCell?: ReactNode
+  /** When set, replaces the default text cell for the PDP column. */
+  pdpCell?: ReactNode
   /** Full-width row below the source columns (e.g. AI Recommended Title + tabs). */
   recommendationHeader?: ReactNode
   /** Full-width row below the header (editable field, actions, reasoning). */
@@ -58,11 +62,15 @@ export function VerticalSourceCompareGrid({
   showPdp = true,
   pimEmptyLabel = "—",
   showColumnLabels = true,
+  pimCell,
+  pdpCell,
   recommendationHeader,
   recommendationBody,
 }: VerticalSourceCompareGridProps) {
   const columnClass = sourceColumnClass(showPim, showPdp)
   const hasRecommendation = Boolean(recommendationHeader || recommendationBody)
+  const sourceCellShellClass =
+    "group relative flex h-full min-h-18 w-full flex-1 flex-col rounded-lg border border-slate-200 bg-slate-50"
 
   const recommendationGrouped =
     recommendationHeader && recommendationBody ? (
@@ -85,18 +93,22 @@ export function VerticalSourceCompareGrid({
         {showPim ? (
           <SourceCompareColumn
             showLabel={showColumnLabels}
-            label={<SourceCellLabel logoSrc={SALSIFY_LOGO_SRC} logoAlt="Salsify" sublabel="Salsify" />}
+            label={<SourceCellLabel logoSrc={SALSIFY_LOGO_SRC} logoAlt={PIM_LOGO_ALT} sublabel={PIM_CHANNEL_LABEL} />}
           >
-            <BulletSourceCell
-              logoSrc={SALSIFY_LOGO_SRC}
-              logoAlt="Salsify"
-              sublabel="Salsify"
-              value={pimValue}
-              compareValue={pdpValue}
-              side="pim"
-              emptyLabel={pimEmptyLabel}
-              showLabel={false}
-            />
+            {pimCell ? (
+              <div className={sourceCellShellClass}>{pimCell}</div>
+            ) : (
+              <BulletSourceCell
+                logoSrc={SALSIFY_LOGO_SRC}
+                logoAlt={PIM_LOGO_ALT}
+                sublabel={PIM_CHANNEL_LABEL}
+                value={pimValue}
+                compareValue={pdpValue}
+                side="pim"
+                emptyLabel={pimEmptyLabel}
+                showLabel={false}
+              />
+            )}
           </SourceCompareColumn>
         ) : null}
         {showPdp ? (
@@ -106,15 +118,19 @@ export function VerticalSourceCompareGrid({
               <SourceCellLabel logoSrc={RETAILER_LOGO_SRC} logoAlt="Amazon" sublabel="Retailer" />
             }
           >
-            <BulletSourceCell
-              logoSrc={RETAILER_LOGO_SRC}
-              logoAlt="Amazon"
-              sublabel="Retailer"
-              value={pdpValue}
-              compareValue={pimValue}
-              side="pdp"
-              showLabel={false}
-            />
+            {pdpCell ? (
+              <div className={sourceCellShellClass}>{pdpCell}</div>
+            ) : (
+              <BulletSourceCell
+                logoSrc={RETAILER_LOGO_SRC}
+                logoAlt="Amazon"
+                sublabel="Retailer"
+                value={pdpValue}
+                compareValue={pimValue}
+                side="pdp"
+                showLabel={false}
+              />
+            )}
           </SourceCompareColumn>
         ) : null}
       </div>
