@@ -27,9 +27,10 @@ export const MOCK_SKUS: Sku[] = [
     title: "NutriChef Food Processor - 8-Cup Capacity, Digital Control Panel",
     thumbnailUrl: "https://placehold.co/64x64/ede9fe/7c3aed?text=NC",
     metrics: { compliance: 54, seo: 30, aeo: 40 },
+    hasPimData: false,
     salsifyIssues: [
-      { type: "warning", label: "Demo: publish status stages" },
-      { type: "error", label: "Description missing" },
+      { type: "error", label: "No PIM catalog entry" },
+      { type: "warning", label: "PDP-only SKU" },
     ],
     lastUpdated: "Mar 7, 2025",
   },

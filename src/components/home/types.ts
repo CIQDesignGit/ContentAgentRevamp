@@ -19,6 +19,8 @@ export type Sku = {
   metrics: Metrics
   salsifyIssues: SalsifyIssue[]
   lastUpdated: string
+  /** When false, this SKU exists only on the retailer PDP — no PIM catalog entry. */
+  hasPimData?: boolean
 }
 
 export type ProductImage = { id: string; label: string; url?: string; hue?: number }
@@ -118,6 +120,8 @@ export type PdpContent = {
 }
 
 export type SkuContent = {
+  /** When false, no PIM catalog entry exists — only PDP data is available. Defaults to true. */
+  hasPimData?: boolean
   title: string
   bullets: string[]
   description: string

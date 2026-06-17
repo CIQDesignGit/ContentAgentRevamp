@@ -8,6 +8,7 @@ import {
   ContentRecommendationBody,
   ContentRecommendationHeader,
 } from "./content-recommendation-card"
+import { AiRecommendationSparklesIcon, SourceChannelLabel } from "./bullet-source-cell"
 import { fieldLabelContentStack } from "./field-layout"
 import type { FieldCompareTarget } from "./vertical-source-compare-grid"
 import { VerticalSourceCompareGrid } from "./vertical-source-compare-grid"
@@ -21,6 +22,8 @@ interface DescriptionSectionProps {
   syncFootprint?: SyncFootprint
   hasUnpublishedEdits?: boolean
   activeBatch?: PublishBatch
+  /** When false, no PIM catalog entry exists — recommendation goes into the PIM column. */
+  hasPimData?: boolean
   onRecommendationChange: (text: string) => void
   onAccept: () => void
   onReject: () => void
@@ -38,6 +41,7 @@ export function DescriptionSection({
   syncFootprint,
   hasUnpublishedEdits,
   activeBatch,
+  hasPimData = true,
   onRecommendationChange,
   onAccept,
   onReject,
@@ -48,6 +52,9 @@ export function DescriptionSection({
 }: DescriptionSectionProps) {
   const [compareTarget, setCompareTarget] = useState<FieldCompareTarget>("pim")
   const [draftCompareTarget, setDraftCompareTarget] = useState<FieldCompareTarget>("pim")
+
+  // No PIM to compare against — always diff against PDP
+  const effectiveCompareTarget: FieldCompareTarget = hasPimData ? compareTarget : "pdp"
   const [isOpen, setIsOpen] = useState(true)
   const [isAddingNew, setIsAddingNew] = useState(false)
   const [draftText, setDraftText] = useState("")
@@ -68,8 +75,8 @@ export function DescriptionSection({
   )
 
   const matchPercent = useMemo(
-    () => titleMatchPercent(displayPim, displayPdp),
-    [displayPim, displayPdp],
+    () => (hasPimData ? titleMatchPercent(displayPim, displayPdp) : 0),
+    [hasPimData, displayPim, displayPdp],
   )
 
   const showReco = Boolean(recommendation)
@@ -87,14 +94,42 @@ export function DescriptionSection({
         }}
         status={status}
         syncFootprint={syncFootprint}
-        compareTarget={compareTarget}
+        compareTarget={effectiveCompareTarget}
         onCompareTargetChange={setCompareTarget}
         isOpen={isOpen}
         onToggleOpen={() => setIsOpen((v) => !v)}
       />
     ) : null
 
-  const showHeaderInGrid = Boolean(recommendationHeaderEl && !showRecoBody)
+  const showHeaderInGrid = Boolean(hasPimData && recommendationHeaderEl && !showRecoBody)
+
+  // When no PIM data: recommendation lives in the left (PIM) column
+  const noPimRecoCell =
+    !hasPimData && recommendation ? (
+      <div className="flex h-full flex-col gap-3 pb-3">
+        <ContentRecommendationBody
+          recommendation={recommendation}
+          pimBaseline=""
+          pdpBaseline={displayPdp}
+          originalText={originalText}
+          compareTarget="pdp"
+          status={status}
+          syncFootprint={syncFootprint}
+          hasUnpublishedEdits={hasUnpublishedEdits}
+          activeBatch={activeBatch}
+          fieldKey="description"
+          onRecommendedTextChange={onRecommendationChange}
+          onAccept={onAccept}
+          onReject={onReject}
+          onReset={() => onRecommendationChange(originalText)}
+          onUndoAccept={onUndoAccept}
+          onUndoReject={onUndoReject}
+          onPushUpdate={onPushUpdate}
+          editAriaLabel="Edit AI recommended description"
+          editRows={5}
+        />
+      </div>
+    ) : null
 
   function handleAddNewDescription() {
     setDraftText(pimDescription)
@@ -121,19 +156,31 @@ export function DescriptionSection({
         <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-500">
           Optional
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-0.5 text-xs font-normal text-slate-500">
-          <Columns2 className="size-3.5 shrink-0 text-slate-400" aria-hidden />
-          {matchPercent}% match between PIM and retailer
-        </span>
+        {hasPimData && (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-0.5 text-xs font-normal text-slate-500">
+            <Columns2 className="size-3.5 shrink-0 text-slate-400" aria-hidden />
+            {matchPercent}% match between PIM and retailer
+          </span>
+        )}
       </header>
 
       <VerticalSourceCompareGrid
-        pimValue={displayPim}
+        pimValue={hasPimData ? displayPim : ""}
         pdpValue={displayPdp}
-        compareTarget={compareTarget}
+        compareTarget={effectiveCompareTarget}
+        pimCell={noPimRecoCell ?? undefined}
+        pimCellBare={!hasPimData}
+        pimColumnLabel={
+          !hasPimData ? (
+            <SourceChannelLabel
+              icon={<AiRecommendationSparklesIcon />}
+              label="AI Recommended Description"
+            />
+          ) : undefined
+        }
         recommendationHeader={showHeaderInGrid ? recommendationHeaderEl : undefined}
         recommendationBody={
-          !recommendation ? undefined : isFullySynced ? (
+          !hasPimData || !recommendation ? undefined : isFullySynced ? (
             <div className={fieldLabelContentStack("w-full")}>
               {!isAddingNew ? (
                 <>
@@ -167,10 +214,10 @@ export function DescriptionSection({
                       />
                     }
                     recommendation={draftRecommendation}
-                    pimBaseline={displayPim}
+                    pimBaseline={hasPimData ? displayPim : ""}
                     pdpBaseline={displayPdp}
                     originalText={draftOriginalText}
-                    compareTarget={draftCompareTarget}
+                    compareTarget={hasPimData ? draftCompareTarget : "pdp"}
                     status="pending"
                     syncFootprint="none"
                     onRecommendedTextChange={setDraftText}
@@ -192,10 +239,10 @@ export function DescriptionSection({
                 key={`${pimDescription}|${pdpDescription}|locked`}
                 header={recommendationHeaderEl ?? undefined}
                 recommendation={recommendation}
-                pimBaseline={displayPim}
+                pimBaseline={hasPimData ? displayPim : ""}
                 pdpBaseline={displayPdp}
                 originalText={originalText}
-                compareTarget={compareTarget}
+                compareTarget={effectiveCompareTarget}
                 status={status}
                 syncFootprint={syncFootprint}
                 hasUnpublishedEdits={hasUnpublishedEdits}

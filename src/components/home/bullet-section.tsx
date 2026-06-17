@@ -9,6 +9,7 @@ import { resolveBulletSyncFootprint } from "@/lib/sync-footprint"
 import { BulletBulkActions } from "./bullet-bulk-actions"
 import { BulletsSourceCompare } from "./bullets-source-compare"
 import { ContentRecommendationHeader } from "./content-recommendation-card"
+import { AiRecommendationSparklesIcon, SourceChannelLabel } from "./bullet-source-cell"
 import {
   BulletRecommendationBlock,
   type BulletRecommendationSlotProps,
@@ -23,6 +24,8 @@ interface BulletPointsSectionProps {
   pdpBullets: string[]
   recommendations: BulletRecommendation[]
   originals: Record<string, string>
+  /** When false, no PIM catalog entry exists — recommendations go into the PIM column. */
+  hasPimData?: boolean
   getFieldPublishBatch?: (fieldKey: string) => PublishBatch | undefined
   getBulletPublishQueue?: (bulletId: string) => FieldPublishQueueItem[]
   onRecommendationTextChange: (id: string, text: string) => void
@@ -117,6 +120,7 @@ export function BulletPointsSection({
   pdpBullets,
   recommendations,
   originals,
+  hasPimData = true,
   getFieldPublishBatch,
   getBulletPublishQueue,
   onRecommendationTextChange,
@@ -134,9 +138,12 @@ export function BulletPointsSection({
   const [gridCompareTarget] = useState<FieldCompareTarget>("pim")
   const [recoCompareTarget, setRecoCompareTarget] = useState<FieldCompareTarget>("pim")
 
+  // No PIM to compare against — always diff against PDP
+  const effectiveRecoCompareTarget: FieldCompareTarget = hasPimData ? recoCompareTarget : "pdp"
+
   const matchPercent = useMemo(
-    () => titleMatchPercent(pimBullets.join("\n"), pdpBullets.join("\n")),
-    [pimBullets, pdpBullets],
+    () => (hasPimData ? titleMatchPercent(pimBullets.join("\n"), pdpBullets.join("\n")) : 0),
+    [hasPimData, pimBullets, pdpBullets],
   )
 
   const displayLists = useMemo(
@@ -168,7 +175,7 @@ export function BulletPointsSection({
         pimBullets,
         pdpBullets,
         originals,
-        recoCompareTarget,
+        effectiveRecoCompareTarget,
         getFieldPublishBatch,
         getBulletPublishQueue,
         {
@@ -185,6 +192,21 @@ export function BulletPointsSection({
     />
   ))
 
+  // When no PIM data: all bullet recommendations live in the left (PIM) column
+  const noPimBulletsCell =
+    !hasPimData && recommendationBlocks.length > 0 ? (
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="divide-y divide-slate-200">{recommendationBlocks}</div>
+        <BulletBulkActions
+          recommendations={recommendations}
+          originals={originals}
+          onAcceptAll={onAcceptAll}
+          onRejectAll={onRejectAll}
+          onResetAll={onResetAll}
+        />
+      </div>
+    ) : null
+
   const pdpCompareForPim = useMemo(
     () => displayLists.pim.map((_, index) => displayLists.pdp[index] ?? ""),
     [displayLists],
@@ -195,13 +217,17 @@ export function BulletPointsSection({
       <header className="flex flex-wrap items-center gap-2 px-1 py-2">
         <ListChecks className="size-4 shrink-0 text-slate-400" aria-hidden />
         <span className="text-sm font-semibold text-slate-900">Bullet Points</span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-0.5 text-xs font-normal text-slate-500">
-          <Columns2 className="size-3.5 shrink-0 text-slate-400" aria-hidden />
-          {matchPercent}% match between PIM and retailer
-        </span>
-        <span className="text-xs text-slate-400">
-          {pimBullets.length} PIM · {pdpBullets.length} PDP
-        </span>
+        {hasPimData && (
+          <>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-0.5 text-xs font-normal text-slate-500">
+              <Columns2 className="size-3.5 shrink-0 text-slate-400" aria-hidden />
+              {matchPercent}% match between PIM and retailer
+            </span>
+            <span className="text-xs text-slate-400">
+              {pimBullets.length} PIM · {pdpBullets.length} PDP
+            </span>
+          </>
+        )}
       </header>
 
       <VerticalSourceCompareGrid
@@ -209,21 +235,32 @@ export function BulletPointsSection({
         pdpValue=""
         compareTarget={gridCompareTarget}
         pimCell={
-          <BulletsSourceCompare
-            bullets={displayLists.pim}
-            compareBullets={pdpCompareForPim}
-            side="pim"
-          />
+          noPimBulletsCell ?? (
+            <BulletsSourceCompare
+              bullets={displayLists.pim}
+              compareBullets={pdpCompareForPim}
+              side="pim"
+            />
+          )
+        }
+        pimCellBare={!hasPimData}
+        pimColumnLabel={
+          !hasPimData ? (
+            <SourceChannelLabel
+              icon={<AiRecommendationSparklesIcon />}
+              label="AI Recommended Bullets"
+            />
+          ) : undefined
         }
         pdpCell={
           <BulletsSourceCompare
             bullets={displayLists.pdp}
-            compareBullets={displayLists.pim}
+            compareBullets={hasPimData ? displayLists.pim : []}
             side="pdp"
           />
         }
         recommendationBody={
-          recommendationBlocks.length > 0 ? (
+          hasPimData && recommendationBlocks.length > 0 ? (
             <div className="w-full min-w-0">
               <div className="border-b border-slate-200 pb-3">
                 <ContentRecommendationHeader

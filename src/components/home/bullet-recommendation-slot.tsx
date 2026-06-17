@@ -206,7 +206,7 @@ export function BulletRecommendationBlock(props: BulletRecommendationSlotProps) 
   if (isFullySynced || (!gridHeader && !gridBody)) return null
 
   return (
-    <div className={fieldLabelContentStack("w-full min-w-0 py-3")}>
+    <div className={fieldLabelContentStack("w-full min-w-0 pb-3 pt-3 first:pt-0")}>
       {gridHeader}
       {gridBody}
     </div>

@@ -676,6 +676,7 @@ export default function Home() {
                   status={content.titleStatus}
                   titleEditSource={content.titleEditSource}
                   recommendation={content.titleRecommendation}
+                  hasPimData={content.hasPimData}
                   syncFootprint={content.titleSyncFootprint}
                   hasUnpublishedEdits={content.titleHasUnpublishedEdits}
                   activeBatch={titlePublishBatch}
@@ -692,6 +693,7 @@ export default function Home() {
                 <ImageSection
                   pimImages={content.images}
                   pdpImages={pdp.images ?? []}
+                  hasPimData={content.hasPimData}
                   onDelete={(id) =>
                     patch((prev) => ({
                       ...prev,
@@ -703,6 +705,7 @@ export default function Home() {
                   pimBullets={content.bullets}
                   pdpBullets={pdp.bullets}
                   recommendations={content.bulletRecommendations}
+                  hasPimData={content.hasPimData}
                   originals={bulletOriginals}
                   getFieldPublishBatch={(fieldKey) => getPublishBatchForField(content, fieldKey)}
                   getBulletPublishQueue={(bulletId) =>
@@ -725,6 +728,7 @@ export default function Home() {
                   pdpDescription={pdp.description}
                   status={content.descriptionStatus}
                   recommendation={content.descriptionRecommendation}
+                  hasPimData={content.hasPimData}
                   syncFootprint={content.descriptionSyncFootprint}
                   hasUnpublishedEdits={content.descriptionHasUnpublishedEdits}
                   activeBatch={descriptionPublishBatch}

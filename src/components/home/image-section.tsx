@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useMemo, useRef, useState, type ReactNode } from "react"
 import {
   ChevronLeft,
   ChevronRight,
@@ -10,10 +10,10 @@ import {
   Link2,
   Trash2,
 } from "lucide-react"
-import { alignImageSlots, imageMatchPercent, imagePresentCount } from "@/lib/image-match"
+import { alignImageSlots, imageMatchPercent, imagePresentCount, makeRecommendedImages } from "@/lib/image-match"
 import { cn } from "@/lib/utils"
 import { fieldLabelContentStack, fieldSectionStack } from "./field-layout"
-import { SourceCellLabel } from "./bullet-source-cell"
+import { AiRecommendationSparklesIcon, SourceCellLabel, SourceChannelLabel } from "./bullet-source-cell"
 import { PIM_CHANNEL_LABEL, PIM_LOGO_ALT, RETAILER_LOGO_SRC, SALSIFY_LOGO_SRC } from "./source-logos"
 import type { ProductImage } from "./types"
 
@@ -180,6 +180,7 @@ function ImageCarouselIndicators({
 }
 
 function ImageCompareColumn({
+  columnLabel,
   logoSrc,
   logoAlt,
   sublabel,
@@ -191,9 +192,10 @@ function ImageCompareColumn({
   readOnly,
   ariaLabel,
 }: {
-  logoSrc: string
-  logoAlt: string
-  sublabel: string
+  columnLabel?: ReactNode
+  logoSrc?: string
+  logoAlt?: string
+  sublabel?: string
   images: ProductImage[]
   presentCount: number
   scrollIndex: number
@@ -205,7 +207,9 @@ function ImageCompareColumn({
   return (
     <div className={fieldLabelContentStack("min-h-0 min-w-0")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <SourceCellLabel logoSrc={logoSrc} logoAlt={logoAlt} sublabel={sublabel} />
+        {columnLabel ?? (
+          <SourceCellLabel logoSrc={logoSrc!} logoAlt={logoAlt!} sublabel={sublabel!} />
+        )}
         <span className="inline-flex items-center gap-1 rounded-md border border-warning-200 bg-warning-50 px-2 py-0.5 text-xs font-medium text-warning-600">
           {presentCount}/{images.length} Present
         </span>
@@ -232,11 +236,18 @@ function ImageCompareColumn({
 interface ImageSectionProps {
   pimImages: ProductImage[]
   pdpImages: ProductImage[]
+  hasPimData?: boolean
   onDelete: (id: string) => void
   readOnly?: boolean
 }
 
-export function ImageSection({ pimImages, pdpImages, onDelete, readOnly }: ImageSectionProps) {
+export function ImageSection({
+  pimImages,
+  pdpImages,
+  hasPimData = true,
+  onDelete,
+  readOnly,
+}: ImageSectionProps) {
   const [pimScrollIndex, setPimScrollIndex] = useState(0)
   const [pdpScrollIndex, setPdpScrollIndex] = useState(0)
 
@@ -245,8 +256,18 @@ export function ImageSection({ pimImages, pdpImages, onDelete, readOnly }: Image
     [pimImages, pdpImages],
   )
 
-  const matchPercent = useMemo(() => imageMatchPercent(pimImages, pdpImages), [pimImages, pdpImages])
-  const pimPresentCount = imagePresentCount(pim)
+  const recommendedImages = useMemo(() => {
+    if (hasPimData) return pim
+    if (pimImages.length > 0) return pimImages
+    return makeRecommendedImages(Math.max(pdpImages.length, pdp.length, 1))
+  }, [hasPimData, pim, pimImages, pdpImages.length, pdp.length])
+
+  const leftImages = hasPimData ? pim : recommendedImages
+  const matchPercent = useMemo(
+    () => (hasPimData ? imageMatchPercent(pimImages, pdpImages) : 0),
+    [hasPimData, pimImages, pdpImages],
+  )
+  const leftPresentCount = imagePresentCount(leftImages)
   const pdpPresentCount = imagePresentCount(pdp)
 
   return (
@@ -254,10 +275,12 @@ export function ImageSection({ pimImages, pdpImages, onDelete, readOnly }: Image
       <header className="flex flex-wrap items-center gap-2 px-1 py-2">
         <ImageIcon className="size-4 shrink-0 text-slate-400" aria-hidden />
         <span className="text-sm font-semibold text-slate-900">Image</span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-0.5 text-xs font-normal text-slate-500">
-          <Columns2 className="size-3.5 shrink-0 text-slate-400" aria-hidden />
-          {matchPercent}% match between PIM and retailer
-        </span>
+        {hasPimData ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-0.5 text-xs font-normal text-slate-500">
+            <Columns2 className="size-3.5 shrink-0 text-slate-400" aria-hidden />
+            {matchPercent}% match between PIM and retailer
+          </span>
+        ) : null}
         {!readOnly ? (
           <button
             type="button"
@@ -271,16 +294,24 @@ export function ImageSection({ pimImages, pdpImages, onDelete, readOnly }: Image
       <div className={fieldSectionStack("w-full")}>
         <div className="grid grid-cols-2 items-start gap-x-3">
           <ImageCompareColumn
+            columnLabel={
+              !hasPimData ? (
+                <SourceChannelLabel
+                  icon={<AiRecommendationSparklesIcon />}
+                  label="AI Recommended Images"
+                />
+              ) : undefined
+            }
             logoSrc={SALSIFY_LOGO_SRC}
             logoAlt={PIM_LOGO_ALT}
             sublabel={PIM_CHANNEL_LABEL}
-            images={pim}
-            presentCount={pimPresentCount}
+            images={leftImages}
+            presentCount={leftPresentCount}
             scrollIndex={pimScrollIndex}
             onScrollIndexChange={setPimScrollIndex}
             onDelete={onDelete}
             readOnly={readOnly}
-            ariaLabel="PIM catalog images"
+            ariaLabel={hasPimData ? "PIM catalog images" : "AI recommended images"}
           />
           <ImageCompareColumn
             logoSrc={RETAILER_LOGO_SRC}

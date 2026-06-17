@@ -40,7 +40,7 @@ export function imageMatchPercent(pimImages: ProductImage[], pdpImages: ProductI
 }
 
 export function makePdpImagesFromPim(pimImages: ProductImage[], pdpPresentCount: number): ProductImage[] {
-  const slotCount = Math.max(pimImages.length, 1)
+  const slotCount = Math.max(pimImages.length, pdpPresentCount, 1)
   return Array.from({ length: slotCount }, (_, i) => {
     if (i >= pdpPresentCount) {
       return { id: `pdp-img-${i + 1}`, label: `Image ${i + 1}` }
@@ -54,4 +54,14 @@ export function makePdpImagesFromPim(pimImages: ProductImage[], pdpPresentCount:
       hue,
     }
   })
+}
+
+/** Gradient placeholder slots for AI-recommended images when no PIM catalog exists. */
+export function makeRecommendedImages(count: number, baseHue = 260): ProductImage[] {
+  const slotCount = Math.max(count, 1)
+  return Array.from({ length: slotCount }, (_, i) => ({
+    id: `reco-img-${i + 1}`,
+    label: `Image ${i + 1}`,
+    hue: (baseHue + i * 28) % 360,
+  }))
 }

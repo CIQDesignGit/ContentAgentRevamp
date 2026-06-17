@@ -20,6 +20,12 @@ interface VerticalSourceCompareGridProps {
   showColumnLabels?: boolean
   /** When set, replaces the default text cell for the PIM column. */
   pimCell?: ReactNode
+  /** Overrides the default shell classes on the pimCell wrapper (border, bg, rounding). */
+  pimCellClassName?: string
+  /** When true, renders pimCell directly with no wrapper shell (no border/bg box). */
+  pimCellBare?: boolean
+  /** Overrides the default Salsify logo label for the PIM column header. */
+  pimColumnLabel?: ReactNode
   /** When set, replaces the default text cell for the PDP column. */
   pdpCell?: ReactNode
   /** Full-width row below the source columns (e.g. AI Recommended Title + tabs). */
@@ -48,7 +54,7 @@ function SourceCompareColumn({
 
   return (
     <div className={fieldLabelContentStack("min-h-0 min-w-0")}>
-      {label}
+      <div className="flex min-h-6 items-center">{label}</div>
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
     </div>
   )
@@ -63,6 +69,9 @@ export function VerticalSourceCompareGrid({
   pimEmptyLabel = "—",
   showColumnLabels = true,
   pimCell,
+  pimCellClassName,
+  pimCellBare = false,
+  pimColumnLabel,
   pdpCell,
   recommendationHeader,
   recommendationBody,
@@ -89,14 +98,14 @@ export function VerticalSourceCompareGrid({
 
   return (
     <div className={fieldSectionStack("w-full")}>
-      <div className={cn("grid items-stretch gap-x-3", columnClass)}>
+      <div className={cn("grid gap-x-3", pimCellBare ? "items-start" : "items-stretch", columnClass)}>
         {showPim ? (
           <SourceCompareColumn
             showLabel={showColumnLabels}
-            label={<SourceCellLabel logoSrc={SALSIFY_LOGO_SRC} logoAlt={PIM_LOGO_ALT} sublabel={PIM_CHANNEL_LABEL} />}
+            label={pimColumnLabel ?? <SourceCellLabel logoSrc={SALSIFY_LOGO_SRC} logoAlt={PIM_LOGO_ALT} sublabel={PIM_CHANNEL_LABEL} />}
           >
             {pimCell ? (
-              <div className={sourceCellShellClass}>{pimCell}</div>
+              pimCellBare ? pimCell : <div className={pimCellClassName ?? sourceCellShellClass}>{pimCell}</div>
             ) : (
               <BulletSourceCell
                 logoSrc={SALSIFY_LOGO_SRC}

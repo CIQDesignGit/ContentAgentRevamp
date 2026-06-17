@@ -18,7 +18,7 @@ export function AiRecommendationSparklesIcon({ className }: { className?: string
   return (
     <Sparkles
       className={cn("size-[18px] shrink-0 text-brand-500", className)}
-      strokeWidth={1.3}
+      strokeWidth={1.5}
       aria-hidden
     />
   )

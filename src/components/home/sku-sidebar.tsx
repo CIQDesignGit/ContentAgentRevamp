@@ -3,7 +3,24 @@
 import { AlignJustify, PanelLeftOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Sku } from "./types"
-import { MetricChip } from "./metric-chip"
+
+// Bordered chip metric — same visual language as the ProductHeader chips
+function CardMetric({ label, value }: { label: string; value: number }) {
+  const isBad = value < 40
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px]",
+        isBad ? "border-error-100 bg-error-50 text-slate-500" : "border-slate-200 bg-white text-slate-500",
+      )}
+    >
+      {label}
+      <span className={cn("font-semibold tabular-nums", isBad ? "text-error-600" : "text-slate-700")}>
+        {value}%
+      </span>
+    </span>
+  )
+}
 
 function SkuThumb({ sku }: { sku: Sku }) {
   if (sku.thumbnailUrl) {
@@ -11,12 +28,12 @@ function SkuThumb({ sku }: { sku: Sku }) {
       <img
         src={sku.thumbnailUrl}
         alt=""
-        className="size-10 shrink-0 rounded-lg border border-slate-200 bg-slate-100 object-contain p-0.5"
+        className="size-11 shrink-0 rounded-lg border border-slate-100 bg-slate-50 object-contain p-0.5"
       />
     )
   }
   return (
-    <div className="size-10 shrink-0 rounded-lg border border-slate-200 bg-slate-100" aria-hidden />
+    <div className="size-11 shrink-0 rounded-lg border border-slate-100 bg-slate-100" aria-hidden />
   )
 }
 
@@ -52,8 +69,8 @@ export function SkuSidebar({ skus, selectedSkuId, onSelect, totalCount, collapse
     <aside className="flex w-[360px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
       <div className="flex shrink-0 items-center justify-between px-4 pb-3 pt-4">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900">SKUs with Issues</h2>
-          <p className="mt-0.5 text-[11px] text-slate-500">
+          <h2 className="text-sm font-semibold text-slate-700">SKUs with Issues</h2>
+          <p className="mt-0.5 text-[11px] text-slate-400">
             Showing {skus.length} of {totalCount}
           </p>
         </div>
@@ -80,34 +97,53 @@ export function SkuSidebar({ skus, selectedSkuId, onSelect, totalCount, collapse
                   type="button"
                   onClick={() => onSelect(sku.id)}
                   className={cn(
-                    "flex w-full flex-col gap-3 rounded-xl border p-3.5 text-left transition-colors",
+                    "flex w-full flex-col overflow-hidden rounded-xl border text-left transition-colors",
                     isActive
                       ? "border-primary bg-brand-25"
                       : "border-slate-200 bg-white hover:bg-slate-50",
                   )}
                 >
-                  {/* Row 1: thumbnail + title/meta */}
-                  <div className="flex flex-col gap-2">
-                    {/* asin + category */}
-                    <p className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                      <span className="font-mono">{sku.asin}</span>
+                  {/* Zone 1: tag row (ASIN · Brand · Category) + thumbnail + title */}
+                  <div className="flex flex-col gap-2 px-3 pt-3 pb-2.5">
+                    {/* Tags above the thumbnail — same row as original */}
+                    <p className="flex flex-wrap items-center gap-1">
+                      <span className="font-mono text-[10px] text-slate-400">{sku.asin}</span>
                       <span aria-hidden className="size-0.5 rounded-full bg-slate-300" />
-                      <span>{sku.category}</span>
+                      <span className="text-[10px] text-slate-400">{sku.brand}</span>
+                      <span aria-hidden className="size-0.5 rounded-full bg-slate-300" />
+                      <span className="text-[10px] text-slate-400">{sku.category}</span>
+                      {sku.hasPimData === false && (
+                        <span
+                          className={cn(
+                            "inline-flex items-center rounded-md border px-1.5 py-0.5 text-[9px] font-semibold tracking-wide",
+                            isActive
+                              ? "border-brand-300 bg-brand-100 text-primary"
+                              : "border-brand-200 bg-brand-50 text-brand-700",
+                          )}
+                        >
+                          PDP only
+                        </span>
+                      )}
                     </p>
-                    {/* thumbnail + title */}
+                    {/* Thumbnail + title */}
                     <div className="flex gap-3">
                       <SkuThumb sku={sku} />
-                      <p className="line-clamp-2 flex-1 overflow-hidden text-sm font-medium leading-snug text-slate-800">
+                      <p className="line-clamp-2 flex-1 text-[13px] font-medium leading-snug text-slate-700">
                         {sku.title}
                       </p>
                     </div>
                   </div>
 
-                  {/* Row 2: metric chips */}
-                  <div className="flex flex-wrap gap-1.5">
-                    <MetricChip label="Compliance" value={sku.metrics.compliance} />
-                    <MetricChip label="SEO" value={sku.metrics.seo} />
-                    <MetricChip label="AEO" value={sku.metrics.aeo} />
+                  {/* Zone 2: metric chips */}
+                  <div
+                    className={cn(
+                      "flex items-center gap-1.5 border-t px-3 py-2",
+                      isActive ? "border-brand-100" : "border-slate-100",
+                    )}
+                  >
+                    <CardMetric label="Compliance" value={sku.metrics.compliance} />
+                    <CardMetric label="SEO" value={sku.metrics.seo} />
+                    <CardMetric label="AEO" value={sku.metrics.aeo} />
                   </div>
                 </button>
               </li>
