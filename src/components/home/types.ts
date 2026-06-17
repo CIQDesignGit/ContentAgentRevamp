@@ -31,11 +31,38 @@ export type Reason = { type: ReasonType; summary: string; detail: string }
 
 export type ReasoningCategory = { key: string; label: string; reasons: Reason[] }
 
+export type AltKeyword = {
+  id: string
+  keyword: string
+  /** Amazon/Helium10 search rank index */
+  rank: number
+  /** Monthly search volume, e.g. "90.5K" */
+  volume: string
+  /** If defined, clicking Insert swaps this word in the recommendation text */
+  replacesWord?: string
+}
+
+export type ShopperQuestion = {
+  question: string
+  /** What aspect of the recommendation content answers this question */
+  answer: string
+  /** True when this question is newly answerable — wasn't before the recommendation */
+  isNew?: boolean
+}
+
+export type AeoPerformance = {
+  /** LLM shopping assistants this was benchmarked against */
+  sources: string[]
+  questions: ShopperQuestion[]
+}
+
 export type TitleRecommendation = {
   agentName: string
   recommendedText: string
   diff: DiffSegment[]
   reasoning: ReasoningCategory[]
+  altKeywords?: AltKeyword[]
+  aeoPerformance?: AeoPerformance
 }
 
 export type TitleStatus = "pending" | "accepted" | "rejected"
@@ -71,6 +98,7 @@ export type BulletRecommendation = {
   status: BulletRecoStatus
   kind: "edit" | "add"
   reasoning: ReasoningCategory[]
+  aeoPerformance?: AeoPerformance
   pimIndex?: number
   syncFootprint?: SyncFootprint
   hasUnpublishedEdits?: boolean

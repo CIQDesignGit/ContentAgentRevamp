@@ -9,6 +9,7 @@ export function bulletAsTitleRecommendation(
     recommendedText: bullet.recommendedText,
     diff: [],
     reasoning: bullet.reasoning,
+    aeoPerformance: bullet.aeoPerformance,
   }
 }
 

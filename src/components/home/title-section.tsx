@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Columns2, Type } from "lucide-react"
 import { titleMatchPercent } from "@/lib/title-match"
 import { resolvePublishedSourceDisplay } from "@/lib/published-source-display"
@@ -62,7 +62,16 @@ export function ProductTitleSection({
 }: ProductTitleSectionProps) {
   const [compareTarget, setCompareTarget] = useState<FieldCompareTarget>("pim")
   const [draftCompareTarget, setDraftCompareTarget] = useState<FieldCompareTarget>("pim")
-  const [isOpen, setIsOpen] = useState(true)
+
+  // "Changes queued" state — collapsed by default so users aren't overwhelmed
+  const isPublishedLocked =
+    status === "accepted" && (syncFootprint === "syncing" || syncFootprint === "queued")
+  const [isOpen, setIsOpen] = useState(() => !isPublishedLocked)
+  // Keep open/collapsed in sync with the queued state across the full publish lifecycle
+  useEffect(() => {
+    setIsOpen(!isPublishedLocked)
+  }, [isPublishedLocked])
+
   const [isAddingNew, setIsAddingNew] = useState(false)
   const [draftText, setDraftText] = useState("")
   const [draftOriginalText, setDraftOriginalText] = useState("")
@@ -212,22 +221,15 @@ export function ProductTitleSection({
       />
     ) : null
 
-  const showHeaderInGrid = Boolean(recommendationHeaderEl && (!showRecoBody || hasPublishQueue))
+  // Don't show the grid header when stagedAcceptedBlock already renders it inside queueBody
+  const showHeaderInGrid = Boolean(
+    recommendationHeaderEl && (!showRecoBody || hasPublishQueue) && !hasStagedAwaitingPublish,
+  )
 
   const queueBody = (
     <div className={fieldLabelContentStack("w-full")}>
       <PublishQueueList items={publishQueue} fieldKey="title" />
       {stagedAcceptedBlock}
-      {!isAddingNew && !hasStagedAwaitingPublish ? (
-        <button
-          type="button"
-          onClick={handleAddNewTitle}
-          className="self-start text-xs font-medium text-primary hover:underline"
-        >
-          Add New Title
-        </button>
-      ) : null}
-      {draftBlock}
     </div>
   )
 
@@ -256,7 +258,7 @@ export function ProductTitleSection({
                   <button
                     type="button"
                     onClick={handleAddNewTitle}
-                    className="self-start text-xs font-medium text-primary hover:underline"
+                    className="self-start text-base font-medium text-primary hover:underline"
                   >
                     Edit Title
                   </button>
@@ -300,6 +302,22 @@ export function ProductTitleSection({
           ) : undefined
         }
       />
+
+      {/* "Add New Title" stays visible even when the queued dropdown is collapsed */}
+      {hasPublishQueue && showReco && !isFullySynced && (
+        <>
+          {!isAddingNew && !hasStagedAwaitingPublish ? (
+            <button
+              type="button"
+              onClick={handleAddNewTitle}
+              className="mt-1 self-start text-xs font-medium text-primary hover:underline"
+            >
+              Add New Title
+            </button>
+          ) : null}
+          {draftBlock}
+        </>
+      )}
     </section>
   )
 }

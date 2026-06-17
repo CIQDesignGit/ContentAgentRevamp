@@ -14,6 +14,7 @@ import { ImageSection } from "@/components/home/image-section"
 import { BulletPointsSection } from "@/components/home/bullet-section"
 import { DescriptionSection } from "@/components/home/description-section"
 import { PublishConfirmDialog } from "@/components/home/publish-confirm-dialog"
+import { toast } from "sonner"
 import { UnpublishedChangesGuardDialog } from "@/components/home/unpublished-changes-guard-dialog"
 
 import { getFieldPublishQueue } from "@/lib/build-field-publish-queue"
@@ -176,6 +177,7 @@ export default function Home() {
     setPublishDialogOpen(false)
     const fieldKeys = publishSummary.publishable.map((f) => f.key)
     const queuedFollowUp = Boolean(activeBatch)
+    const fieldNames = publishSummary.publishable.map((f) => f.label).join(", ")
 
     patch((prev) => {
       const next = applyPublishStart(prev, fieldKeys, queuedFollowUp)
@@ -184,6 +186,10 @@ export default function Home() {
         schedulePublishSimulation(selectedSkuId, batch.id)
       }
       return next
+    })
+
+    toast.success("Your changes are published", {
+      description: `${fieldNames} sent to PIM & PDP.`,
     })
   }
 
@@ -631,6 +637,7 @@ export default function Home() {
             asin={selectedSku.asin}
             productId={selectedSku.productId}
             brand={selectedSku.brand}
+            thumbnailUrl={selectedSku.thumbnailUrl}
             compliance={selectedSku.metrics.compliance}
             seo={selectedSku.metrics.seo}
             aeo={selectedSku.metrics.aeo}

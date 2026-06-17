@@ -77,29 +77,85 @@ export const SKU_CONTENT: Record<string, SkuContentBundle> = {
     description:
       "Transport yourself to a lush summer orchard with the Yankee Candle Black Cherry Large Jar Candle. This iconic 22 oz jar is filled with a bold, sweet-meets-spicy cherry fragrance that evolves from top notes of fresh cherry to warm, velvety base notes of musk and sandalwood.",
     images: makeImages([340, 350, 10, 355, 5, 345, 0, 360]),
-    titleRecommendation: rec(
-      "Jessica",
-      "Yankee Candle Black Cherry Large Jar Candle, 22 oz — Up to 150-Hour Burn, Premium Scented Candle, Ideal Gift",
-      "Yankee Candle Black Cherry Large Jar Candle, 22 oz",
-      "",
-      "— Up to 150-Hour Burn, Premium Scented Candle, Ideal Gift",
-      "Add high-intent gift keywords",
-      "'Premium Scented Candle' and 'Ideal Gift' match top search queries and are expected to lift CTR by ~12%.",
-      "Remove implicit filler phrasing",
-      "The original title ends abruptly at '22 oz' — appending benefit descriptors adds value without triggering character-limit flags.",
-    ),
+    titleRecommendation: {
+      ...rec(
+        "Jessica",
+        "Yankee Candle Black Cherry Large Jar Candle, 22 oz — Up to 150-Hour Burn, Premium Scented Candle, Ideal Gift",
+        "Yankee Candle Black Cherry Large Jar Candle, 22 oz",
+        "",
+        "— Up to 150-Hour Burn, Premium Scented Candle, Ideal Gift",
+        "Add high-intent gift keywords",
+        "'Premium Scented Candle' and 'Ideal Gift' match top search queries and are expected to lift CTR by ~12%.",
+        "Remove implicit filler phrasing",
+        "The original title ends abruptly at '22 oz' — appending benefit descriptors adds value without triggering character-limit flags.",
+      ),
+      altKeywords: [
+        // Ordered left-right per row for the 2-column grid
+        { id: "kw-1", keyword: "scented candles large jar", rank: 4,  volume: "90.5K" },
+        { id: "kw-2", keyword: "yankee candle gift",        rank: 2,  volume: "165K"  },
+        { id: "kw-3", keyword: "long burn time candle",     rank: 7,  volume: "27K"   },
+        { id: "kw-4", keyword: "sage citrus candle",        rank: 3,  volume: "14.8K" },
+        { id: "kw-5", keyword: "birthday candle gift",      rank: 11, volume: "8.2K"  },
+        { id: "kw-6", keyword: "150 hour burn candle",      rank: 5,  volume: "5.4K"  },
+      ],
+      aeoPerformance: {
+        sources: ["Rufus", "Perplexity Shop", "ChatGPT"],
+        questions: [
+          {
+            question: "how long does it burn?",
+            answer: "explicit 110–150 hour burn range now in title",
+            isNew: true,
+          },
+          {
+            question: "what size is it?",
+            answer: "22oz Large Jar surfaced directly in title",
+          },
+          {
+            question: "is it a good gift?",
+            answer: '"Ideal Gift" explicitly signals gift intent',
+            isNew: true,
+          },
+          {
+            question: "what scent is it?",
+            answer: "Black Cherry with warm spice — explicit scent profile",
+          },
+        ],
+      },
+    },
     descriptionStatus: "pending",
-    descriptionRecommendation: rec(
-      "Jessica",
-      "Indulge in Yankee Candle Black Cherry Large Jar Candle (22 oz)—a bold black cherry fragrance with warm spice and vanilla notes. Enjoy up to 150 hours of room-filling aroma with a premium paraffin blend and lead-free cotton wick for a clean, soot-minimizing burn. Perfect for gifting and everyday home fragrance.",
-      "Transport yourself to a lush summer orchard with the Yankee Candle Black Cherry Large Jar Candle. This iconic 22 oz jar is filled with a bold, sweet-meets-spicy cherry fragrance that evolves from top notes of fresh cherry to warm, velvety base notes of musk and sandalwood.",
-      "",
-      "",
-      "Front-load retailer scent keywords",
-      "Opens with 'black cherry' and burn-time benefits that match top Amazon description search queries.",
-      "Add quantified benefits",
-      "150-hour burn and clean-burn claims align with bullet and PDP language to improve conversion.",
-    ),
+    descriptionRecommendation: {
+      ...rec(
+        "Jessica",
+        "Indulge in Yankee Candle Black Cherry Large Jar Candle (22 oz)—a bold black cherry fragrance with warm spice and vanilla notes. Enjoy up to 150 hours of room-filling aroma with a premium paraffin blend and lead-free cotton wick for a clean, soot-minimizing burn. Perfect for gifting and everyday home fragrance.",
+        "Transport yourself to a lush summer orchard with the Yankee Candle Black Cherry Large Jar Candle. This iconic 22 oz jar is filled with a bold, sweet-meets-spicy cherry fragrance that evolves from top notes of fresh cherry to warm, velvety base notes of musk and sandalwood.",
+        "",
+        "",
+        "Front-load retailer scent keywords",
+        "Opens with 'black cherry' and burn-time benefits that match top Amazon description search queries.",
+        "Add quantified benefits",
+        "150-hour burn and clean-burn claims align with bullet and PDP language to improve conversion.",
+      ),
+      altKeywords: [
+        { id: "desc-kw-1", keyword: "black cherry scented candle", rank: 3,  volume: "74K"   },
+        { id: "desc-kw-2", keyword: "yankee candle large jar",     rank: 1,  volume: "210K"  },
+        { id: "desc-kw-3", keyword: "vanilla spice candle",        rank: 6,  volume: "31K"   },
+        { id: "desc-kw-4", keyword: "room filling fragrance",      rank: 9,  volume: "12.5K" },
+      ],
+      aeoPerformance: {
+        sources: ["Rufus", "ChatGPT"],
+        questions: [
+          {
+            question: "How long does a Yankee Candle Black Cherry last?",
+            answer: "Up to 150 hours of room-filling aroma from a 22 oz jar",
+            isNew: true,
+          },
+          {
+            question: "What does Black Cherry smell like?",
+            answer: "Bold black cherry fragrance with warm spice and vanilla notes",
+          },
+        ],
+      },
+    },
     bulletRecommendations: [
       {
         id: "br-1",
@@ -166,6 +222,20 @@ export const SKU_CONTENT: Record<string, SkuContentBundle> = {
             ],
           },
         ],
+        aeoPerformance: {
+          sources: ["Rufus", "ChatGPT"],
+          questions: [
+            {
+              question: "Is this candle safe to burn indoors?",
+              answer: "Lead-free cotton wick and soot-minimizing formula",
+              isNew: true,
+            },
+            {
+              question: "Are Yankee Candles non-toxic?",
+              answer: "Premium paraffin blend with no lead in the wick",
+            },
+          ],
+        },
       },
       {
         id: "br-4",
@@ -188,6 +258,20 @@ export const SKU_CONTENT: Record<string, SkuContentBundle> = {
             ],
           },
         ],
+        aeoPerformance: {
+          sources: ["Rufus", "Perplexity Shop"],
+          questions: [
+            {
+              question: "What's a good candle gift for a birthday?",
+              answer: "Signature glass jar presentation for birthdays, holidays, and housewarmings",
+              isNew: true,
+            },
+            {
+              question: "Does Yankee Candle come gift-ready?",
+              answer: "Iconic jar presentation suitable for gifting without extra packaging",
+            },
+          ],
+        },
       },
       {
         id: "br-5",

@@ -18,6 +18,7 @@ import { fieldLabelContentStack, FIELD_RECO_HEADER_GAP } from "./field-layout"
 import { EditableRecommendationField } from "./editable-recommendation-field"
 import { FieldSyncStatusRow } from "./recommendation-sync-ui"
 import { ReasoningPanel, ToggleSwitch } from "./reasoning-ui"
+import { AltKeywordsPanel } from "./alt-keywords-panel"
 import type { FieldCompareTarget } from "./vertical-source-compare-grid"
 import type { PublishBatch, TitleRecommendation, TitleStatus, SyncFootprint } from "./types"
 
@@ -134,7 +135,7 @@ export function ContentRecommendationHeader({
   onCompareTargetChange,
   isOpen,
   onToggleOpen,
-  collapsible = true,
+  collapsible = false,
   isAiRecommendation = true,
   hideCompareTabs = false,
 }: {
@@ -145,7 +146,7 @@ export function ContentRecommendationHeader({
   onCompareTargetChange: (target: FieldCompareTarget) => void
   isOpen: boolean
   onToggleOpen: () => void
-  /** When false, label is static (no expand/collapse chevron). */
+  /** When true, shows an expand/collapse chevron. Defaults to false — always shown. */
   collapsible?: boolean
   /** Sparkles icon is shown only for AI-generated recommendations. */
   isAiRecommendation?: boolean
@@ -154,6 +155,8 @@ export function ContentRecommendationHeader({
 }) {
   const fp = resolveFieldSyncFootprint(syncFootprint)
   const isPublishedLocked = status === "accepted" && isFieldPublishingLocked(fp)
+  // "Changes queued" state is always collapsible so users can collapse it out of the way
+  const effectivelyCollapsible = collapsible || isPublishedLocked
   const headerLabel = isPublishedLocked
     ? (labels.queued ?? "Changes queued")
     : status === "accepted"
@@ -178,7 +181,7 @@ export function ContentRecommendationHeader({
   return (
     <div className="flex min-h-[30px] w-full flex-nowrap items-center justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          {collapsible ? (
+          {effectivelyCollapsible ? (
             <button
               type="button"
               onClick={onToggleOpen}
@@ -237,6 +240,7 @@ interface ContentRecommendationBodyProps {
   addNewLabel?: string
   onAddNew?: () => void
   hideReasoning?: boolean
+  hideAltKeywords?: boolean
   rejectLabel?: string
   editAriaLabel?: string
   editRows?: number
@@ -269,6 +273,7 @@ export function ContentRecommendationBody({
   addNewLabel,
   onAddNew,
   hideReasoning = false,
+  hideAltKeywords = false,
   rejectLabel = "Reject",
   editAriaLabel = "Edit AI recommendation",
   editRows = 3,
@@ -277,6 +282,37 @@ export function ContentRecommendationBody({
   header,
 }: ContentRecommendationBodyProps) {
   const [showReasoning, setShowReasoning] = useState(false)
+  const [showAltKeywords, setShowAltKeywords] = useState(false)
+  const [usedKeywordIds, setUsedKeywordIds] = useState<Set<string>>(new Set())
+  // Tracks the exact string each keyword appended so removal can precisely strip it
+  const [appliedSuffixes, setAppliedSuffixes] = useState<Map<string, string>>(new Map())
+  const altKeywords = recommendation.altKeywords ?? []
+
+  function handleUseKeyword(kw: { id: string; keyword: string; replacesWord?: string }) {
+    if (kw.replacesWord) {
+      // Targeted swap: replace the specific word/phrase in the recommendation text
+      const escaped = kw.replacesWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      const newText = recommendation.recommendedText.replace(new RegExp(escaped, "i"), kw.keyword)
+      onRecommendedTextChange(newText)
+    } else {
+      // Append keyword as an additional descriptor
+      const suffix = `, ${kw.keyword}`
+      onRecommendedTextChange(recommendation.recommendedText + suffix)
+      setAppliedSuffixes((prev) => new Map(prev).set(kw.id, suffix))
+    }
+    setUsedKeywordIds((prev) => new Set(prev).add(kw.id))
+  }
+
+  function handleRemoveKeyword(kw: { id: string }) {
+    const suffix = appliedSuffixes.get(kw.id)
+    if (suffix) {
+      // Strip only this keyword's contribution from the current text
+      onRecommendedTextChange(recommendation.recommendedText.replace(suffix, ""))
+      setAppliedSuffixes((prev) => { const m = new Map(prev); m.delete(kw.id); return m })
+    }
+    setUsedKeywordIds((prev) => { const s = new Set(prev); s.delete(kw.id); return s })
+  }
+
   const isModified = recommendation.recommendedText !== originalText
   const fp = resolveFieldSyncFootprint(syncFootprint)
   const isSyncing = fp === "syncing"
@@ -299,6 +335,9 @@ export function ContentRecommendationBody({
 
   function handleResetRecommendation() {
     onRecommendedTextChange(originalText)
+    // Clear all keyword applied states so cards reset to "+" when text is reverted
+    setUsedKeywordIds(new Set())
+    setAppliedSuffixes(new Map())
   }
 
   if (!showEditor) {
@@ -360,29 +399,16 @@ export function ContentRecommendationBody({
 
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-3">
-            {isPublishedLocked ? (
-              addNewLabel && onAddNew ? (
-                <button
-                  type="button"
-                  onClick={onAddNew}
-                  className="text-xs font-medium text-primary hover:underline"
-                >
-                  {addNewLabel}
-                </button>
-              ) : (
-                <span />
-              )
-            ) : hideReasoning ? (
-              <span />
+            {isPublishedLocked && addNewLabel && onAddNew ? (
+              <button
+                type="button"
+                onClick={onAddNew}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                {addNewLabel}
+              </button>
             ) : (
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-primary">Show Reasoning</span>
-                <ToggleSwitch
-                  checked={showReasoning}
-                  onChange={setShowReasoning}
-                  ariaLabel="Toggle reasoning"
-                />
-              </div>
+              <span />
             )}
             <div className="flex shrink-0 flex-col items-end justify-center gap-1">
               {status === "pending" ||
@@ -492,8 +518,68 @@ export function ContentRecommendationBody({
             </div>
           </div>
         </div>
-        {!isPublishedLocked && !hideReasoning && showReasoning ? (
-          <ReasoningPanel reasoning={recommendation.reasoning} />
+        {/* Accordions — Reasoning first, then Alt Keywords (each controlled independently) */}
+        {!isPublishedLocked && (!hideReasoning || (!hideAltKeywords && altKeywords.length > 0)) ? (
+          <div className="flex flex-col border-t border-slate-100">
+            {/* Reasoning accordion */}
+            {!hideReasoning && recommendation.reasoning.length > 0 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowReasoning((v) => !v)}
+                  className="flex w-full items-center gap-1.5 py-2 text-left"
+                >
+                  {showReasoning ? (
+                    <ChevronDown className="size-3.5 shrink-0 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="size-3.5 shrink-0 text-slate-400" />
+                  )}
+                  <span className="bg-linear-to-r from-brand-400 to-brand-600 bg-clip-text text-xs font-medium text-transparent">
+                    Reasoning
+                  </span>
+                </button>
+                {showReasoning && (
+                  <div className="pb-2">
+                    <ReasoningPanel
+                      reasoning={recommendation.reasoning}
+                      aeoPerformance={recommendation.aeoPerformance}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Alt Keywords accordion */}
+            {!hideAltKeywords && altKeywords.length > 0 && (
+              <div className={cn(recommendation.reasoning.length > 0 && "border-t border-slate-100")}>
+                <button
+                  type="button"
+                  onClick={() => setShowAltKeywords((v) => !v)}
+                  className="flex w-full items-center gap-1.5 py-2 text-left"
+                >
+                  {showAltKeywords ? (
+                    <ChevronDown className="size-3.5 shrink-0 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="size-3.5 shrink-0 text-slate-400" />
+                  )}
+                  <span className="text-xs font-medium text-slate-600">Alt Keywords</span>
+                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
+                    {altKeywords.length}
+                  </span>
+                </button>
+                {showAltKeywords && (
+                  <div className="pb-2">
+                    <AltKeywordsPanel
+                      keywords={altKeywords}
+                      usedIds={usedKeywordIds}
+                      onUse={handleUseKeyword}
+                      onRemove={handleRemoveKeyword}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         ) : null}
       </div>
     </div>

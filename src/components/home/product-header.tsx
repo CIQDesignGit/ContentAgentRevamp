@@ -11,6 +11,7 @@ interface ProductHeaderProps {
   asin: string
   productId: string
   brand: string
+  thumbnailUrl?: string
   compliance: number
   seo: number
   aeo: number
@@ -24,6 +25,7 @@ export function ProductHeader({
   asin,
   productId,
   brand,
+  thumbnailUrl,
   compliance,
   seo,
   aeo,
@@ -36,21 +38,37 @@ export function ProductHeader({
   return (
     <div className="flex shrink-0 flex-col border-b border-slate-200 bg-white">
       <div className="flex items-start justify-between gap-6 px-6 py-4">
-        <div className="min-w-0 space-y-2">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="truncate text-base font-semibold text-slate-900">{title}</h1>
-            <span className="flex items-center gap-2 text-xs text-slate-500">
+        {/* Left: thumbnail + product info */}
+        <div className="flex min-w-0 items-start gap-3">
+          {/* Product thumbnail */}
+          {thumbnailUrl ? (
+            <img
+              src={thumbnailUrl}
+              alt=""
+              className="size-14 shrink-0 rounded-lg border border-slate-200 bg-slate-100 object-contain p-1"
+            />
+          ) : (
+            <div
+              className="size-14 shrink-0 rounded-lg border border-slate-200 bg-slate-100"
+              aria-hidden
+            />
+          )}
+
+          {/* Metadata above title, then metric chips below */}
+          <div className="min-w-0 space-y-1">
+            <span className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
               <span>{asin}</span>
               <span aria-hidden className="size-1 rounded-full bg-slate-300" />
               <span>{productId}</span>
               <span aria-hidden className="size-1 rounded-full bg-slate-300" />
               <span>{brand}</span>
             </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <MetricChip label="Compliance" value={compliance} icon={<ShieldCheck className="size-3" />} />
-            <MetricChip label="SEO" value={seo} icon={<Search className="size-3" />} />
-            <MetricChip label="AEO" value={aeo} icon={<Sparkles className="size-3" />} />
+            <h1 className="truncate text-base font-semibold text-slate-900">{title}</h1>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <MetricChip label="Compliance" value={compliance} icon={<ShieldCheck className="size-3" />} />
+              <MetricChip label="SEO" value={seo} icon={<Search className="size-3" />} />
+              <MetricChip label="AEO" value={aeo} icon={<Sparkles className="size-3" />} />
+            </div>
           </div>
         </div>
 
@@ -78,6 +96,7 @@ export function ProductHeader({
           </div>
         </div>
       </div>
+
     </div>
   )
 }
