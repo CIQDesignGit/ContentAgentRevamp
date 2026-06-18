@@ -51,7 +51,7 @@ function makeHighlights(skuId: string): ItemHighlight[] {
 export default function TitleOptimizationPage() {
   const [selectedSkuId, setSelectedSkuId] = useState(MOCK_SKUS[0].id)
   const [search, setSearch] = useState("")
-  const [filter, setFilter] = useState("all")
+  const [filter, setFilter] = useState("title-optimization")
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [contentState, setContentState] = useState<ContentState>(() => buildInitialState())
@@ -263,6 +263,7 @@ export default function TitleOptimizationPage() {
         onBrandsChange={setSelectedBrands}
         matchCount={filteredSkus.length}
         onActivityLogClick={() => {}}
+        lockedFilter="title-optimization"
       />
 
       <div className="flex min-h-0 flex-1">

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { BrainCircuit, Check, ChevronDown, FunnelPlus, History, Search, X } from "lucide-react"
+import { BrainCircuit, Check, ChevronDown, FunnelPlus, History, Lock, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { COLUMNS, ColumnFilterPanel, type ColumnFilters } from "./column-filter-dialog"
@@ -14,6 +14,7 @@ const FILTERS = [
   { key: "compliance", label: "Compliance" },
   { key: "seo", label: "SEO" },
   { key: "aeo", label: "AEO" },
+  { key: "title-optimization", label: "Title Optimization" },
 ]
 
 export const BRANDS = ["Yankee Candle", "NutriChef", "Vevor", "Proctor Silex", "Dyson"]
@@ -81,12 +82,15 @@ function DropdownItem({
 function TypeFilterDropdown({
   value,
   onChange,
+  lockedFilter,
 }: {
   value: string
   onChange: (v: string) => void
+  /** When set, this filter key is force-selected and all others are locked. */
+  lockedFilter?: string
 }) {
-  const selected = FILTERS.find((f) => f.key === value)
-  const isFiltered = value !== "all"
+  const activeValue = lockedFilter ?? value
+  const selected = FILTERS.find((f) => f.key === activeValue)
 
   return (
     <Popover>
@@ -94,16 +98,34 @@ function TypeFilterDropdown({
         field="Task type"
         value={selected?.label ?? "All"}
       />
-      <PopoverContent align="start" className="w-40 p-1">
+      <PopoverContent align="start" className="w-48 p-1">
         <ul>
-          {FILTERS.map((f) => (
-            <DropdownItem
-              key={f.key}
-              label={f.label}
-              checked={f.key === value}
-              onToggle={() => onChange(f.key)}
-            />
-          ))}
+          {FILTERS.map((f) => {
+            const isLocked = !!lockedFilter && f.key !== lockedFilter
+            const isChecked = f.key === activeValue
+
+            if (isLocked) {
+              return (
+                <li key={f.key}>
+                  <span className="flex w-full cursor-not-allowed items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-slate-400">
+                    <span className="grid size-4 shrink-0 place-items-center rounded border border-slate-200 bg-slate-50">
+                      <Lock className="size-2.5 text-slate-300" />
+                    </span>
+                    {f.label}
+                  </span>
+                </li>
+              )
+            }
+
+            return (
+              <DropdownItem
+                key={f.key}
+                label={f.label}
+                checked={isChecked}
+                onToggle={() => onChange(f.key)}
+              />
+            )
+          })}
         </ul>
       </PopoverContent>
     </Popover>
@@ -202,11 +224,13 @@ interface FilterBarProps {
   onBrandsChange: (brands: string[]) => void
   matchCount: number
   onActivityLogClick?: () => void
+  /** When set, locks the type filter to this key — all others are shown as disabled. */
+  lockedFilter?: string
 }
 
 export function FilterBar({
   search, onSearchChange, activeFilter, onFilterChange,
-  selectedBrands, onBrandsChange, matchCount, onActivityLogClick,
+  selectedBrands, onBrandsChange, matchCount, onActivityLogClick, lockedFilter,
 }: FilterBarProps) {
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(search.length > 0)
@@ -243,7 +267,7 @@ export function FilterBar({
           </button>
         )}
 
-        <TypeFilterDropdown value={activeFilter} onChange={onFilterChange} />
+        <TypeFilterDropdown value={activeFilter} onChange={onFilterChange} lockedFilter={lockedFilter} />
 
         {/* Separator — Type is a distinct filter from column-based filters */}
         <span aria-hidden className="h-4 w-px shrink-0 bg-slate-200" />
