@@ -51,7 +51,11 @@ export function useBulletRecommendationView({
   onUndoReject,
   onPushUpdate,
   onAcceptNewDraft,
-}: BulletRecommendationSlotProps) {
+  hideLabel = false,
+}: BulletRecommendationSlotProps & {
+  /** When true, suppresses the per-bullet label row (e.g. "Bullet 1"). */
+  hideLabel?: boolean
+}) {
   const [isOpen, setIsOpen] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [draftText, setDraftText] = useState("")
@@ -84,7 +88,7 @@ export function useBulletRecommendationView({
     setIsEditing(false)
   }
 
-  const recommendationHeaderEl = !isFullySynced ? (
+  const recommendationHeaderEl = !isFullySynced && !hideLabel ? (
     <ContentRecommendationHeader
       labels={labels}
       status={item.status}
@@ -200,7 +204,9 @@ export function useBulletRecommendationView({
 }
 
 /** AI recommendation block for one bullet — used below the unified compare grid. */
-export function BulletRecommendationBlock(props: BulletRecommendationSlotProps) {
+export function BulletRecommendationBlock(
+  props: BulletRecommendationSlotProps & { hideLabel?: boolean },
+) {
   const { gridHeader, gridBody, isFullySynced } = useBulletRecommendationView(props)
 
   if (isFullySynced || (!gridHeader && !gridBody)) return null

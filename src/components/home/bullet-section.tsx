@@ -2,13 +2,15 @@
 
 import { useMemo, useState } from "react"
 import { Columns2, ListChecks } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { buildTitleDiff } from "@/lib/build-title-diff"
 import { buildDisplayBulletLists } from "@/lib/build-display-bullet-lists"
 import { titleMatchPercent } from "@/lib/title-match"
 import { resolvePublishedSourceDisplay } from "@/lib/published-source-display"
 import { resolveBulletSyncFootprint } from "@/lib/sync-footprint"
 import { BulletBulkActions } from "./bullet-bulk-actions"
 import { BulletsSourceCompare } from "./bullets-source-compare"
-import { ContentRecommendationHeader } from "./content-recommendation-card"
+import { CompareTabs, ContentRecommendationHeader } from "./content-recommendation-card"
 import { AiRecommendationSparklesIcon, SourceChannelLabel } from "./bullet-source-cell"
 import {
   BulletRecommendationBlock,
@@ -115,6 +117,121 @@ function buildRecommendationBlockProps(
   }
 }
 
+/**
+ * PDP-only combined bullet list view.
+ * Shows all AI-recommended bullets in one box formatted as a bullet list,
+ * with bulk Accept / Reject below. Box border + bg adapts to review state.
+ * Renders word-level diffs when compareTarget is "pdp", plain text when "final".
+ */
+function NoPimBulletsCombinedView({
+  activeRecommendations,
+  recommendations,
+  originals,
+  compareTarget,
+  pdpBullets,
+  onAcceptAll,
+  onRejectAll,
+  onResetAll,
+}: {
+  activeRecommendations: BulletRecommendation[]
+  recommendations: BulletRecommendation[]
+  originals: Record<string, string>
+  compareTarget: FieldCompareTarget
+  pdpBullets: string[]
+  onAcceptAll: () => void
+  onRejectAll: () => void
+  onResetAll: () => void
+}) {
+  const allAccepted = activeRecommendations.every((r) => r.status === "accepted")
+  const allRejected = activeRecommendations.every((r) => r.status === "rejected")
+  const isFinalView = compareTarget === "final"
+
+  // Precompute word-level diffs. Each AI bullet is compared against the PDP bullet
+  // at the same position — this produces meaningful kept/removed/added segments.
+  const diffs = useMemo(
+    () =>
+      activeRecommendations.map((reco, idx) => {
+        const baseline = pdpBullets[idx] ?? ""
+        return buildTitleDiff(baseline, reco.recommendedText)
+      }),
+    [activeRecommendations, pdpBullets],
+  )
+
+  const outerClass = allAccepted
+    ? "bg-success-50"
+    : allRejected
+      ? "bg-slate-50"
+      : "bg-brand-50"
+
+  const innerClass = allAccepted
+    ? "border-success-200 bg-white"
+    : allRejected
+      ? "border-slate-200 bg-slate-100"
+      : "border-brand-300 bg-white"
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-3 pb-3">
+      <div className={cn("w-full min-w-0 rounded-lg px-0.5 py-0.5", outerClass)}>
+        <div className={cn("rounded-md border px-3 py-2", innerClass)}>
+          <ul className="space-y-2">
+            {activeRecommendations.map((reco, idx) => (
+              <li key={reco.id} className="flex gap-2">
+                <span
+                  className={cn(
+                    "mt-0.5 shrink-0 text-sm leading-relaxed",
+                    reco.status === "rejected" ? "text-slate-300" : "text-slate-400",
+                  )}
+                >
+                  •
+                </span>
+                {/* Diff view (vs. PDP) or plain text (Text tab) */}
+                {isFinalView || reco.status !== "pending" ? (
+                  <span
+                    className={cn(
+                      "text-sm leading-relaxed",
+                      reco.status === "accepted"
+                        ? "text-success-700"
+                        : reco.status === "rejected"
+                          ? "text-slate-400 line-through"
+                          : "text-slate-900",
+                    )}
+                  >
+                    {reco.recommendedText}
+                  </span>
+                ) : (
+                  <p className="text-sm leading-relaxed text-slate-900">
+                    {diffs[idx].map((seg, si) => {
+                      if (seg.kind === "kept") return <span key={si}>{seg.text}</span>
+                      if (seg.kind === "removed")
+                        return (
+                          <span key={si} className="text-slate-400 line-through">
+                            {seg.text}
+                          </span>
+                        )
+                      return (
+                        <span key={si} className="rounded bg-green-50 px-0.5 font-medium text-green-700">
+                          {seg.text}
+                        </span>
+                      )
+                    })}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <BulletBulkActions
+        recommendations={recommendations}
+        originals={originals}
+        onAcceptAll={onAcceptAll}
+        onRejectAll={onRejectAll}
+        onResetAll={onResetAll}
+      />
+    </div>
+  )
+}
+
 export function BulletPointsSection({
   pimBullets,
   pdpBullets,
@@ -138,8 +255,9 @@ export function BulletPointsSection({
   const [gridCompareTarget] = useState<FieldCompareTarget>("pim")
   const [recoCompareTarget, setRecoCompareTarget] = useState<FieldCompareTarget>("pim")
 
-  // No PIM to compare against — always diff against PDP
-  const effectiveRecoCompareTarget: FieldCompareTarget = hasPimData ? recoCompareTarget : "pdp"
+  // No PIM to compare against — "vs. PIM" falls back to "vs. PDP"; "Text" is still allowed.
+  const effectiveRecoCompareTarget: FieldCompareTarget =
+    !hasPimData && recoCompareTarget === "pim" ? "pdp" : recoCompareTarget
 
   const matchPercent = useMemo(
     () => (hasPimData ? titleMatchPercent(pimBullets.join("\n"), pdpBullets.join("\n")) : 0),
@@ -167,6 +285,18 @@ export function BulletPointsSection({
     [activeRecommendations],
   )
 
+  const handlers = {
+    onRecommendationTextChange,
+    onAccept,
+    onReject,
+    onReset,
+    onUndoAccept,
+    onUndoReject,
+    onPushUpdate,
+    onAcceptNewDraft,
+  }
+
+  // PIM+PDP: each bullet gets its own "Bullet N" label heading
   const recommendationBlocks = activeRecommendations.map((reco) => (
     <BulletRecommendationBlock
       key={reco.id}
@@ -178,33 +308,24 @@ export function BulletPointsSection({
         effectiveRecoCompareTarget,
         getFieldPublishBatch,
         getBulletPublishQueue,
-        {
-          onRecommendationTextChange,
-          onAccept,
-          onReject,
-          onReset,
-          onUndoAccept,
-          onUndoReject,
-          onPushUpdate,
-          onAcceptNewDraft,
-        },
+        handlers,
       )}
     />
   ))
 
-  // When no PIM data: all bullet recommendations live in the left (PIM) column
+  // When no PIM data: all bullets rendered as one combined list in the left column
   const noPimBulletsCell =
-    !hasPimData && recommendationBlocks.length > 0 ? (
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="divide-y divide-slate-200">{recommendationBlocks}</div>
-        <BulletBulkActions
-          recommendations={recommendations}
-          originals={originals}
-          onAcceptAll={onAcceptAll}
-          onRejectAll={onRejectAll}
-          onResetAll={onResetAll}
-        />
-      </div>
+    !hasPimData && activeRecommendations.length > 0 ? (
+      <NoPimBulletsCombinedView
+        activeRecommendations={activeRecommendations}
+        recommendations={recommendations}
+        originals={originals}
+        compareTarget={effectiveRecoCompareTarget}
+        pdpBullets={pdpBullets}
+        onAcceptAll={onAcceptAll}
+        onRejectAll={onRejectAll}
+        onResetAll={onResetAll}
+      />
     ) : null
 
   const pdpCompareForPim = useMemo(
@@ -227,6 +348,15 @@ export function BulletPointsSection({
               {pimBullets.length} PIM · {pdpBullets.length} PDP
             </span>
           </>
+        )}
+        {hasPendingRecommendations && (
+          <div className="ml-auto">
+            <CompareTabs
+              value={effectiveRecoCompareTarget}
+              onChange={setRecoCompareTarget}
+              exclude={hasPimData ? [] : ["pim"]}
+            />
+          </div>
         )}
       </header>
 
@@ -276,6 +406,7 @@ export function BulletPointsSection({
                   isOpen
                   collapsible={false}
                   onToggleOpen={() => undefined}
+                  hideCompareTabs
                 />
               </div>
               <div className="divide-y divide-slate-200">{recommendationBlocks}</div>

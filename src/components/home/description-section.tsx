@@ -5,6 +5,7 @@ import { AlignLeft, Columns2 } from "lucide-react"
 import { titleMatchPercent } from "@/lib/title-match"
 import { resolvePublishedSourceDisplay } from "@/lib/published-source-display"
 import {
+  CompareTabs,
   ContentRecommendationBody,
   ContentRecommendationHeader,
 } from "./content-recommendation-card"
@@ -53,8 +54,9 @@ export function DescriptionSection({
   const [compareTarget, setCompareTarget] = useState<FieldCompareTarget>("pim")
   const [draftCompareTarget, setDraftCompareTarget] = useState<FieldCompareTarget>("pim")
 
-  // No PIM to compare against — always diff against PDP
-  const effectiveCompareTarget: FieldCompareTarget = hasPimData ? compareTarget : "pdp"
+  // No PIM to compare against — "vs. PIM" falls back to "vs. PDP"; "Text" is still allowed.
+  const effectiveCompareTarget: FieldCompareTarget =
+    !hasPimData && compareTarget === "pim" ? "pdp" : compareTarget
   const [isOpen, setIsOpen] = useState(true)
   const [isAddingNew, setIsAddingNew] = useState(false)
   const [draftText, setDraftText] = useState("")
@@ -98,6 +100,7 @@ export function DescriptionSection({
         onCompareTargetChange={setCompareTarget}
         isOpen={isOpen}
         onToggleOpen={() => setIsOpen((v) => !v)}
+        hideCompareTabs
       />
     ) : null
 
@@ -112,7 +115,7 @@ export function DescriptionSection({
           pimBaseline=""
           pdpBaseline={displayPdp}
           originalText={originalText}
-          compareTarget="pdp"
+          compareTarget={effectiveCompareTarget}
           status={status}
           syncFootprint={syncFootprint}
           hasUnpublishedEdits={hasUnpublishedEdits}
@@ -161,6 +164,15 @@ export function DescriptionSection({
             <Columns2 className="size-3.5 shrink-0 text-slate-400" aria-hidden />
             {matchPercent}% match between PIM and retailer
           </span>
+        )}
+        {showReco && status === "pending" && isOpen && (
+          <div className="ml-auto">
+            <CompareTabs
+              value={effectiveCompareTarget}
+              onChange={setCompareTarget}
+              exclude={hasPimData ? [] : ["pim"]}
+            />
+          </div>
         )}
       </header>
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState, type ReactNode } from "react"
-import { Check, ChevronDown, ChevronRight, RotateCcw, Undo2, X } from "lucide-react"
+import { Check, ChevronDown, ChevronRight, RotateCcw, ToggleLeft, ToggleRight, Undo2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { buildTitleDiff } from "@/lib/build-title-diff"
 import {
@@ -119,17 +119,24 @@ const COMPARE_OPTIONS: { key: FieldCompareTarget; label: string }[] = [
 export function CompareTabs({
   value,
   onChange,
+  exclude = [],
 }: {
   value: FieldCompareTarget
   onChange: (v: FieldCompareTarget) => void
+  /** Keys to omit from the tab list (e.g. hide "pim" when no PIM data exists). */
+  exclude?: FieldCompareTarget[]
 }) {
+  const visibleOptions = exclude.length
+    ? COMPARE_OPTIONS.filter((opt) => !exclude.includes(opt.key))
+    : COMPARE_OPTIONS
+
   return (
     <div
       role="tablist"
       aria-label="Compare recommendation with"
       className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5"
     >
-      {COMPARE_OPTIONS.map((opt) => (
+      {visibleOptions.map((opt) => (
         <button
           key={opt.key}
           type="button"
@@ -436,7 +443,11 @@ export function ContentRecommendationBody({
               {recommendation.recommendedText.length} / {charLimit}
             </p>
           ) : null}
+
+          {/* Action bar: toggles on the left, Accept/Reject on the right */}
           <div className="flex items-center justify-between gap-3">
+
+            {/* Left side: addNewLabel (locked state) OR Reasoning/AltKeywords toggles */}
             {isPublishedLocked && addNewLabel && onAddNew ? (
               <button
                 type="button"
@@ -445,9 +456,51 @@ export function ContentRecommendationBody({
               >
                 {addNewLabel}
               </button>
+            ) : !isPublishedLocked ? (
+              <div className="flex items-center gap-3">
+                {!hideReasoning && recommendation.reasoning.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowReasoning((v) => !v)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 text-xs font-medium transition-colors",
+                      showReasoning ? "text-primary" : "text-slate-500 hover:text-slate-900",
+                    )}
+                  >
+                    {showReasoning ? (
+                      <ToggleRight className="size-3.5 shrink-0 text-primary" aria-hidden />
+                    ) : (
+                      <ToggleLeft className="size-3.5 shrink-0 text-slate-400" aria-hidden />
+                    )}
+                    Reasoning
+                  </button>
+                )}
+                {!hideAltKeywords && altKeywords.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAltKeywords((v) => !v)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 text-xs font-medium transition-colors",
+                      showAltKeywords ? "text-primary" : "text-slate-500 hover:text-slate-900",
+                    )}
+                  >
+                    {showAltKeywords ? (
+                      <ToggleRight className="size-3.5 shrink-0 text-primary" aria-hidden />
+                    ) : (
+                      <ToggleLeft className="size-3.5 shrink-0 text-slate-400" aria-hidden />
+                    )}
+                    Alt Keywords
+                    <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
+                      {altKeywords.length}
+                    </span>
+                  </button>
+                )}
+              </div>
             ) : (
               <span />
             )}
+
+            {/* Right side: Accept / Reject / Undo buttons */}
             <div className="flex shrink-0 flex-col items-end justify-center gap-1">
               {status === "pending" ||
               showReacceptActions ||
@@ -558,65 +611,26 @@ export function ContentRecommendationBody({
             </div>
           </div>
         </div>
-        {/* Accordions — Reasoning first, then Alt Keywords (each controlled independently) */}
-        {!isPublishedLocked && (!hideReasoning || (!hideAltKeywords && altKeywords.length > 0)) ? (
-          <div className="flex flex-col border-t border-slate-100">
-            {/* Reasoning accordion */}
-            {!hideReasoning && recommendation.reasoning.length > 0 && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowReasoning((v) => !v)}
-                  className="flex w-full items-center gap-1.5 py-4 text-left"
-                >
-                  {showReasoning ? (
-                    <ChevronDown className="size-3.5 shrink-0 text-slate-400" />
-                  ) : (
-                    <ChevronRight className="size-3.5 shrink-0 text-slate-400" />
-                  )}
-                  <span className="bg-linear-to-r from-brand-400 to-brand-600 bg-clip-text text-xs font-medium text-transparent">
-                    Reasoning
-                  </span>
-                </button>
-                {showReasoning && (
-                  <div className="pb-2">
-                    <ReasoningPanel
-                      reasoning={recommendation.reasoning}
-                      aeoPerformance={recommendation.aeoPerformance}
-                    />
-                  </div>
-                )}
+
+        {/* Expanded panels — only rendered when their toggle is active */}
+        {!isPublishedLocked && (showReasoning || showAltKeywords) ? (
+          <div className="flex flex-col border-t border-slate-100 pt-3">
+            {showReasoning && !hideReasoning && recommendation.reasoning.length > 0 && (
+              <div className="pb-2">
+                <ReasoningPanel
+                  reasoning={recommendation.reasoning}
+                  aeoPerformance={recommendation.aeoPerformance}
+                />
               </div>
             )}
-
-            {/* Alt Keywords accordion */}
-            {!hideAltKeywords && altKeywords.length > 0 && (
-              <div className={cn(recommendation.reasoning.length > 0 && "border-t border-slate-100")}>
-                <button
-                  type="button"
-                  onClick={() => setShowAltKeywords((v) => !v)}
-                  className="flex w-full items-center gap-1.5 py-2 text-left"
-                >
-                  {showAltKeywords ? (
-                    <ChevronDown className="size-3.5 shrink-0 text-slate-400" />
-                  ) : (
-                    <ChevronRight className="size-3.5 shrink-0 text-slate-400" />
-                  )}
-                  <span className="text-xs font-medium text-slate-600">Alternate Keywords</span>
-                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
-                    {altKeywords.length}
-                  </span>
-                </button>
-                {showAltKeywords && (
-                  <div className="pb-2">
-                    <AltKeywordsPanel
-                      keywords={altKeywords}
-                      usedIds={usedKeywordIds}
-                      onUse={handleUseKeyword}
-                      onRemove={handleRemoveKeyword}
-                    />
-                  </div>
-                )}
+            {showAltKeywords && !hideAltKeywords && altKeywords.length > 0 && (
+              <div className={cn("pb-2", showReasoning && "border-t border-slate-100 pt-2")}>
+                <AltKeywordsPanel
+                  keywords={altKeywords}
+                  usedIds={usedKeywordIds}
+                  onUse={handleUseKeyword}
+                  onRemove={handleRemoveKeyword}
+                />
               </div>
             )}
           </div>

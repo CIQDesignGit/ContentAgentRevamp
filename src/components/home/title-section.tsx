@@ -7,6 +7,7 @@ import { resolvePublishedSourceDisplay } from "@/lib/published-source-display"
 import type { FieldPublishQueueItem } from "@/lib/build-field-publish-queue"
 import { fieldLabelContentStack } from "./field-layout"
 import {
+  CompareTabs,
   ContentRecommendationBody,
   ContentRecommendationHeader,
 } from "./content-recommendation-card"
@@ -103,8 +104,9 @@ export function ProductTitleSection({
     [hasPimData, displayPim, displayPdp],
   )
 
-  // When no PIM data exists, the diff baseline is always the PDP (nothing to compare against from PIM)
-  const effectiveCompareTarget: FieldCompareTarget = hasPimData ? compareTarget : "pdp"
+  // When no PIM data exists, "vs. PIM" falls back to "vs. PDP"; "Text" is still allowed.
+  const effectiveCompareTarget: FieldCompareTarget =
+    !hasPimData && compareTarget === "pim" ? "pdp" : compareTarget
 
   const showReco = Boolean(recommendation)
   const hasPublishQueue = publishQueue.length > 0
@@ -229,6 +231,7 @@ export function ProductTitleSection({
         isOpen={isOpen}
         onToggleOpen={() => setIsOpen((v) => !v)}
         isAiRecommendation={!isManualTitleEdit}
+        hideCompareTabs
       />
     ) : null
 
@@ -253,7 +256,7 @@ export function ProductTitleSection({
           pimBaseline=""
           pdpBaseline={displayPdp}
           originalText={originalText}
-          compareTarget="pdp"
+          compareTarget={effectiveCompareTarget}
           status={status}
           syncFootprint={syncFootprint}
           hasUnpublishedEdits={hasUnpublishedEdits}
@@ -282,6 +285,15 @@ export function ProductTitleSection({
             <Columns2 className="size-3.5 shrink-0 text-slate-400" aria-hidden />
             {matchPercent}% match between PIM and retailer
           </span>
+        )}
+        {showReco && status === "pending" && isOpen && (
+          <div className="ml-auto">
+            <CompareTabs
+              value={effectiveCompareTarget}
+              onChange={setCompareTarget}
+              exclude={hasPimData ? [] : ["pim"]}
+            />
+          </div>
         )}
       </header>
 
