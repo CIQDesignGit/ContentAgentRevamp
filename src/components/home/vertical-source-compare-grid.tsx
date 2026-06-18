@@ -28,6 +28,10 @@ interface VerticalSourceCompareGridProps {
   pimColumnLabel?: ReactNode
   /** When set, replaces the default text cell for the PDP column. */
   pdpCell?: ReactNode
+  /** Overrides the default Retailer/Amazon label for the PDP column header. */
+  pdpColumnLabel?: ReactNode
+  /** When true, renders pdpCell directly with no wrapper shell (no border/bg box). */
+  pdpCellBare?: boolean
   /** Full-width row below the source columns (e.g. AI Recommended Title + tabs). */
   recommendationHeader?: ReactNode
   /** Full-width row below the header (editable field, actions, reasoning). */
@@ -73,6 +77,8 @@ export function VerticalSourceCompareGrid({
   pimCellBare = false,
   pimColumnLabel,
   pdpCell,
+  pdpColumnLabel,
+  pdpCellBare = false,
   recommendationHeader,
   recommendationBody,
 }: VerticalSourceCompareGridProps) {
@@ -98,7 +104,7 @@ export function VerticalSourceCompareGrid({
 
   return (
     <div className={fieldSectionStack("w-full")}>
-      <div className={cn("grid gap-x-3", pimCellBare ? "items-start" : "items-stretch", columnClass)}>
+      <div className={cn("grid gap-x-3", (pimCellBare || pdpCellBare) ? "items-start" : "items-stretch", columnClass)}>
         {showPim ? (
           <SourceCompareColumn
             showLabel={showColumnLabels}
@@ -124,11 +130,17 @@ export function VerticalSourceCompareGrid({
           <SourceCompareColumn
             showLabel={showColumnLabels}
             label={
-              <SourceCellLabel logoSrc={RETAILER_LOGO_SRC} logoAlt="Amazon" sublabel="Retailer" />
+              pdpColumnLabel ?? (
+                <SourceCellLabel logoSrc={RETAILER_LOGO_SRC} logoAlt="Amazon" sublabel="Retailer" />
+              )
             }
           >
             {pdpCell ? (
-              <div className={sourceCellShellClass}>{pdpCell}</div>
+              pdpCellBare ? (
+                pdpCell
+              ) : (
+                <div className={sourceCellShellClass}>{pdpCell}</div>
+              )
             ) : (
               <BulletSourceCell
                 logoSrc={RETAILER_LOGO_SRC}

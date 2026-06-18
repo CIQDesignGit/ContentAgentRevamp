@@ -271,6 +271,8 @@ interface ContentRecommendationBodyProps {
   iconOnlyActions?: boolean
   /** Renders above the field in one group (gap-1 / 4px). */
   header?: ReactNode
+  /** When set, shows a character counter below the field (red when over limit). */
+  charLimit?: number
 }
 
 /** Recommendation field and actions — aligned beside the active source text row. */
@@ -302,6 +304,7 @@ export function ContentRecommendationBody({
   compact = false,
   iconOnlyActions = false,
   header,
+  charLimit,
 }: ContentRecommendationBodyProps) {
   const [showReasoning, setShowReasoning] = useState(false)
   const [showAltKeywords, setShowAltKeywords] = useState(false)
@@ -423,6 +426,16 @@ export function ContentRecommendationBody({
         )}
 
         <div className="space-y-1">
+          {charLimit ? (
+            <p className={cn(
+              "text-right text-xs tabular-nums",
+              recommendation.recommendedText.length > charLimit
+                ? "font-semibold text-error-600"
+                : "text-slate-400",
+            )}>
+              {recommendation.recommendedText.length} / {charLimit}
+            </p>
+          ) : null}
           <div className="flex items-center justify-between gap-3">
             {isPublishedLocked && addNewLabel && onAddNew ? (
               <button

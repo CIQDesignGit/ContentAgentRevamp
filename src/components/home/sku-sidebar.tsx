@@ -44,9 +44,11 @@ interface SkuSidebarProps {
   totalCount: number
   collapsed: boolean
   onToggle: () => void
+  /** When true, hides the Compliance / SEO / AEO metric chips on each card. */
+  hideMetrics?: boolean
 }
 
-export function SkuSidebar({ skus, selectedSkuId, onSelect, totalCount, collapsed, onToggle }: SkuSidebarProps) {
+export function SkuSidebar({ skus, selectedSkuId, onSelect, totalCount, collapsed, onToggle, hideMetrics = false }: SkuSidebarProps) {
   // ── Collapsed strip ──────────────────────────────────────────────────────────
   if (collapsed) {
     return (
@@ -134,12 +136,14 @@ export function SkuSidebar({ skus, selectedSkuId, onSelect, totalCount, collapse
                     </div>
                   </div>
 
-                  {/* Zone 2: metric chips */}
-                  <div className="flex items-center gap-1.5 px-3 pb-2.5 pt-0">
-                    <CardMetric label="Compliance" value={sku.metrics.compliance} />
-                    <CardMetric label="SEO" value={sku.metrics.seo} />
-                    <CardMetric label="AEO" value={sku.metrics.aeo} />
-                  </div>
+                  {/* Zone 2: metric chips — omitted in title-optimization variant */}
+                  {!hideMetrics && (
+                    <div className="flex items-center gap-1.5 px-3 pb-2.5 pt-0">
+                      <CardMetric label="Compliance" value={sku.metrics.compliance} />
+                      <CardMetric label="SEO" value={sku.metrics.seo} />
+                      <CardMetric label="AEO" value={sku.metrics.aeo} />
+                    </div>
+                  )}
                 </button>
               </li>
             )

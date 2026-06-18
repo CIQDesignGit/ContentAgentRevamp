@@ -671,6 +671,7 @@ export default function Home() {
             <section className="flex min-w-0 flex-1 flex-col">
               <div className="space-y-4 overflow-y-auto p-5">
                 <ProductTitleSection
+                  key={selectedSkuId}
                   pimTitle={content.title}
                   pdpTitle={pdp.title}
                   status={content.titleStatus}

@@ -10,7 +10,8 @@ import {
   ContentRecommendationBody,
   ContentRecommendationHeader,
 } from "./content-recommendation-card"
-import { AiRecommendationSparklesIcon, SourceChannelLabel } from "./bullet-source-cell"
+import { AiRecommendationSparklesIcon, SourceCellLabel, SourceChannelLabel } from "./bullet-source-cell"
+import { RETAILER_LOGO_SRC } from "./source-logos"
 import { PublishQueueList } from "./publish-queue-list"
 import type { FieldCompareTarget } from "./vertical-source-compare-grid"
 import { VerticalSourceCompareGrid } from "./vertical-source-compare-grid"
@@ -42,6 +43,8 @@ interface ProductTitleSectionProps {
   onPushUpdate?: () => void
   onAcceptNewDraft?: (text: string) => void
   onUndoStagedNewTitle?: () => void
+  /** When set, shows a character counter on the recommendation field. */
+  charLimit?: number
 }
 
 export function ProductTitleSection({
@@ -63,6 +66,7 @@ export function ProductTitleSection({
   onPushUpdate,
   onAcceptNewDraft,
   onUndoStagedNewTitle,
+  charLimit,
 }: ProductTitleSectionProps) {
   const [compareTarget, setCompareTarget] = useState<FieldCompareTarget>("pim")
   const [draftCompareTarget, setDraftCompareTarget] = useState<FieldCompareTarget>("pim")
@@ -263,6 +267,7 @@ export function ProductTitleSection({
           onUndoReject={onUndoReject}
           onPushUpdate={onPushUpdate}
           editAriaLabel={isManualTitleEdit ? "Edit title" : "Edit AI recommended title"}
+          charLimit={charLimit}
         />
       </div>
     ) : null
@@ -281,12 +286,17 @@ export function ProductTitleSection({
       </header>
 
       <VerticalSourceCompareGrid
-        pimValue={hasPimData ? displayPim : ""}
-        pdpValue={displayPdp}
+        pimValue={hasPimData ? displayPim : displayPdp}
+        pdpValue={hasPimData ? displayPdp : ""}
         compareTarget={effectiveCompareTarget}
-        pimCell={noPimRecoCell ?? undefined}
-        pimCellBare={!hasPimData}
         pimColumnLabel={
+          !hasPimData ? (
+            <SourceCellLabel logoSrc={RETAILER_LOGO_SRC} logoAlt="Amazon" sublabel="Retailer" />
+          ) : undefined
+        }
+        pdpCell={!hasPimData && noPimRecoCell ? noPimRecoCell : undefined}
+        pdpCellBare={!hasPimData}
+        pdpColumnLabel={
           !hasPimData ? (
             <SourceChannelLabel
               icon={<AiRecommendationSparklesIcon />}
@@ -342,6 +352,7 @@ export function ProductTitleSection({
                 editAriaLabel={
                   isManualTitleEdit ? "Edit title" : "Edit AI recommended title"
                 }
+                charLimit={charLimit}
               />
               {draftBlock}
             </div>
