@@ -562,7 +562,7 @@ export function ContentRecommendationBody({
                   ) : (
                     <ChevronRight className="size-3.5 shrink-0 text-slate-400" />
                   )}
-                  <span className="text-xs font-medium text-slate-600">Alt Keywords</span>
+                  <span className="text-xs font-medium text-slate-600">Alternate Keywords</span>
                   <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
                     {altKeywords.length}
                   </span>

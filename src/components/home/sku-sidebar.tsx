@@ -135,12 +135,7 @@ export function SkuSidebar({ skus, selectedSkuId, onSelect, totalCount, collapse
                   </div>
 
                   {/* Zone 2: metric chips */}
-                  <div
-                    className={cn(
-                      "flex items-center gap-1.5 border-t px-3 py-2",
-                      isActive ? "border-brand-100" : "border-slate-100",
-                    )}
-                  >
+                  <div className="flex items-center gap-1.5 px-3 pb-2.5 pt-0">
                     <CardMetric label="Compliance" value={sku.metrics.compliance} />
                     <CardMetric label="SEO" value={sku.metrics.seo} />
                     <CardMetric label="AEO" value={sku.metrics.aeo} />

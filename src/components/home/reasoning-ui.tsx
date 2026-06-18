@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Check, Circle } from "lucide-react"
+import { Circle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { AeoPerformance, ReasonType, ReasoningCategory } from "./types"
 
@@ -11,50 +11,31 @@ const REASON_COLORS: Record<ReasonType, string> = {
   REPLACED: "text-blue-600",
 }
 
-/** Visually distinct card showing which shopper questions the recommendation now answers. */
-function ShopperQuestionsCard({ performance }: { performance: AeoPerformance }) {
-  return (
-    <div className="rounded-lg border border-success-200 bg-success-50 p-3">
-      {/* Header */}
-      <div className="mb-3 flex items-start gap-2">
-        <div className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-success-100">
-          <Check className="size-3 text-success-700" aria-hidden />
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-slate-800">
-            Structured to answer common shopper questions
-          </p>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Surfaced by LLM-powered shopping assistants ({performance.sources.join(", ")})
-          </p>
-        </div>
-      </div>
+const AEO_TAB_KEY = "aeo"
+const COMPLIANCE_TAB_KEY = "compliance"
 
-      {/* Questions list */}
-      <ul className="space-y-2">
-        {performance.questions.map((q, idx) => (
-          <li key={idx} className="flex items-start gap-2">
-            <Check
-              className="mt-0.5 size-3 shrink-0 text-success-600"
-              aria-hidden
-            />
-            <p className="text-xs leading-relaxed text-slate-700">
-              <span className="font-medium text-slate-900">
-                &ldquo;{q.question}&rdquo;
-              </span>
-              {" — "}
-              <span className="text-slate-500">{q.answer}</span>
-              {q.isNew && (
-                <span className="ml-1.5 rounded bg-success-100 px-1.5 py-0.5 text-xs font-medium text-success-700">
-                  NEW
-                </span>
-              )}
-            </p>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
+/** Fixed display order for reasoning category tabs. */
+const REASONING_TAB_ORDER: Record<string, number> = {
+  compliance: 0,
+  seo: 1,
+  aeo: 2,
+}
+
+function sortReasoningCategories(categories: ReasoningCategory[]) {
+  return [...categories].sort((a, b) => {
+    const aOrder = REASONING_TAB_ORDER[a.key] ?? 99
+    const bOrder = REASONING_TAB_ORDER[b.key] ?? 99
+    return aOrder - bOrder
+  })
+}
+
+function getDefaultActiveKey(
+  reasoning: ReasoningCategory[],
+  sortedReasoning: ReasoningCategory[],
+): string {
+  const complianceTab = reasoning.find((category) => category.key === COMPLIANCE_TAB_KEY)
+  if (complianceTab) return complianceTab.key
+  return sortedReasoning[0]?.key ?? AEO_TAB_KEY
 }
 
 export function ReasoningPanel({
@@ -64,50 +45,93 @@ export function ReasoningPanel({
   reasoning: ReasoningCategory[]
   aeoPerformance?: AeoPerformance
 }) {
-  const [activeKey, setActiveKey] = useState(reasoning[0]?.key ?? "")
-  const active = reasoning.find((r) => r.key === activeKey) ?? reasoning[0]
+  const sortedReasoning = sortReasoningCategories(reasoning)
+  const [activeKey, setActiveKey] = useState(() =>
+    getDefaultActiveKey(reasoning, sortedReasoning),
+  )
+  const hasAeoInReasoning = reasoning.some((category) => category.key === AEO_TAB_KEY)
+  const showAeoPerformanceTab = Boolean(aeoPerformance && !hasAeoInReasoning)
+  const activeReasoning =
+    reasoning.find((category) => category.key === activeKey) ?? reasoning[0]
+  const isAeoShopperView = activeKey === AEO_TAB_KEY && Boolean(aeoPerformance)
 
   return (
-    <div className="space-y-2">
-      {/* AI reasoning categories */}
-      {active && (
-        <div className="rounded-lg bg-brand-25 p-3">
-          <div className="mb-3 flex flex-wrap gap-1.5">
-            {reasoning.map((cat) => (
-              <button
-                key={cat.key}
-                type="button"
-                onClick={() => setActiveKey(cat.key)}
-                className={cn(
-                  "rounded-md border px-2 py-1 text-xs font-medium",
-                  cat.key === activeKey
-                    ? "border-primary bg-white text-primary"
-                    : "border-brand-200 bg-brand-50 text-primary hover:bg-brand-100",
-                )}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-          <ul className="space-y-3">
-            {active.reasons.map((r, idx) => (
-              <li key={idx} className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Circle
-                    className={cn("size-2 shrink-0 fill-current", REASON_COLORS[r.type])}
-                    aria-hidden
-                  />
-                  <span className="text-sm font-medium text-slate-900">{r.summary}</span>
-                </div>
-                <p className="pl-6 text-xs leading-relaxed text-slate-500">{r.detail}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+    <div className="rounded-lg bg-brand-25 p-3">
+      <div
+        className={cn(
+          "flex flex-wrap gap-1.5",
+          (isAeoShopperView || activeReasoning) && "mb-3",
+        )}
+      >
+        {sortedReasoning.map((cat) => (
+          <button
+            key={cat.key}
+            type="button"
+            onClick={() => setActiveKey(cat.key)}
+            className={cn(
+              "rounded-md border px-2 py-1 text-xs font-medium",
+              cat.key === activeKey
+                ? "border-primary bg-white text-primary"
+                : "border-brand-200 bg-brand-50 text-primary hover:bg-brand-100",
+            )}
+          >
+            {cat.label}
+          </button>
+        ))}
+        {showAeoPerformanceTab ? (
+          <button
+            type="button"
+            onClick={() => setActiveKey(AEO_TAB_KEY)}
+            className={cn(
+              "rounded-md border px-2 py-1 text-xs font-medium",
+              isAeoShopperView
+                ? "border-primary bg-white text-primary"
+                : "border-brand-200 bg-brand-50 text-primary hover:bg-brand-100",
+            )}
+          >
+            AEO
+          </button>
+        ) : null}
+      </div>
 
-      {/* Shopper questions — visually distinct success/green card */}
-      {aeoPerformance && <ShopperQuestionsCard performance={aeoPerformance} />}
+      {isAeoShopperView && aeoPerformance ? (
+        <ul className="space-y-3">
+          {aeoPerformance.questions.map((q, idx) => (
+            <li key={idx} className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Circle
+                  className="size-2 shrink-0 fill-current text-success-600"
+                  aria-hidden
+                />
+                <span className="text-sm font-medium text-slate-900">
+                  &ldquo;{q.question}&rdquo;
+                  {q.isNew ? (
+                    <span className="ml-1.5 rounded bg-slate-200 px-1.5 py-0.5 text-xs font-medium text-slate-600">
+                      NEW
+                    </span>
+                  ) : null}
+                </span>
+              </div>
+              <p className="pl-6 text-xs leading-relaxed text-slate-500">{q.answer}</p>
+            </li>
+          ))}
+        </ul>
+      ) : activeReasoning ? (
+        <ul className="space-y-3">
+          {activeReasoning.reasons.map((r, idx) => (
+            <li key={idx} className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Circle
+                  className={cn("size-2 shrink-0 fill-current", REASON_COLORS[r.type])}
+                  aria-hidden
+                />
+                <span className="text-sm font-medium text-slate-900">{r.summary}</span>
+              </div>
+              <p className="pl-6 text-xs leading-relaxed text-slate-500">{r.detail}</p>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   )
 }
