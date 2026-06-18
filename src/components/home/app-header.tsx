@@ -9,6 +9,7 @@ function IconHeaderButton({
   badge,
   label,
   href,
+  variant = "default",
   children,
 }: {
   badge?: number | string
@@ -16,8 +17,7 @@ function IconHeaderButton({
   href?: string
   children: ReactNode
 }) {
-  const baseClass =
-    "relative grid size-8 place-items-center rounded-md text-slate-600 hover:bg-slate-100"
+  const baseClass = "relative grid size-8 place-items-center rounded-md text-slate-600 hover:bg-slate-100"
 
   const inner = (
     <>
@@ -82,14 +82,14 @@ export function AppHeader({ title = "Content Agent", backHref }: AppHeaderProps)
       </div>
 
       <div className="flex items-center gap-2">
+        <IconHeaderButton label="Activity" href="/title-optimization">
+          <Rocket className="size-4 text-brand-500" />
+        </IconHeaderButton>
         <IconHeaderButton label="Alerts" badge={6}>
           <Bell className="size-5" />
         </IconHeaderButton>
         <IconHeaderButton label="Help">
           <HelpCircle className="size-5" />
-        </IconHeaderButton>
-        <IconHeaderButton label="Activity" href="/title-optimization">
-          <Rocket className="size-5" />
         </IconHeaderButton>
         <IconHeaderButton label="Share">
           <Share2 className="size-5" />

@@ -343,9 +343,23 @@ export default function TitleOptimizationPage() {
               />
 
               {/* Locked sections — visible but not interactive in this module */}
-              <LockedBulletsSection bullets={content.bullets} />
-              <LockedImagesSection count={content.images.length} />
-              <LockedDescriptionSection description={content.description} />
+              <LockedBulletsSection
+                bullets={content.bullets}
+                recommendations={content.bulletRecommendations}
+                pdpBullets={content.pdpContent.bullets}
+                hasPimData={content.hasPimData}
+              />
+              <LockedImagesSection
+                count={content.images.length}
+                pdpImages={content.pdpContent.images ?? []}
+                hasPimData={content.hasPimData}
+              />
+              <LockedDescriptionSection
+                description={content.description}
+                recommendation={content.descriptionRecommendation}
+                pdpDescription={content.pdpContent.description}
+                hasPimData={content.hasPimData}
+              />
             </div>
           </div>
         </main>
