@@ -6,7 +6,7 @@ import { fieldLabelContentStack, fieldSectionStack } from "./field-layout"
 import { BulletSourceCell, SourceCellLabel } from "./bullet-source-cell"
 import { PIM_CHANNEL_LABEL, PIM_LOGO_ALT, RETAILER_LOGO_SRC, SALSIFY_LOGO_SRC } from "./source-logos"
 
-export type FieldCompareTarget = "pim" | "pdp"
+export type FieldCompareTarget = "pim" | "pdp" | "final"
 
 interface VerticalSourceCompareGridProps {
   pimValue: string

@@ -68,6 +68,11 @@ interface EditableRecommendationFieldProps {
   editAriaLabel?: string
   editRows?: number
   compact?: boolean
+  /**
+   * When this value changes (e.g. the compare tab switches), the field exits
+   * edit mode so the diff view becomes visible again.
+   */
+  exitEditKey?: string
 }
 
 export function EditableRecommendationField({
@@ -81,6 +86,7 @@ export function EditableRecommendationField({
   editAriaLabel = "Edit AI recommendation",
   editRows = 3,
   compact = false,
+  exitEditKey,
 }: EditableRecommendationFieldProps) {
   const [isEditing, setIsEditing] = useState(false)
   const canEdit = !readOnly
@@ -92,6 +98,11 @@ export function EditableRecommendationField({
   useEffect(() => {
     if (readOnly) setIsEditing(false)
   }, [readOnly])
+
+  // Exit edit mode whenever the tab/view changes so the diff is visible again
+  useEffect(() => {
+    setIsEditing(false)
+  }, [exitEditKey])
 
   const plainText = (
     <p

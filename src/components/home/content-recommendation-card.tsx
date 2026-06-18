@@ -27,6 +27,17 @@ function keepFieldFocusOnPointerDown(e: React.MouseEvent) {
   e.preventDefault()
 }
 
+const VARIANT_CLASS: Record<string, string> = {
+  bordered:
+    "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
+  ghost:
+    "px-1 text-slate-500 hover:text-slate-900",
+  accept:
+    "border border-success-100 bg-success-50 text-success-700 hover:bg-success-100",
+  reject:
+    "border border-error-100 bg-error-50 text-error-700 hover:bg-error-100",
+}
+
 function RecoActionButton({
   onClick,
   label,
@@ -38,7 +49,7 @@ function RecoActionButton({
   label: string
   icon: ReactNode
   iconOnly?: boolean
-  variant?: "bordered" | "ghost"
+  variant?: "bordered" | "ghost" | "accept" | "reject"
 }) {
   if (iconOnly) {
     return (
@@ -47,7 +58,14 @@ function RecoActionButton({
         onMouseDown={keepFieldFocusOnPointerDown}
         onClick={onClick}
         aria-label={label}
-        className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+        className={cn(
+          "inline-flex size-8 items-center justify-center rounded-md border transition-colors",
+          variant === "accept"
+            ? "border-success-100 bg-success-50 hover:bg-success-100"
+            : variant === "reject"
+              ? "border-error-100 bg-error-50 hover:bg-error-100"
+              : "border-slate-200 bg-white hover:bg-slate-50",
+        )}
       >
         {icon}
       </button>
@@ -73,7 +91,10 @@ function RecoActionButton({
       type="button"
       onMouseDown={keepFieldFocusOnPointerDown}
       onClick={onClick}
-      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50"
+      className={cn(
+        "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition-colors",
+        VARIANT_CLASS[variant] ?? VARIANT_CLASS.bordered,
+      )}
     >
       {icon}
       {label}
@@ -89,6 +110,12 @@ export type RecommendationLabels = {
   queued?: string
 }
 
+const COMPARE_OPTIONS: { key: FieldCompareTarget; label: string }[] = [
+  { key: "pim", label: "vs. PIM" },
+  { key: "pdp", label: "vs. PDP" },
+  { key: "final", label: "Text" },
+]
+
 export function CompareTabs({
   value,
   onChange,
@@ -102,12 +129,7 @@ export function CompareTabs({
       aria-label="Compare recommendation with"
       className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5"
     >
-      {(
-        [
-          { key: "pim" as const, label: "PIM" },
-          { key: "pdp" as const, label: "PDP" },
-        ] as const
-      ).map((opt) => (
+      {COMPARE_OPTIONS.map((opt) => (
         <button
           key={opt.key}
           type="button"
@@ -207,7 +229,7 @@ export function ContentRecommendationHeader({
       {!hideCompareTabs ? (
         <div
           className={cn(
-            "flex h-[30px] w-[92px] shrink-0 items-center justify-end",
+            "flex h-[30px] shrink-0 items-center justify-end",
             status === "pending" && isOpen ? "visible" : "invisible pointer-events-none",
           )}
           aria-hidden={!(status === "pending" && isOpen)}
@@ -318,7 +340,9 @@ export function ContentRecommendationBody({
   const isSyncing = fp === "syncing"
   const isPublishedLocked = status === "accepted" && isFieldPublishingLocked(fp)
   const showEditor = status === "pending" || status === "accepted" || status === "rejected"
-  const baseline = compareTarget === "pim" ? pimBaseline : pdpBaseline
+  // "final" mode shows clean output with no diff; fall back to pim for baseline calc
+  const isFinalView = compareTarget === "final"
+  const baseline = compareTarget === "pim" || isFinalView ? pimBaseline : pdpBaseline
   const compareDiff = useMemo(
     () => buildTitleDiff(baseline, recommendation.recommendedText),
     [baseline, recommendation.recommendedText],
@@ -377,11 +401,12 @@ export function ContentRecommendationBody({
       originalValue={originalText}
       onChange={onRecommendedTextChange}
       tone={fieldTone}
-      showDiff={status === "pending"}
+      showDiff={status === "pending" && !isFinalView}
       readOnly={status === "rejected" || isPublishedLocked}
       editAriaLabel={editAriaLabel}
       editRows={editRows}
       compact={compact}
+      exitEditKey={compareTarget}
     />
   )
 
@@ -456,12 +481,14 @@ export function ContentRecommendationBody({
                         label={rejectLabel}
                         icon={<X className="size-4 text-error-600" />}
                         iconOnly={iconOnlyActions}
+                        variant="reject"
                       />
                       <RecoActionButton
                         onClick={onAccept}
                         label="Accept"
                         icon={<Check className="size-4 text-success-600" />}
                         iconOnly={iconOnlyActions}
+                        variant="accept"
                       />
                     </>
                   ) : null}
@@ -527,7 +554,7 @@ export function ContentRecommendationBody({
                 <button
                   type="button"
                   onClick={() => setShowReasoning((v) => !v)}
-                  className="flex w-full items-center gap-1.5 py-2 text-left"
+                  className="flex w-full items-center gap-1.5 py-4 text-left"
                 >
                   {showReasoning ? (
                     <ChevronDown className="size-3.5 shrink-0 text-slate-400" />
