@@ -55,6 +55,8 @@ interface ProductTitleSectionProps {
   onToggleInclude?: () => void
   /** When true, hides Accept/Reject/Undo buttons (section toggle handles inclusion instead). */
   hideActions?: boolean
+  /** When true, Reasoning panel starts expanded on mount (title-optimization mode). */
+  defaultReasoningOpen?: boolean
 }
 
 export function ProductTitleSection({
@@ -80,6 +82,7 @@ export function ProductTitleSection({
   isIncluded = true,
   onToggleInclude,
   hideActions = false,
+  defaultReasoningOpen = false,
 }: ProductTitleSectionProps) {
   const [compareTarget, setCompareTarget] = useState<FieldCompareTarget>("final")
   const [draftCompareTarget, setDraftCompareTarget] = useState<FieldCompareTarget>("final")
@@ -99,7 +102,7 @@ export function ProductTitleSection({
   const [originalText] = useState(() => recommendation?.recommendedText ?? "")
 
   // No-PIM layout: expanded panel state + keyword interaction (lifted so panels render full-width)
-  const [noPimShowReasoning, setNoPimShowReasoning] = useState(false)
+  const [noPimShowReasoning, setNoPimShowReasoning] = useState(defaultReasoningOpen)
   const [noPimShowAltKeywords, setNoPimShowAltKeywords] = useState(false)
   const [noPimUsedKeywordIds, setNoPimUsedKeywordIds] = useState<Set<string>>(new Set())
   const [noPimAppliedSuffixes, setNoPimAppliedSuffixes] = useState<Map<string, string>>(new Map())
@@ -476,6 +479,7 @@ export function ProductTitleSection({
                   onAddNew={isAddingNew ? undefined : handleAddNewTitle}
                   editAriaLabel={isManualTitleEdit ? "Edit title" : "Edit AI recommended title"}
                   charLimit={charLimit}
+                  defaultReasoningOpen={defaultReasoningOpen}
                 />
                 {draftBlock}
               </div>

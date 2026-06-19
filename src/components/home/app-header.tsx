@@ -83,7 +83,11 @@ export function AppHeader({ title = "Content Agent", backHref }: AppHeaderProps)
       </div>
 
       <div className="flex items-center gap-2">
-        <IconHeaderButton label="Activity" href="/title-optimization" className="bg-brand-100">
+        <IconHeaderButton
+          label={backHref ? "Content Agent" : "Title Optimization"}
+          href={backHref ? "/" : "/title-optimization"}
+          className="bg-brand-100"
+        >
           <Rocket className="size-4 text-brand-500" />
         </IconHeaderButton>
         <IconHeaderButton label="Alerts" badge={6}>

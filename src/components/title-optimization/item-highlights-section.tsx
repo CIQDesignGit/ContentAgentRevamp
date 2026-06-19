@@ -104,6 +104,8 @@ interface ItemHighlightsSectionProps {
   onToggleInclude?: () => void
   onAccept: (id: string) => void
   onUndoAccept: (id: string) => void
+  /** When true, all reasoning panels start open on mount. */
+  defaultReasoningOpen?: boolean
 }
 
 type PanelState = { reasoning: boolean; altKeywords: boolean }
@@ -115,6 +117,7 @@ export function ItemHighlightsSection({
   onToggleInclude,
   onAccept,
   onUndoAccept,
+  defaultReasoningOpen = false,
 }: ItemHighlightsSectionProps) {
   const [panelState, setPanelState] = useState<Record<string, PanelState>>({})
 
@@ -159,7 +162,7 @@ export function ItemHighlightsSection({
                 <HighlightRow
                   key={h.id}
                   highlight={h}
-                  showReasoning={panelState[h.id]?.reasoning ?? false}
+                  showReasoning={panelState[h.id]?.reasoning ?? defaultReasoningOpen}
                   showAltKeywords={panelState[h.id]?.altKeywords ?? false}
                   onToggleReasoning={() => toggleReasoning(h.id)}
                   onToggleAltKeywords={() => toggleAltKeywords(h.id)}
@@ -192,14 +195,16 @@ export function ItemHighlightsSection({
           const state = panelState[h.id]
           const reasoning = h.reasoning ?? []
           const altKeywords = h.altKeywords ?? []
-          if (!state?.reasoning && !state?.altKeywords) return null
+          const showReasoning = state?.reasoning ?? defaultReasoningOpen
+          const showAltKeywords = state?.altKeywords ?? false
+          if (!showReasoning && !showAltKeywords) return null
 
           return (
             <div key={h.id} className="flex flex-col gap-3 border-t border-slate-100 pt-3">
-              {state.reasoning && reasoning.length > 0 && (
+              {showReasoning && reasoning.length > 0 && (
                 <ReasoningPanel reasoning={reasoning} />
               )}
-              {state.altKeywords && altKeywords.length > 0 && (
+              {showAltKeywords && altKeywords.length > 0 && (
                 <AltKeywordsPanel
                   keywords={altKeywords}
                   usedIds={new Set()}

@@ -451,6 +451,7 @@ export default function TitleOptimizationPage() {
                 isIncluded={titleIncluded}
                 onToggleInclude={() => setTitleIncluded((v) => !v)}
                 hideActions
+                defaultReasoningOpen
               />
 
               {/* Item Highlights — new AI-generated info points */}
@@ -461,6 +462,7 @@ export default function TitleOptimizationPage() {
                 onUndoAccept={(id) => patchHighlight(id, "pending")}
                 isIncluded={highlightIncluded}
                 onToggleInclude={() => setHighlightIncluded((v) => !v)}
+                defaultReasoningOpen
               />
 
               {/* Locked sections — visible but not interactive in this module */}

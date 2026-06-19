@@ -287,6 +287,8 @@ interface ContentRecommendationBodyProps {
   hideActions?: boolean
   /** When true, suppresses inline expanded panels — parent is responsible for rendering them. */
   hideExpandedPanels?: boolean
+  /** When true, the Reasoning panel starts open on mount (uncontrolled default). */
+  defaultReasoningOpen?: boolean
   /** External controlled show-state for the Reasoning panel toggle. */
   showReasoningPanel?: boolean
   /** External controlled show-state for the AltKeywords panel toggle. */
@@ -329,12 +331,13 @@ export function ContentRecommendationBody({
   charLimit,
   hideActions = false,
   hideExpandedPanels = false,
+  defaultReasoningOpen = false,
   showReasoningPanel,
   showAltKeywordsPanel,
   onReasoningToggle,
   onAltKeywordsToggle,
 }: ContentRecommendationBodyProps) {
-  const [showReasoningLocal, setShowReasoningLocal] = useState(false)
+  const [showReasoningLocal, setShowReasoningLocal] = useState(defaultReasoningOpen)
   const [showAltKeywordsLocal, setShowAltKeywordsLocal] = useState(false)
   // Prefer external controlled state when provided (controlled mode)
   const showReasoning = showReasoningPanel ?? showReasoningLocal

@@ -229,16 +229,13 @@ export function SkuSidebar({
       {/* ── Selection action bar — sticky bottom, visible when ≥1 selected ── */}
       {isSelectionMode && selectedCount > 0 && (
         <div className="shrink-0 space-y-3 border-t border-slate-200 bg-slate-50 p-3">
-          {/* Count */}
+          {/* Count + intent label */}
           <p className="px-0.5 text-[11px] font-semibold text-slate-500">
-            {selectedCount} SKU{selectedCount > 1 ? "s" : ""} selected
+            Accept changes for {selectedCount} selected SKU{selectedCount > 1 ? "s" : ""}
           </p>
 
           {/* Field selector — 2×2 grid */}
           <div>
-            <p className="mb-1.5 px-0.5 text-[11px] font-medium text-slate-500">
-              Accept changes for
-            </p>
             <div className="grid grid-cols-2 gap-1">
               {BULK_FIELDS.map(({ id, label, icon: Icon }) => {
                 const checked = selectedFields.has(id)
