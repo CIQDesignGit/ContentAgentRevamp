@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { Columns2, ListChecks } from "lucide-react"
+import { SectionSelectToggle } from "./section-controls"
 import { cn } from "@/lib/utils"
 import { buildTitleDiff } from "@/lib/build-title-diff"
 import { buildDisplayBulletLists } from "@/lib/build-display-bullet-lists"
@@ -41,6 +42,10 @@ interface BulletPointsSectionProps {
   onRejectAll: () => void
   onResetAll: () => void
   onAcceptNewDraft?: (id: string, text: string) => void
+  isIncluded?: boolean
+  onToggleInclude?: () => void
+  /** When true, hides Accept/Reject/bulk-action buttons — section toggle handles inclusion instead. */
+  hideActions?: boolean
 }
 
 function getBulletBaselines(
@@ -132,6 +137,7 @@ function NoPimBulletsCombinedView({
   onAcceptAll,
   onRejectAll,
   onResetAll,
+  hideActions = false,
 }: {
   activeRecommendations: BulletRecommendation[]
   recommendations: BulletRecommendation[]
@@ -141,6 +147,7 @@ function NoPimBulletsCombinedView({
   onAcceptAll: () => void
   onRejectAll: () => void
   onResetAll: () => void
+  hideActions?: boolean
 }) {
   const allAccepted = activeRecommendations.every((r) => r.status === "accepted")
   const allRejected = activeRecommendations.every((r) => r.status === "rejected")
@@ -221,13 +228,15 @@ function NoPimBulletsCombinedView({
           </ul>
         </div>
       </div>
-      <BulletBulkActions
-        recommendations={recommendations}
-        originals={originals}
-        onAcceptAll={onAcceptAll}
-        onRejectAll={onRejectAll}
-        onResetAll={onResetAll}
-      />
+      {!hideActions && (
+        <BulletBulkActions
+          recommendations={recommendations}
+          originals={originals}
+          onAcceptAll={onAcceptAll}
+          onRejectAll={onRejectAll}
+          onResetAll={onResetAll}
+        />
+      )}
     </div>
   )
 }
@@ -251,6 +260,9 @@ export function BulletPointsSection({
   onRejectAll,
   onResetAll,
   onAcceptNewDraft,
+  isIncluded = true,
+  onToggleInclude,
+  hideActions = false,
 }: BulletPointsSectionProps) {
   const [gridCompareTarget] = useState<FieldCompareTarget>("pim")
   const [recoCompareTarget, setRecoCompareTarget] = useState<FieldCompareTarget>("final")
@@ -300,6 +312,7 @@ export function BulletPointsSection({
   const recommendationBlocks = activeRecommendations.map((reco) => (
     <BulletRecommendationBlock
       key={reco.id}
+      hideActions={hideActions}
       {...buildRecommendationBlockProps(
         reco,
         pimBullets,
@@ -325,6 +338,7 @@ export function BulletPointsSection({
         onAcceptAll={onAcceptAll}
         onRejectAll={onRejectAll}
         onResetAll={onResetAll}
+        hideActions={hideActions}
       />
     ) : null
 
@@ -349,15 +363,19 @@ export function BulletPointsSection({
             </span>
           </>
         )}
-        {hasPendingRecommendations && (
-          <div className="ml-auto">
-            <CompareTabs
-              value={effectiveRecoCompareTarget}
-              onChange={setRecoCompareTarget}
-              exclude={hasPimData ? [] : ["pim"]}
-            />
-          </div>
+        {hasPendingRecommendations && !hideActions && (
+          <CompareTabs
+            value={effectiveRecoCompareTarget}
+            onChange={setRecoCompareTarget}
+            exclude={hasPimData ? [] : ["pim"]}
+          />
         )}
+        <div className="ml-auto">
+          <SectionSelectToggle
+            selected={isIncluded}
+            onToggle={onToggleInclude ?? (() => {})}
+          />
+        </div>
       </header>
 
       <VerticalSourceCompareGrid
@@ -410,13 +428,15 @@ export function BulletPointsSection({
                 />
               </div>
               <div className="divide-y divide-slate-200">{recommendationBlocks}</div>
-              <BulletBulkActions
-                recommendations={recommendations}
-                originals={originals}
-                onAcceptAll={onAcceptAll}
-                onRejectAll={onRejectAll}
-                onResetAll={onResetAll}
-              />
+              {!hideActions && (
+                <BulletBulkActions
+                  recommendations={recommendations}
+                  originals={originals}
+                  onAcceptAll={onAcceptAll}
+                  onRejectAll={onRejectAll}
+                  onResetAll={onResetAll}
+                />
+              )}
             </div>
           ) : undefined
         }

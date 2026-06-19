@@ -1,10 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Check, Lightbulb, Square, ToggleLeft, ToggleRight } from "lucide-react"
+import { Lightbulb, ToggleLeft, ToggleRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { AiRecommendationSparklesIcon } from "@/components/home/bullet-source-cell"
+import { Checkbox } from "@/components/ui/checkbox"
+import { AiRecommendationSparklesIcon, BulletSourceCell, SourceCellLabel } from "@/components/home/bullet-source-cell"
+import { fieldLabelContentStack, fieldSectionStack } from "@/components/home/field-layout"
 import { ReasoningPanel } from "@/components/home/reasoning-ui"
+import { AltKeywordsPanel } from "@/components/home/alt-keywords-panel"
+import { RETAILER_LOGO_SRC } from "@/components/home/source-logos"
 import type { AltKeyword, ReasoningCategory } from "@/components/home/types"
 
 export type HighlightStatus = "pending" | "accepted" | "rejected"
@@ -17,67 +21,42 @@ export type ItemHighlight = {
   altKeywords?: AltKeyword[]
 }
 
-// ─── Section select toggle ─────────────────────────────────────────────────────
 
-function SectionSelectToggle({
-  selected,
-  onToggle,
+// ─── Single highlight row (text box + toggle buttons only) ────────────────────
+
+function HighlightRow({
+  highlight,
+  showReasoning,
+  showAltKeywords,
+  onToggleReasoning,
+  onToggleAltKeywords,
 }: {
-  selected: boolean
-  onToggle: () => void
+  highlight: ItemHighlight
+  showReasoning: boolean
+  showAltKeywords: boolean
+  onToggleReasoning: () => void
+  onToggleAltKeywords: () => void
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-label={selected ? "Deselect section" : "Select section"}
-      title={selected ? "Remove from publish" : "Include in publish"}
-      className="rounded p-0.5 transition-colors hover:bg-slate-100"
-    >
-      {selected ? (
-        <span className="flex size-5 items-center justify-center rounded-[3px] bg-brand-500">
-          <Check className="size-3 stroke-3 text-white" />
-        </span>
-      ) : (
-        <Square className="size-5 text-slate-300" />
-      )}
-    </button>
-  )
-}
-
-// ─── Single highlight row ─────────────────────────────────────────────────────
-
-function HighlightRow({ highlight }: { highlight: ItemHighlight }) {
   const { status, text, reasoning = [], altKeywords = [] } = highlight
-  const [showReasoning, setShowReasoning] = useState(false)
-  const [showAltKeywords, setShowAltKeywords] = useState(false)
-
   const outerBg = status === "accepted" ? "bg-success-50" : "bg-brand-50"
   const innerBorder = status === "accepted" ? "border-success-200" : "border-brand-300"
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-start gap-3">
-        <div className="mt-2.5 shrink-0">
-          <AiRecommendationSparklesIcon />
-        </div>
-
-        <div className={cn("min-w-0 flex-1 rounded-lg px-0.5 py-0.5 transition-colors", outerBg)}>
-          <div className={cn("rounded-md border bg-white px-3 py-2", innerBorder)}>
-            <p className="text-sm leading-relaxed text-slate-800">{text}</p>
-          </div>
+      <div className={cn("min-w-0 flex-1 rounded-lg px-0.5 py-0.5 transition-colors", outerBg)}>
+        <div className={cn("rounded-md border bg-white px-3 py-2", innerBorder)}>
+          <p className="text-sm leading-relaxed text-slate-800">{text}</p>
         </div>
       </div>
 
-      {/* Reasoning / Alt Keywords toggles — mirrors ContentRecommendationBody action bar */}
       {(reasoning.length > 0 || altKeywords.length > 0) && (
-        <div className="flex items-center gap-3 pl-8">
+        <div className="flex items-center gap-3 pl-1">
           {reasoning.length > 0 && (
             <button
               type="button"
-              onClick={() => setShowReasoning((v) => !v)}
+              onClick={onToggleReasoning}
               className={cn(
-                "inline-flex items-center gap-1.5 text-xs font-medium transition-colors",
+                "inline-flex items-center gap-1.5 py-2.5 text-xs font-medium transition-colors",
                 showReasoning ? "text-primary" : "text-slate-500 hover:text-slate-900",
               )}
             >
@@ -92,9 +71,9 @@ function HighlightRow({ highlight }: { highlight: ItemHighlight }) {
           {altKeywords.length > 0 && (
             <button
               type="button"
-              onClick={() => setShowAltKeywords((v) => !v)}
+              onClick={onToggleAltKeywords}
               className={cn(
-                "inline-flex items-center gap-1.5 text-xs font-medium transition-colors",
+                "inline-flex items-center gap-1.5 py-2.5 text-xs font-medium transition-colors",
                 showAltKeywords ? "text-primary" : "text-slate-500 hover:text-slate-900",
               )}
             >
@@ -109,28 +88,6 @@ function HighlightRow({ highlight }: { highlight: ItemHighlight }) {
               </span>
             </button>
           )}
-        </div>
-      )}
-
-      {/* Expanded panels */}
-      {showReasoning && reasoning.length > 0 && (
-        <div className="pl-8">
-          <ReasoningPanel reasoning={reasoning} />
-        </div>
-      )}
-      {showAltKeywords && altKeywords.length > 0 && (
-        <div className="pl-8 rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <div className="flex flex-wrap gap-2">
-            {altKeywords.map((kw) => (
-              <span
-                key={kw.id}
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700"
-              >
-                <span className="font-medium">{kw.keyword}</span>
-                <span className="text-slate-400">{kw.volume}</span>
-              </span>
-            ))}
-          </div>
         </div>
       )}
     </div>
@@ -149,6 +106,8 @@ interface ItemHighlightsSectionProps {
   onUndoAccept: (id: string) => void
 }
 
+type PanelState = { reasoning: boolean; altKeywords: boolean }
+
 export function ItemHighlightsSection({
   highlights,
   hasPimData = true,
@@ -157,27 +116,100 @@ export function ItemHighlightsSection({
   onAccept,
   onUndoAccept,
 }: ItemHighlightsSectionProps) {
+  const [panelState, setPanelState] = useState<Record<string, PanelState>>({})
+
+  function toggleReasoning(id: string) {
+    setPanelState((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], reasoning: !(prev[id]?.reasoning ?? false), altKeywords: prev[id]?.altKeywords ?? false },
+    }))
+  }
+
+  function toggleAltKeywords(id: string) {
+    setPanelState((prev) => ({
+      ...prev,
+      [id]: { reasoning: prev[id]?.reasoning ?? false, altKeywords: !(prev[id]?.altKeywords ?? false) },
+    }))
+  }
+
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
       <header className="flex flex-wrap items-center gap-2 px-1 py-2">
         <Lightbulb className="size-4 shrink-0 text-slate-400" aria-hidden />
         <span className="text-sm font-semibold text-slate-900">Item Highlights</span>
-
-        {!hasPimData && (
-          <span className="rounded-full border border-info-200 bg-info-50 px-2.5 py-0.5 text-xs text-info-700">
-            Generated from PDP data only
-          </span>
-        )}
-
-        <div className="ml-auto">
-          <SectionSelectToggle selected={isIncluded} onToggle={onToggleInclude ?? (() => {})} />
-        </div>
+        <Checkbox
+          checked={isIncluded}
+          onCheckedChange={onToggleInclude}
+          aria-label={isIncluded ? "Remove from publish" : "Include in publish"}
+          className="ml-auto size-5 shrink-0 rounded-[3px]"
+        />
       </header>
 
-      <div className={cn("mt-1 space-y-3 px-1 transition-opacity", !isIncluded && "opacity-40")}>
-        {highlights.map((h) => (
-          <HighlightRow key={h.id} highlight={h} />
-        ))}
+      <div className={fieldSectionStack("w-full")}>
+        {/* Two-column source grid */}
+        <div className="grid grid-cols-2 items-start gap-x-3">
+          {/* Left: AI highlights */}
+          <div className={fieldLabelContentStack("min-h-0 min-w-0")}>
+            <div className="flex min-h-[30px] items-center gap-1.5">
+              <AiRecommendationSparklesIcon />
+              <span className="text-xs font-semibold text-slate-700">AI Recommended Item Highlights</span>
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col gap-3">
+              {highlights.map((h) => (
+                <HighlightRow
+                  key={h.id}
+                  highlight={h}
+                  showReasoning={panelState[h.id]?.reasoning ?? false}
+                  showAltKeywords={panelState[h.id]?.altKeywords ?? false}
+                  onToggleReasoning={() => toggleReasoning(h.id)}
+                  onToggleAltKeywords={() => toggleAltKeywords(h.id)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Retailer (empty) */}
+          <div className={fieldLabelContentStack("min-h-0 min-w-0")}>
+            <div className="flex min-h-[30px] items-center">
+              <SourceCellLabel logoSrc={RETAILER_LOGO_SRC} logoAlt="Amazon" sublabel="Retailer" />
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col">
+              <BulletSourceCell
+                logoSrc={RETAILER_LOGO_SRC}
+                logoAlt="Amazon"
+                sublabel="Retailer"
+                value=""
+                compareValue=""
+                side="pdp"
+                showLabel={false}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Full-width expanded panels — rendered below the grid, outside column constraints */}
+        {highlights.map((h) => {
+          const state = panelState[h.id]
+          const reasoning = h.reasoning ?? []
+          const altKeywords = h.altKeywords ?? []
+          if (!state?.reasoning && !state?.altKeywords) return null
+
+          return (
+            <div key={h.id} className="flex flex-col gap-3 border-t border-slate-100 pt-3">
+              {state.reasoning && reasoning.length > 0 && (
+                <ReasoningPanel reasoning={reasoning} />
+              )}
+              {state.altKeywords && altKeywords.length > 0 && (
+                <AltKeywordsPanel
+                  keywords={altKeywords}
+                  usedIds={new Set()}
+                  onUse={() => {}}
+                  onRemove={() => {}}
+                />
+              )}
+            </div>
+          )
+        })}
       </div>
     </section>
   )

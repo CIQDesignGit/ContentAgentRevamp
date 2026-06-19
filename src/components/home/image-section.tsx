@@ -16,6 +16,7 @@ import { fieldLabelContentStack, fieldSectionStack } from "./field-layout"
 import { AiRecommendationSparklesIcon, SourceCellLabel, SourceChannelLabel } from "./bullet-source-cell"
 import { PIM_CHANNEL_LABEL, PIM_LOGO_ALT, RETAILER_LOGO_SRC, SALSIFY_LOGO_SRC } from "./source-logos"
 import type { ProductImage } from "./types"
+import { SectionSelectToggle } from "./section-controls"
 
 const CARD_WIDTH_PX = 136
 const CARD_GAP_PX = 12
@@ -239,6 +240,8 @@ interface ImageSectionProps {
   hasPimData?: boolean
   onDelete: (id: string) => void
   readOnly?: boolean
+  isIncluded?: boolean
+  onToggleInclude?: () => void
 }
 
 export function ImageSection({
@@ -247,6 +250,8 @@ export function ImageSection({
   hasPimData = true,
   onDelete,
   readOnly,
+  isIncluded = true,
+  onToggleInclude,
 }: ImageSectionProps) {
   const [pimScrollIndex, setPimScrollIndex] = useState(0)
   const [pdpScrollIndex, setPdpScrollIndex] = useState(0)
@@ -284,11 +289,17 @@ export function ImageSection({
         {!readOnly ? (
           <button
             type="button"
-            className="ml-auto inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-primary hover:bg-brand-50"
+            className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-primary hover:bg-brand-50"
           >
             <ImagePlus className="size-4" /> Add image
           </button>
         ) : null}
+        <div className="ml-auto">
+          <SectionSelectToggle
+            selected={isIncluded}
+            onToggle={onToggleInclude ?? (() => {})}
+          />
+        </div>
       </header>
 
       <div className={fieldSectionStack("w-full")}>

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { AlignLeft, Columns2 } from "lucide-react"
+import { SectionSelectToggle } from "./section-controls"
 import { titleMatchPercent } from "@/lib/title-match"
 import { resolvePublishedSourceDisplay } from "@/lib/published-source-display"
 import {
@@ -32,6 +33,10 @@ interface DescriptionSectionProps {
   onUndoReject: () => void
   onPushUpdate?: () => void
   onAcceptNewDraft?: (text: string) => void
+  isIncluded?: boolean
+  onToggleInclude?: () => void
+  /** When true, hides Accept/Reject action buttons — section toggle handles inclusion instead. */
+  hideActions?: boolean
 }
 
 export function DescriptionSection({
@@ -50,6 +55,9 @@ export function DescriptionSection({
   onUndoReject,
   onPushUpdate,
   onAcceptNewDraft,
+  isIncluded = true,
+  onToggleInclude,
+  hideActions = false,
 }: DescriptionSectionProps) {
   const [compareTarget, setCompareTarget] = useState<FieldCompareTarget>("final")
   const [draftCompareTarget, setDraftCompareTarget] = useState<FieldCompareTarget>("final")
@@ -130,6 +138,7 @@ export function DescriptionSection({
           onPushUpdate={onPushUpdate}
           editAriaLabel="Edit AI recommended description"
           editRows={5}
+          hideActions={hideActions}
         />
       </div>
     ) : null
@@ -165,15 +174,19 @@ export function DescriptionSection({
             {matchPercent}% match between PIM and retailer
           </span>
         )}
-        {showReco && status === "pending" && isOpen && (
-          <div className="ml-auto">
-            <CompareTabs
-              value={effectiveCompareTarget}
-              onChange={setCompareTarget}
-              exclude={hasPimData ? [] : ["pim"]}
-            />
-          </div>
+        {showReco && status === "pending" && isOpen && !hideActions && (
+          <CompareTabs
+            value={effectiveCompareTarget}
+            onChange={setCompareTarget}
+            exclude={hasPimData ? [] : ["pim"]}
+          />
         )}
+        <div className="ml-auto">
+          <SectionSelectToggle
+            selected={isIncluded}
+            onToggle={onToggleInclude ?? (() => {})}
+          />
+        </div>
       </header>
 
       <VerticalSourceCompareGrid
@@ -271,6 +284,7 @@ export function DescriptionSection({
                 onAddNew={isAddingNew ? undefined : handleAddNewDescription}
                 editAriaLabel="Edit AI recommended description"
                 editRows={5}
+                hideActions={hideActions}
               />
               {isAddingNew && draftRecommendation ? (
                 <div className="border-t border-slate-200 pt-3">

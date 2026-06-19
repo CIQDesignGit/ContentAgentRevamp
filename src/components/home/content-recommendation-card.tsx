@@ -457,7 +457,7 @@ export function ContentRecommendationBody({
           recommendationField
         )}
 
-        <div className="space-y-1">
+        <div className="space-y-1 pt-2 py-2.5">
           {/* Action bar: toggles on the left, Accept/Reject on the right */}
           <div className="flex items-center justify-between gap-3">
 

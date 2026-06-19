@@ -42,9 +42,7 @@ export function ProductHeader({
   hideMetrics = false,
 }: ProductHeaderProps) {
   const hasSelection = selectedCount !== undefined && totalSections !== undefined
-  const ctaLabel = hasSelection && selectedCount! > 0
-    ? `Publish ${selectedCount} to PDP`
-    : "Publish to PDP"
+  const ctaLabel = "Publish to PDP"
   // When section-level selection is in use, enable publish as long as at least one section is selected.
   // Falls back to the standard publishState logic on pages that don't use section selection.
   const canPublish = hasSelection

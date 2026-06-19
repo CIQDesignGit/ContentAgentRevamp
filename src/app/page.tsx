@@ -5,6 +5,7 @@ export const dynamic = "force-static"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 
+import { BulkSelectControl } from "@/components/home/section-controls"
 import { AppHeader } from "@/components/home/app-header"
 import { FilterBar } from "@/components/home/filter-bar"
 import { SkuSidebar } from "@/components/home/sku-sidebar"
@@ -53,6 +54,14 @@ export default function Home() {
   const [unpublishedGuardOpen, setUnpublishedGuardOpen] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null)
   const publishTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  // Section-level publish inclusion — all selected by default
+  const [titleIncluded, setTitleIncluded] = useState(true)
+  const [imageIncluded, setImageIncluded] = useState(true)
+  const [bulletsIncluded, setBulletsIncluded] = useState(true)
+  const [descriptionIncluded, setDescriptionIncluded] = useState(true)
+
+  const includedCount = [titleIncluded, imageIncluded, bulletsIncluded, descriptionIncluded].filter(Boolean).length
 
   const filteredSkus = useMemo(
     () => MOCK_SKUS.filter((s) => passesFilter(s, filter) && passesSearch(s, search)),
@@ -151,6 +160,10 @@ export default function Home() {
 
   useEffect(() => {
     clearPublishTimers()
+    setTitleIncluded(true)
+    setImageIncluded(true)
+    setBulletsIncluded(true)
+    setDescriptionIncluded(true)
   }, [selectedSkuId, clearPublishTimers])
 
   function schedulePublishSimulation(skuId: string, batchId: string) {
@@ -643,10 +656,10 @@ export default function Home() {
             aeo={selectedSku.metrics.aeo}
             publishState={publishBarState}
             publishableCount={publishSummary.publishable.length}
+            selectedCount={includedCount}
+            totalSections={4}
             onPublishClick={() => {
-              if (publishSummary.publishable.length > 0) {
-                setPublishDialogOpen(true)
-              }
+              if (includedCount > 0) setPublishDialogOpen(true)
             }}
           />
 
@@ -669,7 +682,17 @@ export default function Home() {
 
           <div className="flex min-h-0 flex-1">
             <section className="flex min-w-0 flex-1 flex-col">
-              <div className="space-y-4 overflow-y-auto p-5">
+              {/* Bulk select strip — sits above the scrollable section list */}
+              <div className="flex shrink-0 items-center justify-end px-5 pt-3 pb-1">
+                <BulkSelectControl
+                  selectedCount={includedCount}
+                  totalCount={4}
+                  onSelectAll={() => { setTitleIncluded(true); setImageIncluded(true); setBulletsIncluded(true); setDescriptionIncluded(true) }}
+                  onDeselectAll={() => { setTitleIncluded(false); setImageIncluded(false); setBulletsIncluded(false); setDescriptionIncluded(false) }}
+                />
+              </div>
+
+              <div className="flex-1 space-y-4 overflow-y-auto px-5 pb-5">
                 <ProductTitleSection
                   key={selectedSkuId}
                   pimTitle={content.title}
@@ -690,6 +713,9 @@ export default function Home() {
                   onPushUpdate={handlePushUpdateTitle}
                   onAcceptNewDraft={handleAcceptNewTitleDraft}
                   onUndoStagedNewTitle={handleUndoStagedNewTitle}
+                  isIncluded={titleIncluded}
+                  onToggleInclude={() => setTitleIncluded((v) => !v)}
+                  hideActions
                 />
                 <ImageSection
                   pimImages={content.images}
@@ -701,6 +727,8 @@ export default function Home() {
                       images: prev.images.map((img) => (img.id === id ? { ...img, url: undefined } : img)),
                     }))
                   }
+                  isIncluded={imageIncluded}
+                  onToggleInclude={() => setImageIncluded((v) => !v)}
                 />
                 <BulletPointsSection
                   pimBullets={content.bullets}
@@ -723,6 +751,9 @@ export default function Home() {
                   onRejectAll={handleRejectAllBullets}
                   onResetAll={handleResetAllBullets}
                   onAcceptNewDraft={handleAcceptNewBulletDraft}
+                  isIncluded={bulletsIncluded}
+                  onToggleInclude={() => setBulletsIncluded((v) => !v)}
+                  hideActions
                 />
                 <DescriptionSection
                   pimDescription={content.description}
@@ -740,6 +771,9 @@ export default function Home() {
                   onUndoReject={handleUndoRejectDescription}
                   onPushUpdate={handlePushUpdateDescription}
                   onAcceptNewDraft={handleAcceptNewDescriptionDraft}
+                  isIncluded={descriptionIncluded}
+                  onToggleInclude={() => setDescriptionIncluded((v) => !v)}
+                  hideActions
                 />
               </div>
             </section>

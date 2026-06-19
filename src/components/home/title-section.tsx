@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Check, Columns2, Square, Type } from "lucide-react"
+import { Columns2, Type } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { SectionSelectToggle } from "./section-controls"
 import { titleMatchPercent } from "@/lib/title-match"
 import { resolvePublishedSourceDisplay } from "@/lib/published-source-display"
 import type { FieldPublishQueueItem } from "@/lib/build-field-publish-queue"
@@ -27,35 +28,6 @@ import type {
   SyncFootprint,
 } from "./types"
 
-// ─── Section select toggle (shared pattern) ──────────────────────────────────
-
-function SectionSelectToggle({
-  selected,
-  onToggle,
-}: {
-  selected: boolean
-  onToggle: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-label={selected ? "Deselect section" : "Select section"}
-      title={selected ? "Remove from publish" : "Include in publish"}
-      className="rounded p-0.5 transition-colors hover:bg-slate-100"
-    >
-      {selected ? (
-        <span className="flex size-5 items-center justify-center rounded-[3px] bg-brand-500">
-          <Check className="size-3 stroke-3 text-white" />
-        </span>
-      ) : (
-        <Square className="size-5 text-slate-300" />
-      )}
-    </button>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface ProductTitleSectionProps {
   pimTitle: string

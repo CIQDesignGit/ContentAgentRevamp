@@ -32,6 +32,8 @@ export interface BulletRecommendationSlotProps {
   onUndoReject: () => void
   onPushUpdate: () => void
   onAcceptNewDraft?: (text: string) => void
+  /** When true, hides the Accept/Reject action buttons. */
+  hideActions?: boolean
 }
 
 /** Shared title-parity layout: grid header + body slots for one bullet reco. */
@@ -51,6 +53,7 @@ export function useBulletRecommendationView({
   onUndoReject,
   onPushUpdate,
   onAcceptNewDraft,
+  hideActions = false,
   hideLabel = false,
 }: BulletRecommendationSlotProps & {
   /** When true, suppresses the per-bullet label row (e.g. "Bullet 1"). */
@@ -192,6 +195,7 @@ export function useBulletRecommendationView({
         editAriaLabel={`Edit ${item.label}`}
         compact
         iconOnlyActions
+        hideActions={hideActions}
       />
     )
   }
