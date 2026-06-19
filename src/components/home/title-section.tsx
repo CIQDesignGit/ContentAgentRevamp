@@ -6,13 +6,15 @@ import { cn } from "@/lib/utils"
 import { titleMatchPercent } from "@/lib/title-match"
 import { resolvePublishedSourceDisplay } from "@/lib/published-source-display"
 import type { FieldPublishQueueItem } from "@/lib/build-field-publish-queue"
-import { fieldLabelContentStack } from "./field-layout"
+import { fieldLabelContentStack, fieldSectionStack } from "./field-layout"
 import {
-  CompareTabs,
   ContentRecommendationBody,
   ContentRecommendationHeader,
 } from "./content-recommendation-card"
-import { AiRecommendationSparklesIcon, SourceCellLabel, SourceChannelLabel } from "./bullet-source-cell"
+import { BulletSourceCell, SourceCellLabel } from "./bullet-source-cell"
+import { ReasoningPanel } from "./reasoning-ui"
+import { AltKeywordsPanel } from "./alt-keywords-panel"
+import type { AltKeyword } from "./types"
 import { RETAILER_LOGO_SRC } from "./source-logos"
 import { PublishQueueList } from "./publish-queue-list"
 import type { FieldCompareTarget } from "./vertical-source-compare-grid"
@@ -123,6 +125,34 @@ export function ProductTitleSection({
   const [draftText, setDraftText] = useState("")
   const [draftOriginalText, setDraftOriginalText] = useState("")
   const [originalText] = useState(() => recommendation?.recommendedText ?? "")
+
+  // No-PIM layout: expanded panel state + keyword interaction (lifted so panels render full-width)
+  const [noPimShowReasoning, setNoPimShowReasoning] = useState(false)
+  const [noPimShowAltKeywords, setNoPimShowAltKeywords] = useState(false)
+  const [noPimUsedKeywordIds, setNoPimUsedKeywordIds] = useState<Set<string>>(new Set())
+  const [noPimAppliedSuffixes, setNoPimAppliedSuffixes] = useState<Map<string, string>>(new Map())
+
+  function handleNoPimUseKeyword(kw: AltKeyword) {
+    if (kw.replacesWord) {
+      const escaped = kw.replacesWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      const newText = (recommendation?.recommendedText ?? "").replace(new RegExp(escaped, "i"), kw.keyword)
+      onRecommendationChange(newText)
+    } else {
+      const suffix = `, ${kw.keyword}`
+      onRecommendationChange((recommendation?.recommendedText ?? "") + suffix)
+      setNoPimAppliedSuffixes((prev) => new Map(prev).set(kw.id, suffix))
+    }
+    setNoPimUsedKeywordIds((prev) => new Set(prev).add(kw.id))
+  }
+
+  function handleNoPimRemoveKeyword(kw: AltKeyword) {
+    const suffix = noPimAppliedSuffixes.get(kw.id)
+    if (suffix) {
+      onRecommendationChange((recommendation?.recommendedText ?? "").replace(suffix, ""))
+      setNoPimAppliedSuffixes((prev) => { const m = new Map(prev); m.delete(kw.id); return m })
+    }
+    setNoPimUsedKeywordIds((prev) => { const s = new Set(prev); s.delete(kw.id); return s })
+  }
 
   const publishedText = recommendation?.recommendedText
   const { pim: displayPim, pdp: displayPdp } = useMemo(
@@ -287,34 +317,9 @@ export function ProductTitleSection({
     </div>
   )
 
-  // When no PIM data: the recommendation UI lives inside the PIM column cell
-  const noPimRecoCell =
-    !hasPimData && recommendation ? (
-      <div className="flex h-full flex-col gap-3 pb-3">
-        <ContentRecommendationBody
-          recommendation={recommendation}
-          pimBaseline=""
-          pdpBaseline={displayPdp}
-          originalText={originalText}
-          compareTarget={effectiveCompareTarget}
-          status={status}
-          syncFootprint={syncFootprint}
-          hasUnpublishedEdits={hasUnpublishedEdits}
-          activeBatch={activeBatch}
-          fieldKey="title"
-          onRecommendedTextChange={onRecommendationChange}
-          onAccept={onAccept}
-          onReject={onReject}
-          onReset={() => onRecommendationChange(originalText)}
-          onUndoAccept={onUndoAccept}
-          onUndoReject={onUndoReject}
-          onPushUpdate={onPushUpdate}
-          hideActions={hideActions}
-          editAriaLabel={isManualTitleEdit ? "Edit title" : "Edit AI recommended title"}
-          charLimit={charLimit}
-        />
-      </div>
-    ) : null
+  const noPimAltKeywords = recommendation?.altKeywords ?? []
+  const noPimHasExpandedPanels = !isPublishedLocked && recommendation &&
+    (noPimShowReasoning || noPimShowAltKeywords)
 
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
@@ -337,83 +342,175 @@ export function ProductTitleSection({
         )}
       </header>
 
-      <VerticalSourceCompareGrid
-        pimValue={hasPimData ? displayPim : displayPdp}
-        pdpValue={hasPimData ? displayPdp : ""}
-        compareTarget={effectiveCompareTarget}
-        reverseColumns={!hasPimData}
-        charLimit={charLimit}
-        pimColumnLabel={
-          !hasPimData ? (
-            <SourceCellLabel logoSrc={RETAILER_LOGO_SRC} logoAlt="Amazon" sublabel="Retailer" />
-          ) : undefined
-        }
-        pdpCell={!hasPimData && noPimRecoCell ? noPimRecoCell : undefined}
-        pdpCellBare={!hasPimData}
-        pdpColumnLabel={
-          !hasPimData ? (
-            <SourceChannelLabel
-              icon={<AiRecommendationSparklesIcon />}
-              label="AI Recommended Title"
-            />
-          ) : undefined
-        }
-        recommendationHeader={hasPimData && showHeaderInGrid ? recommendationHeaderEl : undefined}
-        recommendationBody={
-          !hasPimData || !recommendation ? undefined : isFullySynced ? (
-            <div className={fieldLabelContentStack("w-full")}>
-              {!isAddingNew ? (
-                <>
-                  <p className="text-xs text-slate-500">No AI recommendation</p>
-                  <button
-                    type="button"
-                    onClick={handleAddNewTitle}
-                    className="self-start text-base font-medium text-primary hover:underline"
-                  >
-                    Edit Title
-                  </button>
-                </>
+      {!hasPimData ? (
+        /* ── No-PIM layout: 2-column grid (AI Recommendation | Retailer) + full-width panels below ── */
+        <div className={fieldSectionStack("w-full")}>
+          <div className="grid grid-cols-2 items-start gap-x-3">
+            {/* Left: AI Recommendation — panels are rendered full-width below, not inline */}
+            <div className={fieldLabelContentStack("min-h-0 min-w-0")}>
+              {recommendationHeaderEl}
+              {isFullySynced ? (
+                <div className={fieldLabelContentStack("w-full")}>
+                  {!isAddingNew ? (
+                    <>
+                      <p className="text-xs text-slate-500">No AI recommendation</p>
+                      <button
+                        type="button"
+                        onClick={handleAddNewTitle}
+                        className="self-start text-base font-medium text-primary hover:underline"
+                      >
+                        Edit Title
+                      </button>
+                    </>
+                  ) : null}
+                  {draftBlock}
+                </div>
+              ) : hasPublishQueue && showRecoBody ? (
+                queueBody
+              ) : showRecoBody && recommendation ? (
+                <ContentRecommendationBody
+                  key={`${pimTitle}|${pdpTitle}|nopim`}
+                  recommendation={recommendation}
+                  pimBaseline=""
+                  pdpBaseline={displayPdp}
+                  originalText={originalText}
+                  compareTarget={effectiveCompareTarget}
+                  status={status}
+                  syncFootprint={syncFootprint}
+                  hasUnpublishedEdits={hasUnpublishedEdits}
+                  activeBatch={activeBatch}
+                  fieldKey="title"
+                  onRecommendedTextChange={onRecommendationChange}
+                  onAccept={onAccept}
+                  onReject={onReject}
+                  onReset={() => onRecommendationChange(originalText)}
+                  onUndoAccept={onUndoAccept}
+                  onUndoReject={onUndoReject}
+                  onPushUpdate={onPushUpdate}
+                  hideReasoning={isManualTitleEdit}
+                  hideActions={hideActions}
+                  editAriaLabel={isManualTitleEdit ? "Edit title" : "Edit AI recommended title"}
+                  charLimit={charLimit}
+                  hideExpandedPanels
+                  showReasoningPanel={noPimShowReasoning}
+                  showAltKeywordsPanel={noPimShowAltKeywords}
+                  onReasoningToggle={setNoPimShowReasoning}
+                  onAltKeywordsToggle={setNoPimShowAltKeywords}
+                />
               ) : null}
-              {draftBlock}
             </div>
-          ) : hasPublishQueue && showRecoBody ? (
-            queueBody
-          ) : showRecoBody ? (
-            <div className={fieldLabelContentStack("w-full")}>
-              <ContentRecommendationBody
-                key={`${pimTitle}|${pdpTitle}|locked`}
-                header={recommendationHeaderEl ?? undefined}
-                recommendation={recommendation}
-                pimBaseline={hasPimData ? displayPim : ""}
-                pdpBaseline={displayPdp}
-                originalText={originalText}
-                compareTarget={effectiveCompareTarget}
-                status={status}
-                syncFootprint={syncFootprint}
-                hasUnpublishedEdits={hasUnpublishedEdits}
-                activeBatch={activeBatch}
-                fieldKey="title"
-                onRecommendedTextChange={onRecommendationChange}
-                onAccept={onAccept}
-                onReject={onReject}
-                onReset={() => onRecommendationChange(originalText)}
-                onUndoAccept={onUndoAccept}
-                onUndoReject={onUndoReject}
-                onPushUpdate={onPushUpdate}
-                hideReasoning={isManualTitleEdit}
-                hideActions={hideActions}
-                addNewLabel={isAddingNew ? undefined : "Add New Title"}
-                onAddNew={isAddingNew ? undefined : handleAddNewTitle}
-                editAriaLabel={
-                  isManualTitleEdit ? "Edit title" : "Edit AI recommended title"
-                }
-                charLimit={charLimit}
-              />
-              {draftBlock}
+
+            {/* Right: Retailer source */}
+            <div className={fieldLabelContentStack("min-h-0 min-w-0")}>
+              <div className="flex min-h-[30px] items-center">
+                <SourceCellLabel logoSrc={RETAILER_LOGO_SRC} logoAlt="Amazon" sublabel="Retailer" />
+              </div>
+              <div className="flex min-h-0 flex-1 flex-col">
+                <BulletSourceCell
+                  logoSrc={RETAILER_LOGO_SRC}
+                  logoAlt="Amazon"
+                  sublabel="Retailer"
+                  value={displayPdp}
+                  compareValue=""
+                  side="pdp"
+                  showLabel={false}
+                  charLimit={charLimit}
+                />
+              </div>
             </div>
-          ) : undefined
-        }
-      />
+          </div>
+
+          {/* Full-width expanded panels */}
+          {noPimHasExpandedPanels && (
+            <div className="flex flex-col border-t border-slate-100 pt-3">
+              {noPimShowReasoning && !isManualTitleEdit && recommendation!.reasoning.length > 0 && (
+                <div className="pb-2">
+                  <ReasoningPanel
+                    reasoning={recommendation!.reasoning}
+                    aeoPerformance={recommendation!.aeoPerformance}
+                  />
+                </div>
+              )}
+              {noPimShowAltKeywords && noPimAltKeywords.length > 0 && (
+                <div className={cn(
+                  "pb-2",
+                  noPimShowReasoning && !isManualTitleEdit && recommendation!.reasoning.length > 0
+                    ? "border-t border-slate-100 pt-2"
+                    : undefined,
+                )}>
+                  <AltKeywordsPanel
+                    keywords={noPimAltKeywords}
+                    usedIds={noPimUsedKeywordIds}
+                    onUse={handleNoPimUseKeyword}
+                    onRemove={handleNoPimRemoveKeyword}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ── Has-PIM layout: standard 2-column source grid ── */
+        <VerticalSourceCompareGrid
+          pimValue={displayPim}
+          pdpValue={displayPdp}
+          compareTarget={effectiveCompareTarget}
+          charLimit={charLimit}
+          recommendationHeader={showHeaderInGrid ? recommendationHeaderEl : undefined}
+          recommendationBody={
+            !recommendation ? undefined : isFullySynced ? (
+              <div className={fieldLabelContentStack("w-full")}>
+                {!isAddingNew ? (
+                  <>
+                    <p className="text-xs text-slate-500">No AI recommendation</p>
+                    <button
+                      type="button"
+                      onClick={handleAddNewTitle}
+                      className="self-start text-base font-medium text-primary hover:underline"
+                    >
+                      Edit Title
+                    </button>
+                  </>
+                ) : null}
+                {draftBlock}
+              </div>
+            ) : hasPublishQueue && showRecoBody ? (
+              queueBody
+            ) : showRecoBody ? (
+              <div className={fieldLabelContentStack("w-full")}>
+                <ContentRecommendationBody
+                  key={`${pimTitle}|${pdpTitle}|locked`}
+                  header={recommendationHeaderEl ?? undefined}
+                  recommendation={recommendation}
+                  pimBaseline={displayPim}
+                  pdpBaseline={displayPdp}
+                  originalText={originalText}
+                  compareTarget={effectiveCompareTarget}
+                  status={status}
+                  syncFootprint={syncFootprint}
+                  hasUnpublishedEdits={hasUnpublishedEdits}
+                  activeBatch={activeBatch}
+                  fieldKey="title"
+                  onRecommendedTextChange={onRecommendationChange}
+                  onAccept={onAccept}
+                  onReject={onReject}
+                  onReset={() => onRecommendationChange(originalText)}
+                  onUndoAccept={onUndoAccept}
+                  onUndoReject={onUndoReject}
+                  onPushUpdate={onPushUpdate}
+                  hideReasoning={isManualTitleEdit}
+                  hideActions={hideActions}
+                  addNewLabel={isAddingNew ? undefined : "Add New Title"}
+                  onAddNew={isAddingNew ? undefined : handleAddNewTitle}
+                  editAriaLabel={isManualTitleEdit ? "Edit title" : "Edit AI recommended title"}
+                  charLimit={charLimit}
+                />
+                {draftBlock}
+              </div>
+            ) : undefined
+          }
+        />
+      )}
 
       {/* "Add New Title" stays visible even when the queued dropdown is collapsed */}
       {hasPublishQueue && showReco && !isFullySynced && (

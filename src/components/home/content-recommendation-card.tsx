@@ -285,6 +285,16 @@ interface ContentRecommendationBodyProps {
   charLimit?: number
   /** When true, hides the Accept / Reject / Undo action buttons entirely. */
   hideActions?: boolean
+  /** When true, suppresses inline expanded panels — parent is responsible for rendering them. */
+  hideExpandedPanels?: boolean
+  /** External controlled show-state for the Reasoning panel toggle. */
+  showReasoningPanel?: boolean
+  /** External controlled show-state for the AltKeywords panel toggle. */
+  showAltKeywordsPanel?: boolean
+  /** Called when the user clicks the Reasoning toggle (controlled mode). */
+  onReasoningToggle?: (show: boolean) => void
+  /** Called when the user clicks the AltKeywords toggle (controlled mode). */
+  onAltKeywordsToggle?: (show: boolean) => void
 }
 
 /** Recommendation field and actions — aligned beside the active source text row. */
@@ -318,9 +328,17 @@ export function ContentRecommendationBody({
   header,
   charLimit,
   hideActions = false,
+  hideExpandedPanels = false,
+  showReasoningPanel,
+  showAltKeywordsPanel,
+  onReasoningToggle,
+  onAltKeywordsToggle,
 }: ContentRecommendationBodyProps) {
-  const [showReasoning, setShowReasoning] = useState(false)
-  const [showAltKeywords, setShowAltKeywords] = useState(false)
+  const [showReasoningLocal, setShowReasoningLocal] = useState(false)
+  const [showAltKeywordsLocal, setShowAltKeywordsLocal] = useState(false)
+  // Prefer external controlled state when provided (controlled mode)
+  const showReasoning = showReasoningPanel ?? showReasoningLocal
+  const showAltKeywords = showAltKeywordsPanel ?? showAltKeywordsLocal
   const [usedKeywordIds, setUsedKeywordIds] = useState<Set<string>>(new Set())
   // Tracks the exact string each keyword appended so removal can precisely strip it
   const [appliedSuffixes, setAppliedSuffixes] = useState<Map<string, string>>(new Map())
@@ -457,7 +475,10 @@ export function ContentRecommendationBody({
                 {!hideReasoning && recommendation.reasoning.length > 0 && (
                   <button
                     type="button"
-                    onClick={() => setShowReasoning((v) => !v)}
+                    onClick={() => {
+                      const next = !showReasoning
+                      onReasoningToggle ? onReasoningToggle(next) : setShowReasoningLocal(next)
+                    }}
                     className={cn(
                       "inline-flex items-center gap-1.5 text-xs font-medium transition-colors",
                       showReasoning ? "text-primary" : "text-slate-500 hover:text-slate-900",
@@ -474,7 +495,10 @@ export function ContentRecommendationBody({
                 {!hideAltKeywords && altKeywords.length > 0 && (
                   <button
                     type="button"
-                    onClick={() => setShowAltKeywords((v) => !v)}
+                    onClick={() => {
+                      const next = !showAltKeywords
+                      onAltKeywordsToggle ? onAltKeywordsToggle(next) : setShowAltKeywordsLocal(next)
+                    }}
                     className={cn(
                       "inline-flex items-center gap-1.5 text-xs font-medium transition-colors",
                       showAltKeywords ? "text-primary" : "text-slate-500 hover:text-slate-900",
@@ -608,8 +632,8 @@ export function ContentRecommendationBody({
           </div>
         </div>
 
-        {/* Expanded panels — only rendered when their toggle is active */}
-        {!isPublishedLocked && (showReasoning || showAltKeywords) ? (
+        {/* Expanded panels — only rendered when their toggle is active and not externally managed */}
+        {!hideExpandedPanels && !isPublishedLocked && (showReasoning || showAltKeywords) ? (
           <div className="flex flex-col border-t border-slate-100 pt-3">
             {showReasoning && !hideReasoning && recommendation.reasoning.length > 0 && (
               <div className="pb-2">

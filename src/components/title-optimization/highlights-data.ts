@@ -1,7 +1,52 @@
+import type { AltKeyword, ReasoningCategory } from "@/components/home/types"
+
+type HighlightEntry = {
+  id: string
+  text: string
+  reasoning?: ReasoningCategory[]
+  altKeywords?: AltKeyword[]
+}
+
 /** AI-generated item highlight per SKU id. Falls back to sku-1 entry when unmatched. */
-export const HIGHLIGHTS_BY_SKU: Record<string, { id: string; text: string }[]> = {
-  "sku-1": [{ id: "h1", text: "Long-lasting 110–150 hour burn time in a hand-poured 22 oz glass jar" }],
-  "sku-2": [{ id: "h1", text: "8-cup capacity with intuitive digital touchscreen control panel" }],
+export const HIGHLIGHTS_BY_SKU: Record<string, HighlightEntry[]> = {
+  "sku-1": [{
+    id: "h1",
+    text: "Long-lasting 110–150 hour burn time in a hand-poured 22 oz glass jar",
+    reasoning: [{
+      key: "seo",
+      label: "SEO",
+      reasons: [
+        { type: "ADDED", summary: "Burn time is a top search qualifier", detail: "Shoppers filter by burn hours — surfacing '110–150 hour' directly addresses the #2 category query." },
+        { type: "ADDED", summary: "Hand-poured signals premium quality", detail: "Search data shows 'hand-poured candle' queries convert 28% higher than generic candle searches." },
+      ],
+    }],
+    altKeywords: [
+      { id: "k1", keyword: "long burn candle", rank: 12, volume: "45K" },
+      { id: "k2", keyword: "22 oz candle jar", rank: 24, volume: "22K" },
+      { id: "k3", keyword: "hand poured soy candle", rank: 31, volume: "18K" },
+      { id: "k4", keyword: "premium scented candle", rank: 38, volume: "67K" },
+      { id: "k5", keyword: "large jar candle", rank: 9, volume: "89K" },
+      { id: "k6", keyword: "150 hour burn time", rank: 55, volume: "11K" },
+    ],
+  }],
+  "sku-2": [{
+    id: "h1",
+    text: "8-cup capacity with intuitive digital touchscreen control panel",
+    reasoning: [{
+      key: "seo",
+      label: "SEO",
+      reasons: [
+        { type: "ADDED", summary: "Capacity is the #1 purchase decision driver", detail: "'8-cup food processor' has 110K monthly searches — front-loading it captures high-intent queries." },
+        { type: "REPLACED", summary: "Digital touchscreen differentiates from competitors", detail: "Only 12% of listings in this category mention touchscreen controls, creating a strong differentiator." },
+      ],
+    }],
+    altKeywords: [
+      { id: "k1", keyword: "8 cup food processor", rank: 4, volume: "110K" },
+      { id: "k2", keyword: "digital food processor", rank: 17, volume: "34K" },
+      { id: "k3", keyword: "touchscreen food processor", rank: 29, volume: "14K" },
+      { id: "k4", keyword: "electric food processor", rank: 7, volume: "78K" },
+    ],
+  }],
   "sku-3": [{ id: "h1", text: "Powerful V11 motor delivers up to 60 minutes of cord-free runtime" }],
   "sku-4": [{ id: "h1", text: "Extra-wide slots fit thick artisan bread, bagels, and English muffins" }],
   "sku-5": [{ id: "h1", text: "High-speed steel burrs grind whole grains into ultra-fine flour in seconds" }],
