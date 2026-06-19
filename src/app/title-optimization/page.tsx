@@ -9,6 +9,7 @@ import { SkuSidebar } from "@/components/home/sku-sidebar"
 import { ProductHeader, type PublishBarState } from "@/components/home/product-header"
 import { ProductTitleSection } from "@/components/home/title-section"
 import { PublishConfirmDialog } from "@/components/home/publish-confirm-dialog"
+import { BulkPublishConfirmDialog, BulkPublishSuccessDialog, type BulkField } from "@/components/home/bulk-publish-confirm-dialog"
 import { UnpublishedChangesGuardDialog } from "@/components/home/unpublished-changes-guard-dialog"
 import { ItemHighlightsSection, type ItemHighlight } from "@/components/title-optimization/item-highlights-section"
 import {
@@ -65,6 +66,14 @@ export default function TitleOptimizationPage() {
   const [titleIncluded, setTitleIncluded] = useState(true)
   const [highlightIncluded, setHighlightIncluded] = useState(true)
   const publishTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  // ── Bulk SKU selection ───────────────────────────────────────────────────
+  const [isSelectionMode, setIsSelectionMode] = useState(false)
+  const [selectedSkuIds, setSelectedSkuIds] = useState<Set<string>>(new Set())
+  const [bulkPublishDialogOpen, setBulkPublishDialogOpen] = useState(false)
+  const [pendingBulkFields, setPendingBulkFields] = useState<BulkField[]>([])
+  const [bulkSuccessOpen, setBulkSuccessOpen] = useState(false)
+  const [bulkSuccessInfo, setBulkSuccessInfo] = useState<{ skuCount: number; fields: BulkField[] } | null>(null)
 
   const filteredSkus = useMemo(
     () => MOCK_SKUS.filter((s) => passesFilter(s, filter) && passesSearch(s, search)),
@@ -213,6 +222,80 @@ export default function TitleOptimizationPage() {
     })
   }
 
+  // ── Bulk SKU selection handlers ──────────────────────────────────────────
+
+  function handleToggleSelectionMode() {
+    setIsSelectionMode((v) => !v)
+    setSelectedSkuIds(new Set())
+  }
+
+  function handleToggleSkuSelection(id: string) {
+    setSelectedSkuIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function handleSelectAllSkus() {
+    setSelectedSkuIds(new Set(filteredSkus.map((s) => s.id)))
+  }
+
+  function handleDeselectAllSkus() {
+    setSelectedSkuIds(new Set())
+  }
+
+  function handleBulkPublishConfirm(fields: BulkField[]) {
+    setBulkPublishDialogOpen(false)
+    const includeTitle = fields.includes("title")
+    const includeBullets = fields.includes("bullets")
+    const includeDescription = fields.includes("description")
+
+    const skuIds = Array.from(selectedSkuIds)
+    const newState = { ...contentState }
+    const batchesToSchedule: { skuId: string; batchId: string }[] = []
+
+    for (const skuId of skuIds) {
+      const skuContent = newState[skuId] ?? makeInitialContent(MOCK_SKUS.find((s) => s.id === skuId)!)
+      const accepted: typeof skuContent = {
+        ...skuContent,
+        titleStatus: includeTitle && skuContent.titleStatus === "pending" ? "accepted" : skuContent.titleStatus,
+        titleSyncFootprint: includeTitle && skuContent.titleStatus === "pending" ? "none" : skuContent.titleSyncFootprint,
+        descriptionStatus: includeDescription && skuContent.descriptionStatus === "pending" ? "accepted" : skuContent.descriptionStatus,
+        descriptionSyncFootprint: includeDescription && skuContent.descriptionStatus === "pending" ? "none" : skuContent.descriptionSyncFootprint,
+        bulletRecommendations: skuContent.bulletRecommendations.map((r) =>
+          includeBullets && r.status === "pending"
+            ? { ...r, status: "accepted" as const, syncFootprint: "none" as const, hasUnpublishedEdits: false, footprint: undefined }
+            : r,
+        ),
+      }
+      const fieldKeys = [
+        includeTitle && accepted.titleStatus === "accepted" ? "title" : null,
+        includeDescription && accepted.descriptionStatus === "accepted" ? "description" : null,
+        ...(includeBullets
+          ? accepted.bulletRecommendations.filter((r) => r.status === "accepted").map((r) => `bullet:${r.id}`)
+          : []),
+      ].filter(Boolean) as string[]
+
+      if (fieldKeys.length === 0) { newState[skuId] = accepted; continue }
+
+      const published = applyPublishStart(accepted, fieldKeys, false)
+      newState[skuId] = published
+
+      const batch = published.publishBatches?.[published.publishBatches.length - 1]
+      if (batch) batchesToSchedule.push({ skuId, batchId: batch.id })
+    }
+
+    setContentState(newState)
+    batchesToSchedule.forEach(({ skuId, batchId }) => schedulePublishSimulation(skuId, batchId))
+
+    setBulkSuccessInfo({ skuCount: batchesToSchedule.length || skuIds.length, fields })
+    setBulkSuccessOpen(true)
+    setIsSelectionMode(false)
+    setSelectedSkuIds(new Set())
+  }
+
   // ── Navigation guard ──────────────────────────────────────────────────────
 
   const bulletOriginals = useMemo(() => {
@@ -276,6 +359,28 @@ export default function TitleOptimizationPage() {
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed((v) => !v)}
           hideMetrics
+          isSelectionMode={isSelectionMode}
+          selectedSkuIds={selectedSkuIds}
+          onToggleSelectionMode={handleToggleSelectionMode}
+          onToggleSkuSelection={handleToggleSkuSelection}
+          onSelectAllSkus={handleSelectAllSkus}
+          onDeselectAllSkus={handleDeselectAllSkus}
+          onBulkAcceptAndPublish={(fields) => { setPendingBulkFields(fields); setBulkPublishDialogOpen(true) }}
+        />
+
+        <BulkPublishConfirmDialog
+          open={bulkPublishDialogOpen}
+          onOpenChange={setBulkPublishDialogOpen}
+          skuCount={selectedSkuIds.size}
+          fields={pendingBulkFields}
+          onConfirm={() => handleBulkPublishConfirm(pendingBulkFields)}
+        />
+
+        <BulkPublishSuccessDialog
+          open={bulkSuccessOpen}
+          onOpenChange={setBulkSuccessOpen}
+          skuCount={bulkSuccessInfo?.skuCount ?? 0}
+          fields={bulkSuccessInfo?.fields ?? []}
         />
 
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">

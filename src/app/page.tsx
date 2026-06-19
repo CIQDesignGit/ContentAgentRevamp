@@ -15,6 +15,7 @@ import { ImageSection } from "@/components/home/image-section"
 import { BulletPointsSection } from "@/components/home/bullet-section"
 import { DescriptionSection } from "@/components/home/description-section"
 import { PublishConfirmDialog } from "@/components/home/publish-confirm-dialog"
+import { BulkPublishConfirmDialog, BulkPublishSuccessDialog, type BulkField } from "@/components/home/bulk-publish-confirm-dialog"
 import { toast } from "sonner"
 import { UnpublishedChangesGuardDialog } from "@/components/home/unpublished-changes-guard-dialog"
 
@@ -54,6 +55,14 @@ export default function Home() {
   const [unpublishedGuardOpen, setUnpublishedGuardOpen] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null)
   const publishTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  // ── Bulk SKU selection state ──────────────────────────────────────────────
+  const [isSelectionMode, setIsSelectionMode] = useState(false)
+  const [selectedSkuIds, setSelectedSkuIds] = useState<Set<string>>(new Set())
+  const [bulkPublishDialogOpen, setBulkPublishDialogOpen] = useState(false)
+  const [pendingBulkFields, setPendingBulkFields] = useState<BulkField[]>([])
+  const [bulkSuccessOpen, setBulkSuccessOpen] = useState(false)
+  const [bulkSuccessInfo, setBulkSuccessInfo] = useState<{ skuCount: number; fields: BulkField[] } | null>(null)
 
   // Section-level publish inclusion — all selected by default
   const [titleIncluded, setTitleIncluded] = useState(true)
@@ -204,6 +213,118 @@ export default function Home() {
     toast.success("Your changes are published", {
       description: `${fieldNames} sent to PIM & PDP.`,
     })
+  }
+
+  // ── Bulk SKU selection handlers ──────────────────────────────────────────
+
+  function handleToggleSelectionMode() {
+    setIsSelectionMode((v) => !v)
+    setSelectedSkuIds(new Set())
+  }
+
+  function handleToggleSkuSelection(id: string) {
+    setSelectedSkuIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function handleSelectAllSkus() {
+    setSelectedSkuIds(new Set(filteredSkus.map((s) => s.id)))
+  }
+
+  function handleDeselectAllSkus() {
+    setSelectedSkuIds(new Set())
+  }
+
+  /** Accepts all pending recommendations for selected SKUs — does not publish. */
+  function handleBulkAccept() {
+    const skuIds = Array.from(selectedSkuIds)
+    const newState = { ...contentState }
+
+    for (const skuId of skuIds) {
+      const skuContent = newState[skuId] ?? makeInitialContent(MOCK_SKUS.find((s) => s.id === skuId)!)
+      newState[skuId] = {
+        ...skuContent,
+        titleStatus: skuContent.titleStatus === "pending" ? "accepted" : skuContent.titleStatus,
+        titleSyncFootprint: skuContent.titleStatus === "pending" ? "none" : skuContent.titleSyncFootprint,
+        descriptionStatus: skuContent.descriptionStatus === "pending" ? "accepted" : skuContent.descriptionStatus,
+        descriptionSyncFootprint: skuContent.descriptionStatus === "pending" ? "none" : skuContent.descriptionSyncFootprint,
+        bulletRecommendations: skuContent.bulletRecommendations.map((r) =>
+          r.status !== "pending"
+            ? r
+            : { ...r, status: "accepted" as const, syncFootprint: "none" as const, hasUnpublishedEdits: false, footprint: undefined },
+        ),
+      }
+    }
+
+    setContentState(newState)
+    toast.success(`Accepted recommendations for ${skuIds.length} SKU${skuIds.length > 1 ? "s" : ""}`, {
+      description: "Changes staged — click Publish when ready.",
+    })
+    setIsSelectionMode(false)
+    setSelectedSkuIds(new Set())
+  }
+
+  /** Accept pending recs for selected SKUs (only for chosen fields), then publish. */
+  function handleBulkPublishConfirm(fields: BulkField[]) {
+    setBulkPublishDialogOpen(false)
+    const includeTitle = fields.includes("title")
+    const includeBullets = fields.includes("bullets")
+    const includeDescription = fields.includes("description")
+
+    const skuIds = Array.from(selectedSkuIds)
+    const newState = { ...contentState }
+    const batchesToSchedule: { skuId: string; batchId: string }[] = []
+
+    for (const skuId of skuIds) {
+      const skuContent = newState[skuId] ?? makeInitialContent(MOCK_SKUS.find((s) => s.id === skuId)!)
+
+      // Accept pending recs only for the fields the user selected
+      const accepted: typeof skuContent = {
+        ...skuContent,
+        titleStatus: includeTitle && skuContent.titleStatus === "pending" ? "accepted" : skuContent.titleStatus,
+        titleSyncFootprint: includeTitle && skuContent.titleStatus === "pending" ? "none" : skuContent.titleSyncFootprint,
+        descriptionStatus: includeDescription && skuContent.descriptionStatus === "pending" ? "accepted" : skuContent.descriptionStatus,
+        descriptionSyncFootprint: includeDescription && skuContent.descriptionStatus === "pending" ? "none" : skuContent.descriptionSyncFootprint,
+        bulletRecommendations: skuContent.bulletRecommendations.map((r) =>
+          includeBullets && r.status === "pending"
+            ? { ...r, status: "accepted" as const, syncFootprint: "none" as const, hasUnpublishedEdits: false, footprint: undefined }
+            : r,
+        ),
+      }
+
+      // Build publish field key list from accepted state
+      const fieldKeys = [
+        includeTitle && accepted.titleStatus === "accepted" ? "title" : null,
+        includeDescription && accepted.descriptionStatus === "accepted" ? "description" : null,
+        ...(includeBullets
+          ? accepted.bulletRecommendations.filter((r) => r.status === "accepted").map((r) => `bullet:${r.id}`)
+          : []),
+      ].filter(Boolean) as string[]
+
+      if (fieldKeys.length === 0) {
+        newState[skuId] = accepted
+        continue
+      }
+
+      const published = applyPublishStart(accepted, fieldKeys, false)
+      newState[skuId] = published
+
+      const batch = published.publishBatches?.[published.publishBatches.length - 1]
+      if (batch) batchesToSchedule.push({ skuId, batchId: batch.id })
+    }
+
+    setContentState(newState)
+    batchesToSchedule.forEach(({ skuId, batchId }) => schedulePublishSimulation(skuId, batchId))
+
+    // Show success modal with what was published
+    setBulkSuccessInfo({ skuCount: batchesToSchedule.length || skuIds.length, fields })
+    setBulkSuccessOpen(true)
+    setIsSelectionMode(false)
+    setSelectedSkuIds(new Set())
   }
 
   const bulletOriginals = useMemo(() => {
@@ -642,6 +763,28 @@ export default function Home() {
           totalCount={MOCK_SKUS.length}
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed((v) => !v)}
+          isSelectionMode={isSelectionMode}
+          selectedSkuIds={selectedSkuIds}
+          onToggleSelectionMode={handleToggleSelectionMode}
+          onToggleSkuSelection={handleToggleSkuSelection}
+          onSelectAllSkus={handleSelectAllSkus}
+          onDeselectAllSkus={handleDeselectAllSkus}
+          onBulkAcceptAndPublish={(fields) => { setPendingBulkFields(fields); setBulkPublishDialogOpen(true) }}
+        />
+
+        <BulkPublishConfirmDialog
+          open={bulkPublishDialogOpen}
+          onOpenChange={setBulkPublishDialogOpen}
+          skuCount={selectedSkuIds.size}
+          fields={pendingBulkFields}
+          onConfirm={() => handleBulkPublishConfirm(pendingBulkFields)}
+        />
+
+        <BulkPublishSuccessDialog
+          open={bulkSuccessOpen}
+          onOpenChange={setBulkSuccessOpen}
+          skuCount={bulkSuccessInfo?.skuCount ?? 0}
+          fields={bulkSuccessInfo?.fields ?? []}
         />
 
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
