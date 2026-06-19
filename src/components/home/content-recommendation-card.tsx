@@ -167,6 +167,7 @@ export function ContentRecommendationHeader({
   collapsible = false,
   isAiRecommendation = true,
   hideCompareTabs = false,
+  compareTabsExclude = [],
 }: {
   labels: RecommendationLabels
   status: TitleStatus
@@ -181,6 +182,8 @@ export function ContentRecommendationHeader({
   isAiRecommendation?: boolean
   /** When true, PIM/PDP tabs are omitted (controlled by a parent toolbar). */
   hideCompareTabs?: boolean
+  /** Keys to exclude from the compare tab list (e.g. hide "pim" when no PIM data). */
+  compareTabsExclude?: FieldCompareTarget[]
 }) {
   const fp = resolveFieldSyncFootprint(syncFootprint)
   const isPublishedLocked = status === "accepted" && isFieldPublishingLocked(fp)
@@ -241,7 +244,7 @@ export function ContentRecommendationHeader({
           )}
           aria-hidden={!(status === "pending" && isOpen)}
         >
-          <CompareTabs value={compareTarget} onChange={onCompareTargetChange} />
+          <CompareTabs value={compareTarget} onChange={onCompareTargetChange} exclude={compareTabsExclude} />
         </div>
       ) : null}
     </div>
@@ -280,6 +283,8 @@ interface ContentRecommendationBodyProps {
   header?: ReactNode
   /** When set, shows a character counter below the field (red when over limit). */
   charLimit?: number
+  /** When true, hides the Accept / Reject / Undo action buttons entirely. */
+  hideActions?: boolean
 }
 
 /** Recommendation field and actions — aligned beside the active source text row. */
@@ -312,6 +317,7 @@ export function ContentRecommendationBody({
   iconOnlyActions = false,
   header,
   charLimit,
+  hideActions = false,
 }: ContentRecommendationBodyProps) {
   const [showReasoning, setShowReasoning] = useState(false)
   const [showAltKeywords, setShowAltKeywords] = useState(false)
@@ -491,7 +497,7 @@ export function ContentRecommendationBody({
             )}
 
             {/* Right side: Accept / Reject / Undo buttons */}
-            <div className="flex shrink-0 flex-col items-end justify-center gap-1">
+            {!hideActions && <div className="flex shrink-0 flex-col items-end justify-center gap-1">
               {status === "pending" ||
               showReacceptActions ||
               showAcceptedReviewActions ||
@@ -598,7 +604,7 @@ export function ContentRecommendationBody({
                   fieldKey={fieldKey}
                 />
               ) : null}
-            </div>
+            </div>}
           </div>
         </div>
 

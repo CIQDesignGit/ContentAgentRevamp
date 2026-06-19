@@ -1,6 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Check, Minus, Square } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 import { AppHeader } from "@/components/home/app-header"
 import { FilterBar } from "@/components/home/filter-bar"
@@ -41,6 +43,52 @@ const TITLE_CHAR_LIMIT = 75
 
 type PendingNavigation = { kind: "sku"; skuId: string } | { kind: "route"; path: string }
 
+// ─── Bulk select control ──────────────────────────────────────────────────────
+
+function BulkSelectControl({
+  selectedCount,
+  totalCount,
+  onSelectAll,
+  onDeselectAll,
+}: {
+  selectedCount: number
+  totalCount: number
+  onSelectAll: () => void
+  onDeselectAll: () => void
+}) {
+  const allSelected = selectedCount === totalCount
+  const noneSelected = selectedCount === 0
+
+  return (
+    <div className="flex items-center justify-end">
+      <button
+        type="button"
+        onClick={allSelected ? onDeselectAll : onSelectAll}
+        className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 transition-colors hover:bg-slate-100"
+      >
+        <span className={cn("text-sm font-medium", allSelected ? "text-brand-500" : "text-slate-400")}>
+          {allSelected
+            ? "All selected"
+            : noneSelected
+            ? "Select all"
+            : `${selectedCount} / ${totalCount} selected`}
+        </span>
+        {allSelected ? (
+          <span className="flex size-4 items-center justify-center rounded-[3px] bg-brand-500">
+            <Check className="size-2.5 stroke-3 text-white" />
+          </span>
+        ) : noneSelected ? (
+          <Square className="size-4 text-slate-300" />
+        ) : (
+          <span className="flex size-4 items-center justify-center rounded-[3px] bg-brand-200">
+            <Minus className="size-2.5 stroke-3 text-brand-600" />
+          </span>
+        )}
+      </button>
+    </div>
+  )
+}
+
 function makeHighlights(skuId: string): ItemHighlight[] {
   return (HIGHLIGHTS_BY_SKU[skuId] ?? DEFAULT_HIGHLIGHTS).map((h) => ({
     ...h,
@@ -59,6 +107,9 @@ export default function TitleOptimizationPage() {
   const [unpublishedGuardOpen, setUnpublishedGuardOpen] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null)
   const [highlights, setHighlights] = useState<ItemHighlight[]>(() => makeHighlights(MOCK_SKUS[0].id))
+  // Section-level publish inclusion (independent of accept/reject status, both selected by default)
+  const [titleIncluded, setTitleIncluded] = useState(true)
+  const [highlightIncluded, setHighlightIncluded] = useState(true)
   const publishTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   const filteredSkus = useMemo(
@@ -87,9 +138,11 @@ export default function TitleOptimizationPage() {
 
   const hasUnpublished = publishSummary.publishable.length > 0
 
-  // Reset highlights when SKU changes
+  // Reset highlights and inclusion state when SKU changes
   useEffect(() => {
     setHighlights(makeHighlights(selectedSkuId))
+    setTitleIncluded(true)
+    setHighlightIncluded(true)
   }, [selectedSkuId])
 
   function patch(updater: (prev: SkuContent) => SkuContent) {
@@ -283,6 +336,9 @@ export default function TitleOptimizationPage() {
             aeo={selectedSku.metrics.aeo}
             publishState={publishBarState}
             publishableCount={publishSummary.publishable.length}
+            hideMetrics
+            selectedCount={[titleIncluded, highlightIncluded].filter(Boolean).length}
+            totalSections={2}
             onPublishClick={() => { if (publishSummary.publishable.length > 0) setPublishDialogOpen(true) }}
           />
 
@@ -301,7 +357,17 @@ export default function TitleOptimizationPage() {
           />
 
           <div className="flex-1 overflow-y-auto">
-            <div className="space-y-4 p-5">
+            {/* Bulk select — own tight strip, not part of section spacing */}
+            <div className="flex items-center justify-end px-5 pt-3 pb-1">
+              <BulkSelectControl
+                selectedCount={[titleIncluded, highlightIncluded].filter(Boolean).length}
+                totalCount={2}
+                onSelectAll={() => { setTitleIncluded(true); setHighlightIncluded(true) }}
+                onDeselectAll={() => { setTitleIncluded(false); setHighlightIncluded(false) }}
+              />
+            </div>
+
+            <div className="space-y-4 px-5 pb-5">
               {/* Title — fully interactive, 75-char limit */}
               <ProductTitleSection
                 key={selectedSkuId}
@@ -323,6 +389,9 @@ export default function TitleOptimizationPage() {
                 onAcceptNewDraft={handleAcceptNewTitleDraft}
                 onUndoStagedNewTitle={handleUndoStagedNewTitle}
                 charLimit={TITLE_CHAR_LIMIT}
+                isIncluded={titleIncluded}
+                onToggleInclude={() => setTitleIncluded((v) => !v)}
+                hideActions
               />
 
               {/* Item Highlights — new AI-generated info points */}
@@ -330,9 +399,9 @@ export default function TitleOptimizationPage() {
                 highlights={highlights}
                 hasPimData={content.hasPimData}
                 onAccept={(id) => patchHighlight(id, "accepted")}
-                onReject={(id) => patchHighlight(id, "rejected")}
                 onUndoAccept={(id) => patchHighlight(id, "pending")}
-                onUndoReject={(id) => patchHighlight(id, "pending")}
+                isIncluded={highlightIncluded}
+                onToggleInclude={() => setHighlightIncluded((v) => !v)}
               />
 
               {/* Locked sections — visible but not interactive in this module */}

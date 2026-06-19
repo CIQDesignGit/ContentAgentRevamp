@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Columns2, Type } from "lucide-react"
+import { Check, Columns2, Square, Type } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { titleMatchPercent } from "@/lib/title-match"
 import { resolvePublishedSourceDisplay } from "@/lib/published-source-display"
 import type { FieldPublishQueueItem } from "@/lib/build-field-publish-queue"
@@ -23,6 +24,36 @@ import type {
   TitleStatus,
   SyncFootprint,
 } from "./types"
+
+// ─── Section select toggle (shared pattern) ──────────────────────────────────
+
+function SectionSelectToggle({
+  selected,
+  onToggle,
+}: {
+  selected: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={selected ? "Deselect section" : "Select section"}
+      title={selected ? "Remove from publish" : "Include in publish"}
+      className="rounded p-0.5 transition-colors hover:bg-slate-100"
+    >
+      {selected ? (
+        <span className="flex size-5 items-center justify-center rounded-[3px] bg-brand-500">
+          <Check className="size-3 stroke-3 text-white" />
+        </span>
+      ) : (
+        <Square className="size-5 text-slate-300" />
+      )}
+    </button>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface ProductTitleSectionProps {
   pimTitle: string
@@ -46,6 +77,10 @@ interface ProductTitleSectionProps {
   onUndoStagedNewTitle?: () => void
   /** When set, shows a character counter on the recommendation field. */
   charLimit?: number
+  isIncluded?: boolean
+  onToggleInclude?: () => void
+  /** When true, hides Accept/Reject/Undo buttons (section toggle handles inclusion instead). */
+  hideActions?: boolean
 }
 
 export function ProductTitleSection({
@@ -68,6 +103,9 @@ export function ProductTitleSection({
   onAcceptNewDraft,
   onUndoStagedNewTitle,
   charLimit,
+  isIncluded = true,
+  onToggleInclude,
+  hideActions = false,
 }: ProductTitleSectionProps) {
   const [compareTarget, setCompareTarget] = useState<FieldCompareTarget>("final")
   const [draftCompareTarget, setDraftCompareTarget] = useState<FieldCompareTarget>("final")
@@ -169,6 +207,7 @@ export function ProductTitleSection({
           onReset={() => setDraftText(draftOriginalText)}
           onUndoAccept={() => setIsAddingNew(false)}
           hideReasoning
+          hideActions={hideActions}
           rejectLabel="Cancel"
           editAriaLabel="Edit new title"
         />
@@ -210,6 +249,7 @@ export function ProductTitleSection({
           onReset={() => onRecommendationChange(recommendation.recommendedText)}
           onUndoAccept={onUndoAccept}
           hideReasoning
+          hideActions={hideActions}
           editAriaLabel="Edit title"
         />
       </div>
@@ -228,10 +268,10 @@ export function ProductTitleSection({
         syncFootprint={syncFootprint}
         compareTarget={effectiveCompareTarget}
         onCompareTargetChange={setCompareTarget}
+        compareTabsExclude={hasPimData ? [] : ["pim"]}
         isOpen={isOpen}
         onToggleOpen={() => setIsOpen((v) => !v)}
         isAiRecommendation={!isManualTitleEdit}
-        hideCompareTabs
       />
     ) : null
 
@@ -269,6 +309,7 @@ export function ProductTitleSection({
           onUndoAccept={onUndoAccept}
           onUndoReject={onUndoReject}
           onPushUpdate={onPushUpdate}
+          hideActions={hideActions}
           editAriaLabel={isManualTitleEdit ? "Edit title" : "Edit AI recommended title"}
           charLimit={charLimit}
         />
@@ -286,12 +327,11 @@ export function ProductTitleSection({
             {matchPercent}% match between PIM and retailer
           </span>
         )}
-        {showReco && status === "pending" && isOpen && (
+        {showReco && (
           <div className="ml-auto">
-            <CompareTabs
-              value={effectiveCompareTarget}
-              onChange={setCompareTarget}
-              exclude={hasPimData ? [] : ["pim"]}
+            <SectionSelectToggle
+              selected={isIncluded}
+              onToggle={onToggleInclude ?? (() => {})}
             />
           </div>
         )}
@@ -361,6 +401,7 @@ export function ProductTitleSection({
                 onUndoReject={onUndoReject}
                 onPushUpdate={onPushUpdate}
                 hideReasoning={isManualTitleEdit}
+                hideActions={hideActions}
                 addNewLabel={isAddingNew ? undefined : "Add New Title"}
                 onAddNew={isAddingNew ? undefined : handleAddNewTitle}
                 editAriaLabel={

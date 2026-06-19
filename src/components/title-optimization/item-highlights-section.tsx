@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, Lightbulb, Undo2, X } from "lucide-react"
+import { Check, Lightbulb, Square } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AiRecommendationSparklesIcon } from "@/components/home/bullet-source-cell"
 
@@ -12,35 +12,46 @@ export type ItemHighlight = {
   status: HighlightStatus
 }
 
-// ─── Single highlight row ─────────────────────────────────────────────────────
+// ─── Section select toggle ─────────────────────────────────────────────────────
 
-function HighlightRow({
-  highlight,
-  onAccept,
-  onReject,
-  onUndoAccept,
-  onUndoReject,
+function SectionSelectToggle({
+  selected,
+  onToggle,
 }: {
-  highlight: ItemHighlight
-  onAccept: () => void
-  onReject: () => void
-  onUndoAccept: () => void
-  onUndoReject: () => void
+  selected: boolean
+  onToggle: () => void
 }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={selected ? "Deselect section" : "Select section"}
+      title={selected ? "Remove from publish" : "Include in publish"}
+      className="rounded p-0.5 transition-colors hover:bg-slate-100"
+    >
+      {selected ? (
+        <span className="flex size-5 items-center justify-center rounded-[3px] bg-brand-500">
+          <Check className="size-3 stroke-3 text-white" />
+        </span>
+      ) : (
+        <Square className="size-5 text-slate-300" />
+      )}
+    </button>
+  )
+}
+
+// ─── Single highlight row (display-only — selection is at section level) ──────
+
+function HighlightRow({ highlight }: { highlight: ItemHighlight }) {
   const { status, text } = highlight
 
   const outerBg =
     status === "accepted" ? "bg-success-50"
-    : status === "rejected" ? "bg-slate-50"
     : "bg-brand-50"
 
   const innerBorder =
     status === "accepted" ? "border-success-200"
-    : status === "rejected" ? "border-slate-200"
     : "border-brand-300"
-
-  const innerBg =
-    status === "rejected" ? "bg-slate-100" : "bg-white"
 
   return (
     <div className="flex items-start gap-3">
@@ -48,60 +59,10 @@ function HighlightRow({
         <AiRecommendationSparklesIcon />
       </div>
 
-      {/* Outer tinted pill → inner white box — matches EditableRecommendationField */}
       <div className={cn("min-w-0 flex-1 rounded-lg px-0.5 py-0.5 transition-colors", outerBg)}>
-        <div className={cn("rounded-md border px-3 py-2", innerBorder, innerBg)}>
-          <p
-            className={cn(
-              "text-sm leading-relaxed",
-              status === "rejected" ? "text-slate-400 line-through" : "text-slate-800",
-            )}
-          >
-            {text}
-          </p>
+        <div className={cn("rounded-md border bg-white px-3 py-2", innerBorder)}>
+          <p className="text-sm leading-relaxed text-slate-800">{text}</p>
         </div>
-      </div>
-
-      {/* Labeled action buttons — fit-content width */}
-      <div className="flex w-fit shrink-0 items-center gap-1.5">
-        {status === "pending" && (
-          <>
-            <button
-              type="button"
-              onClick={onReject}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-error-100 bg-error-50 px-3 text-xs font-medium text-error-700 hover:bg-error-100"
-            >
-              <X className="size-3.5" /> Reject
-            </button>
-            <button
-              type="button"
-              onClick={onAccept}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-success-100 bg-success-50 px-3 text-xs font-medium text-success-700 hover:bg-success-100"
-            >
-              <Check className="size-3.5" /> Accept
-            </button>
-          </>
-        )}
-        {status === "accepted" && (
-          <button
-            type="button"
-            onClick={onUndoAccept}
-            aria-label="Undo accept"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
-          >
-            <Undo2 className="size-3.5" />
-          </button>
-        )}
-        {status === "rejected" && (
-          <button
-            type="button"
-            onClick={onUndoReject}
-            aria-label="Undo reject"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
-          >
-            <Undo2 className="size-3.5" />
-          </button>
-        )}
       </div>
     </div>
   )
@@ -113,19 +74,19 @@ interface ItemHighlightsSectionProps {
   highlights: ItemHighlight[]
   /** When false (no PIM entry), a badge clarifies the highlights are PDP-derived. */
   hasPimData?: boolean
+  isIncluded?: boolean
+  onToggleInclude?: () => void
   onAccept: (id: string) => void
-  onReject: (id: string) => void
   onUndoAccept: (id: string) => void
-  onUndoReject: (id: string) => void
 }
 
 export function ItemHighlightsSection({
   highlights,
   hasPimData = true,
+  isIncluded = true,
+  onToggleInclude,
   onAccept,
-  onReject,
   onUndoAccept,
-  onUndoReject,
 }: ItemHighlightsSectionProps) {
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
@@ -139,18 +100,14 @@ export function ItemHighlightsSection({
           </span>
         )}
 
+        <div className="ml-auto">
+          <SectionSelectToggle selected={isIncluded} onToggle={onToggleInclude ?? (() => {})} />
+        </div>
       </header>
 
-      <div className="mt-1 space-y-2 px-1">
+      <div className={cn("mt-1 space-y-2 px-1 transition-opacity", !isIncluded && "opacity-40")}>
         {highlights.map((h) => (
-          <HighlightRow
-            key={h.id}
-            highlight={h}
-            onAccept={() => onAccept(h.id)}
-            onReject={() => onReject(h.id)}
-            onUndoAccept={() => onUndoAccept(h.id)}
-            onUndoReject={() => onUndoReject(h.id)}
-          />
+          <HighlightRow key={h.id} highlight={h} />
         ))}
       </div>
     </section>

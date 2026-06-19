@@ -18,6 +18,11 @@ interface ProductHeaderProps {
   publishState: PublishBarState
   publishableCount: number
   onPublishClick: () => void
+  /** Number of sections the user has checked for publish. */
+  selectedCount?: number
+  /** Total number of selectable sections. */
+  totalSections?: number
+  hideMetrics?: boolean
 }
 
 export function ProductHeader({
@@ -32,29 +37,39 @@ export function ProductHeader({
   publishState,
   publishableCount,
   onPublishClick,
+  selectedCount,
+  totalSections,
+  hideMetrics = false,
 }: ProductHeaderProps) {
-  const canPublish = publishState === "ready" || (publishState === "syncing" && publishableCount > 0)
+  const hasSelection = selectedCount !== undefined && totalSections !== undefined
+  const ctaLabel = hasSelection && selectedCount! > 0
+    ? `Publish ${selectedCount} to PDP`
+    : "Publish to PDP"
+  // When section-level selection is in use, enable publish as long as at least one section is selected.
+  // Falls back to the standard publishState logic on pages that don't use section selection.
+  const canPublish = hasSelection
+    ? selectedCount! > 0
+    : publishState === "ready" || (publishState === "syncing" && publishableCount > 0)
 
   return (
     <div className="flex shrink-0 flex-col border-b border-slate-200 bg-white">
       <div className="flex items-start justify-between gap-6 px-6 py-4">
-        {/* Left: thumbnail + product info */}
-        <div className="flex min-w-0 items-start gap-3">
-          {/* Product thumbnail */}
+        {/* Left: thumbnail + product info — items-stretch so thumbnail matches text height */}
+        <div className="flex min-w-0 items-stretch gap-3">
           {thumbnailUrl ? (
             <img
               src={thumbnailUrl}
               alt=""
-              className="size-14 shrink-0 rounded-lg border border-slate-200 bg-slate-100 object-contain p-1"
+              className="w-14 shrink-0 rounded-lg border border-slate-200 bg-slate-100 object-contain p-1"
             />
           ) : (
             <div
-              className="size-14 shrink-0 rounded-lg border border-slate-200 bg-slate-100"
+              className="w-14 shrink-0 rounded-lg border border-slate-200 bg-slate-100"
               aria-hidden
             />
           )}
 
-          {/* Metadata above title, then metric chips below */}
+          {/* Metadata + title + optional metrics */}
           <div className="min-w-0 space-y-1">
             <span className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
               <span>{asin}</span>
@@ -64,39 +79,39 @@ export function ProductHeader({
               <span>{brand}</span>
             </span>
             <h1 className="truncate text-base font-semibold text-slate-900">{title}</h1>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <MetricChip label="Compliance" value={compliance} icon={<ShieldCheck className="size-3" />} />
-              <MetricChip label="SEO" value={seo} icon={<Search className="size-3" />} />
-              <MetricChip label="AEO" value={aeo} icon={<Sparkles className="size-3" />} />
-            </div>
+            {!hideMetrics && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <MetricChip label="Compliance" value={compliance} icon={<ShieldCheck className="size-3" />} />
+                <MetricChip label="SEO" value={seo} icon={<Search className="size-3" />} />
+                <MetricChip label="AEO" value={aeo} icon={<Sparkles className="size-3" />} />
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-col items-end gap-2">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onPublishClick}
-              disabled={!canPublish}
-              className={cn(
-                "inline-flex h-8 items-center gap-2 rounded-md px-4 text-xs font-medium text-white",
-                canPublish ? "bg-primary hover:bg-brand-700" : "cursor-not-allowed bg-slate-300",
-              )}
-            >
-              Publish to PIM &amp; PDP
-            </button>
-            <button
-              type="button"
-              aria-label="Bookmark"
-              title="Bookmark"
-              className="grid size-8 place-items-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-100"
-            >
-              <BookmarkPlus className="size-4" />
-            </button>
-          </div>
+        {/* Right: publish CTA + bookmark */}
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={onPublishClick}
+            disabled={!canPublish}
+            className={cn(
+              "inline-flex h-8 items-center gap-2 rounded-md px-4 text-xs font-medium text-white",
+              canPublish ? "bg-primary hover:bg-brand-700" : "cursor-not-allowed bg-slate-300",
+            )}
+          >
+            {ctaLabel}
+          </button>
+          <button
+            type="button"
+            aria-label="Bookmark"
+            title="Bookmark"
+            className="grid size-8 place-items-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-100"
+          >
+            <BookmarkPlus className="size-4" />
+          </button>
         </div>
       </div>
-
     </div>
   )
 }
