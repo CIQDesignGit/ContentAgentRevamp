@@ -36,6 +36,10 @@ interface VerticalSourceCompareGridProps {
   recommendationHeader?: ReactNode
   /** Full-width row below the header (editable field, actions, reasoning). */
   recommendationBody?: ReactNode
+  /** When true, renders PDP column before PIM column. */
+  reverseColumns?: boolean
+  /** When set, shows a character counter inside each source text box. */
+  charLimit?: number
 }
 
 function sourceColumnClass(showPim: boolean, showPdp: boolean) {
@@ -81,6 +85,8 @@ export function VerticalSourceCompareGrid({
   pdpCellBare = false,
   recommendationHeader,
   recommendationBody,
+  reverseColumns = false,
+  charLimit,
 }: VerticalSourceCompareGridProps) {
   const columnClass = sourceColumnClass(showPim, showPdp)
   const hasRecommendation = Boolean(recommendationHeader || recommendationBody)
@@ -105,55 +111,64 @@ export function VerticalSourceCompareGrid({
   return (
     <div className={fieldSectionStack("w-full")}>
       <div className={cn("grid gap-x-3", (pimCellBare || pdpCellBare) ? "items-start" : "items-stretch", columnClass)}>
-        {showPim ? (
-          <SourceCompareColumn
-            showLabel={showColumnLabels}
-            label={pimColumnLabel ?? <SourceCellLabel logoSrc={SALSIFY_LOGO_SRC} logoAlt={PIM_LOGO_ALT} sublabel={PIM_CHANNEL_LABEL} />}
-          >
-            {pimCell ? (
-              pimCellBare ? pimCell : <div className={pimCellClassName ?? sourceCellShellClass}>{pimCell}</div>
-            ) : (
-              <BulletSourceCell
-                logoSrc={SALSIFY_LOGO_SRC}
-                logoAlt={PIM_LOGO_ALT}
-                sublabel={PIM_CHANNEL_LABEL}
-                value={pimValue}
-                compareValue={pdpValue}
-                side="pim"
-                emptyLabel={pimEmptyLabel}
-                showLabel={false}
-              />
-            )}
-          </SourceCompareColumn>
-        ) : null}
-        {showPdp ? (
-          <SourceCompareColumn
-            showLabel={showColumnLabels}
-            label={
-              pdpColumnLabel ?? (
-                <SourceCellLabel logoSrc={RETAILER_LOGO_SRC} logoAlt="Amazon" sublabel="Retailer" />
-              )
-            }
-          >
-            {pdpCell ? (
-              pdpCellBare ? (
-                pdpCell
+        {(() => {
+          const pimColumn = showPim ? (
+            <SourceCompareColumn
+              key="pim"
+              showLabel={showColumnLabels}
+              label={pimColumnLabel ?? <SourceCellLabel logoSrc={SALSIFY_LOGO_SRC} logoAlt={PIM_LOGO_ALT} sublabel={PIM_CHANNEL_LABEL} />}
+            >
+              {pimCell ? (
+                pimCellBare ? pimCell : <div className={pimCellClassName ?? sourceCellShellClass}>{pimCell}</div>
               ) : (
-                <div className={sourceCellShellClass}>{pdpCell}</div>
-              )
-            ) : (
-              <BulletSourceCell
-                logoSrc={RETAILER_LOGO_SRC}
-                logoAlt="Amazon"
-                sublabel="Retailer"
-                value={pdpValue}
-                compareValue={pimValue}
-                side="pdp"
-                showLabel={false}
-              />
-            )}
-          </SourceCompareColumn>
-        ) : null}
+                <BulletSourceCell
+                  logoSrc={SALSIFY_LOGO_SRC}
+                  logoAlt={PIM_LOGO_ALT}
+                  sublabel={PIM_CHANNEL_LABEL}
+                  value={pimValue}
+                  compareValue={pdpValue}
+                  side="pim"
+                  emptyLabel={pimEmptyLabel}
+                  showLabel={false}
+                  charLimit={charLimit}
+                />
+              )}
+            </SourceCompareColumn>
+          ) : null
+
+          const pdpColumn = showPdp ? (
+            <SourceCompareColumn
+              key="pdp"
+              showLabel={showColumnLabels}
+              label={
+                pdpColumnLabel ?? (
+                  <SourceCellLabel logoSrc={RETAILER_LOGO_SRC} logoAlt="Amazon" sublabel="Retailer" />
+                )
+              }
+            >
+              {pdpCell ? (
+                pdpCellBare ? (
+                  pdpCell
+                ) : (
+                  <div className={sourceCellShellClass}>{pdpCell}</div>
+                )
+              ) : (
+                <BulletSourceCell
+                  logoSrc={RETAILER_LOGO_SRC}
+                  logoAlt="Amazon"
+                  sublabel="Retailer"
+                  value={pdpValue}
+                  compareValue={pimValue}
+                  side="pdp"
+                  showLabel={false}
+                  charLimit={charLimit}
+                />
+              )}
+            </SourceCompareColumn>
+          ) : null
+
+          return reverseColumns ? [pdpColumn, pimColumn] : [pimColumn, pdpColumn]
+        })()}
       </div>
 
       {hasRecommendation ? recommendationGrouped : null}

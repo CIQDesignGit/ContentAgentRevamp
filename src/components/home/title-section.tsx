@@ -69,8 +69,8 @@ export function ProductTitleSection({
   onUndoStagedNewTitle,
   charLimit,
 }: ProductTitleSectionProps) {
-  const [compareTarget, setCompareTarget] = useState<FieldCompareTarget>("pim")
-  const [draftCompareTarget, setDraftCompareTarget] = useState<FieldCompareTarget>("pim")
+  const [compareTarget, setCompareTarget] = useState<FieldCompareTarget>("final")
+  const [draftCompareTarget, setDraftCompareTarget] = useState<FieldCompareTarget>("final")
 
   // "Changes queued" state — collapsed by default so users aren't overwhelmed
   const isPublishedLocked =
@@ -301,6 +301,8 @@ export function ProductTitleSection({
         pimValue={hasPimData ? displayPim : displayPdp}
         pdpValue={hasPimData ? displayPdp : ""}
         compareTarget={effectiveCompareTarget}
+        reverseColumns={!hasPimData}
+        charLimit={charLimit}
         pimColumnLabel={
           !hasPimData ? (
             <SourceCellLabel logoSrc={RETAILER_LOGO_SRC} logoAlt="Amazon" sublabel="Retailer" />

@@ -111,9 +111,9 @@ export type RecommendationLabels = {
 }
 
 const COMPARE_OPTIONS: { key: FieldCompareTarget; label: string }[] = [
+  { key: "final", label: "Text" },
   { key: "pim", label: "vs. PIM" },
   { key: "pdp", label: "vs. PDP" },
-  { key: "final", label: "Text" },
 ]
 
 export function CompareTabs({
@@ -416,6 +416,7 @@ export function ContentRecommendationBody({
       editAriaLabel={editAriaLabel}
       editRows={editRows}
       compact={compact}
+      charLimit={charLimit}
       exitEditKey={compareTarget}
     />
   )
@@ -433,17 +434,6 @@ export function ContentRecommendationBody({
         )}
 
         <div className="space-y-1">
-          {charLimit ? (
-            <p className={cn(
-              "text-right text-xs tabular-nums",
-              recommendation.recommendedText.length > charLimit
-                ? "font-semibold text-error-600"
-                : "text-slate-400",
-            )}>
-              {recommendation.recommendedText.length} / {charLimit}
-            </p>
-          ) : null}
-
           {/* Action bar: toggles on the left, Accept/Reject on the right */}
           <div className="flex items-center justify-between gap-3">
 

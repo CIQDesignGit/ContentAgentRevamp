@@ -62,25 +62,23 @@ function HighlightRow({
         </div>
       </div>
 
-      {/* Icon-only action buttons per row */}
-      <div className="flex shrink-0 items-center gap-1">
+      {/* Labeled action buttons — fit-content width */}
+      <div className="flex w-fit shrink-0 items-center gap-1.5">
         {status === "pending" && (
           <>
             <button
               type="button"
               onClick={onReject}
-              aria-label="Reject"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-error-100 bg-error-50 text-error-600 hover:bg-error-100"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-error-100 bg-error-50 px-3 text-xs font-medium text-error-700 hover:bg-error-100"
             >
-              <X className="size-3.5" />
+              <X className="size-3.5" /> Reject
             </button>
             <button
               type="button"
               onClick={onAccept}
-              aria-label="Accept"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-success-100 bg-success-50 text-success-600 hover:bg-success-100"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-success-100 bg-success-50 px-3 text-xs font-medium text-success-700 hover:bg-success-100"
             >
-              <Check className="size-3.5" />
+              <Check className="size-3.5" /> Accept
             </button>
           </>
         )}
@@ -89,9 +87,9 @@ function HighlightRow({
             type="button"
             onClick={onUndoAccept}
             aria-label="Undo accept"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
           >
-            <Undo2 className="size-3" />
+            <Undo2 className="size-3.5" />
           </button>
         )}
         {status === "rejected" && (
@@ -99,9 +97,9 @@ function HighlightRow({
             type="button"
             onClick={onUndoReject}
             aria-label="Undo reject"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
           >
-            <Undo2 className="size-3" />
+            <Undo2 className="size-3.5" />
           </button>
         )}
       </div>
@@ -119,8 +117,6 @@ interface ItemHighlightsSectionProps {
   onReject: (id: string) => void
   onUndoAccept: (id: string) => void
   onUndoReject: (id: string) => void
-  onAcceptAll: () => void
-  onRejectAll: () => void
 }
 
 export function ItemHighlightsSection({
@@ -130,12 +126,7 @@ export function ItemHighlightsSection({
   onReject,
   onUndoAccept,
   onUndoReject,
-  onAcceptAll,
-  onRejectAll,
 }: ItemHighlightsSectionProps) {
-  const acceptedCount = highlights.filter((h) => h.status === "accepted").length
-  const hasPending = highlights.some((h) => h.status === "pending")
-
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
       <header className="flex flex-wrap items-center gap-2 px-1 py-2">
@@ -148,9 +139,6 @@ export function ItemHighlightsSection({
           </span>
         )}
 
-        <span className="ml-auto rounded-full border border-slate-200 px-2.5 py-0.5 text-xs text-slate-500">
-          {acceptedCount} / {highlights.length} accepted
-        </span>
       </header>
 
       <div className="mt-1 space-y-2 px-1">
@@ -165,26 +153,6 @@ export function ItemHighlightsSection({
           />
         ))}
       </div>
-
-      {/* Bulk actions footer — only shown while any highlight is still pending */}
-      {hasPending && (
-        <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3 px-1">
-          <button
-            type="button"
-            onClick={onRejectAll}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-error-100 bg-error-50 px-3 text-xs font-medium text-error-700 hover:bg-error-100"
-          >
-            <X className="size-3.5" /> Reject All
-          </button>
-          <button
-            type="button"
-            onClick={onAcceptAll}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-success-100 bg-success-50 px-3 text-xs font-medium text-success-700 hover:bg-success-100"
-          >
-            <Check className="size-3.5" /> Accept All
-          </button>
-        </div>
-      )}
     </section>
   )
 }

@@ -68,6 +68,8 @@ interface EditableRecommendationFieldProps {
   editAriaLabel?: string
   editRows?: number
   compact?: boolean
+  /** When set, shows a character counter inside the box (red when over limit). */
+  charLimit?: number
   /**
    * When this value changes (e.g. the compare tab switches), the field exits
    * edit mode so the diff view becomes visible again.
@@ -86,6 +88,7 @@ export function EditableRecommendationField({
   editAriaLabel = "Edit AI recommendation",
   editRows = 3,
   compact = false,
+  charLimit,
   exitEditKey,
 }: EditableRecommendationFieldProps) {
   const [isEditing, setIsEditing] = useState(false)
@@ -153,6 +156,15 @@ export function EditableRecommendationField({
         ) : (
           displayContent
         )}
+
+        {charLimit ? (
+          <p className={cn(
+            "mt-1 text-right text-xs tabular-nums",
+            value.length > charLimit ? "font-semibold text-error-600" : "text-slate-400",
+          )}>
+            {value.length} / {charLimit}
+          </p>
+        ) : null}
       </div>
     </div>
   )

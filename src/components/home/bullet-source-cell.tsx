@@ -75,6 +75,8 @@ interface BulletSourceCellProps {
   emptyLabel?: string
   /** When false, only the text box is shown (column label is rendered once at section top). */
   showLabel?: boolean
+  /** When set, shows a character counter inside the source box. */
+  charLimit?: number
 }
 
 /** Logo + source name shown above the compare text box. */
@@ -101,6 +103,7 @@ export function BulletSourceCell({
   side,
   emptyLabel = "—",
   showLabel = true,
+  charLimit,
 }: BulletSourceCellProps) {
   const [copied, setCopied] = useState(false)
   const display = value.trim() ? value : emptyLabel
@@ -138,6 +141,14 @@ export function BulletSourceCell({
             {display}
           </p>
         )}
+        {charLimit && value.trim() ? (
+          <p className={cn(
+            "px-3 pb-2 text-right text-xs tabular-nums",
+            value.length > charLimit ? "font-semibold text-error-600" : "text-slate-400",
+          )}>
+            {value.length} / {charLimit}
+          </p>
+        ) : null}
         {value.trim() ? (
           <button
             type="button"

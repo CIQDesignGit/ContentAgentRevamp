@@ -51,8 +51,8 @@ export function DescriptionSection({
   onPushUpdate,
   onAcceptNewDraft,
 }: DescriptionSectionProps) {
-  const [compareTarget, setCompareTarget] = useState<FieldCompareTarget>("pim")
-  const [draftCompareTarget, setDraftCompareTarget] = useState<FieldCompareTarget>("pim")
+  const [compareTarget, setCompareTarget] = useState<FieldCompareTarget>("final")
+  const [draftCompareTarget, setDraftCompareTarget] = useState<FieldCompareTarget>("final")
 
   // No PIM to compare against — "vs. PIM" falls back to "vs. PDP"; "Text" is still allowed.
   const effectiveCompareTarget: FieldCompareTarget =

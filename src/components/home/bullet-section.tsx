@@ -253,7 +253,7 @@ export function BulletPointsSection({
   onAcceptNewDraft,
 }: BulletPointsSectionProps) {
   const [gridCompareTarget] = useState<FieldCompareTarget>("pim")
-  const [recoCompareTarget, setRecoCompareTarget] = useState<FieldCompareTarget>("pim")
+  const [recoCompareTarget, setRecoCompareTarget] = useState<FieldCompareTarget>("final")
 
   // No PIM to compare against — "vs. PIM" falls back to "vs. PDP"; "Text" is still allowed.
   const effectiveRecoCompareTarget: FieldCompareTarget =

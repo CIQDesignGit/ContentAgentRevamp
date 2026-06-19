@@ -244,12 +244,6 @@ export default function TitleOptimizationPage() {
   function patchHighlight(id: string, status: ItemHighlight["status"]) {
     setHighlights((prev) => prev.map((h) => (h.id === id ? { ...h, status } : h)))
   }
-  function acceptAllHighlights() {
-    setHighlights((prev) => prev.map((h) => h.status === "pending" ? { ...h, status: "accepted" as const } : h))
-  }
-  function rejectAllHighlights() {
-    setHighlights((prev) => prev.map((h) => h.status === "pending" ? { ...h, status: "rejected" as const } : h))
-  }
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
@@ -339,8 +333,6 @@ export default function TitleOptimizationPage() {
                 onReject={(id) => patchHighlight(id, "rejected")}
                 onUndoAccept={(id) => patchHighlight(id, "pending")}
                 onUndoReject={(id) => patchHighlight(id, "pending")}
-                onAcceptAll={acceptAllHighlights}
-                onRejectAll={rejectAllHighlights}
               />
 
               {/* Locked sections — visible but not interactive in this module */}
