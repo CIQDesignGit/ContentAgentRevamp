@@ -1,3 +1,4 @@
+
 ---
 name: understand-project
 description: Loads full project context for the Content Agent Revamp prototype — tech stack, design system tokens, product domain rules, UI instructions, and component map. Use at the start of any task in this repo, or when the user asks "what is this project?", "what design tokens exist?", "how is the project structured?", or before building/editing any page or component.

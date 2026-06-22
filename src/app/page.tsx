@@ -16,6 +16,7 @@ import { BulletPointsSection } from "@/components/home/bullet-section"
 import { DescriptionSection } from "@/components/home/description-section"
 import { PublishConfirmDialog } from "@/components/home/publish-confirm-dialog"
 import { BulkPublishConfirmDialog, BulkPublishSuccessDialog, type BulkField } from "@/components/home/bulk-publish-confirm-dialog"
+import { BulkReviewDialog } from "@/components/home/bulk-review-dialog"
 import { toast } from "sonner"
 import { UnpublishedChangesGuardDialog } from "@/components/home/unpublished-changes-guard-dialog"
 
@@ -63,6 +64,7 @@ export default function Home() {
   const [pendingBulkFields, setPendingBulkFields] = useState<BulkField[]>([])
   const [bulkSuccessOpen, setBulkSuccessOpen] = useState(false)
   const [bulkSuccessInfo, setBulkSuccessInfo] = useState<{ skuCount: number; fields: BulkField[] } | null>(null)
+  const [bulkReviewOpen, setBulkReviewOpen] = useState(false)
 
   // Section-level publish inclusion — all selected by default
   const [titleIncluded, setTitleIncluded] = useState(true)
@@ -770,6 +772,20 @@ export default function Home() {
           onSelectAllSkus={handleSelectAllSkus}
           onDeselectAllSkus={handleDeselectAllSkus}
           onBulkAcceptAndPublish={(fields) => { setPendingBulkFields(fields); setBulkPublishDialogOpen(true) }}
+          onBulkReview={() => setBulkReviewOpen(true)}
+        />
+
+        <BulkReviewDialog
+          open={bulkReviewOpen}
+          onOpenChange={setBulkReviewOpen}
+          selectedSkuIds={selectedSkuIds}
+          contentState={contentState}
+          skus={filteredSkus}
+          onBulkApprove={(fields, skuIds) => {
+            setSelectedSkuIds(new Set(skuIds))
+            setPendingBulkFields(fields)
+            setBulkPublishDialogOpen(true)
+          }}
         />
 
         <BulkPublishConfirmDialog
@@ -777,7 +793,7 @@ export default function Home() {
           onOpenChange={setBulkPublishDialogOpen}
           skuCount={selectedSkuIds.size}
           fields={pendingBulkFields}
-          onConfirm={() => handleBulkPublishConfirm(pendingBulkFields)}
+          onConfirm={(fields) => handleBulkPublishConfirm(fields)}
         />
 
         <BulkPublishSuccessDialog

@@ -373,7 +373,7 @@ export default function TitleOptimizationPage() {
           onOpenChange={setBulkPublishDialogOpen}
           skuCount={selectedSkuIds.size}
           fields={pendingBulkFields}
-          onConfirm={() => handleBulkPublishConfirm(pendingBulkFields)}
+          onConfirm={(fields) => handleBulkPublishConfirm(fields)}
         />
 
         <BulkPublishSuccessDialog

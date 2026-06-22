@@ -64,14 +64,14 @@ export function BulkSelectControl({
             : `Accept ${selectedCount}`}
         </span>
         {allSelected ? (
-          <span className="flex size-4 items-center justify-center rounded-[3px] bg-brand-500">
-            <Check className="size-2.5 stroke-3 text-white" />
+          <span className="flex size-5 items-center justify-center rounded-[3px] bg-brand-500">
+            <Check className="size-3 stroke-3 text-white" />
           </span>
         ) : noneSelected ? (
-          <Square className="size-4 text-slate-300" />
+          <Square className="size-5 text-slate-300" />
         ) : (
-          <span className="flex size-4 items-center justify-center rounded-[3px] bg-brand-200">
-            <Minus className="size-2.5 stroke-3 text-brand-600" />
+          <span className="flex size-5 items-center justify-center rounded-[3px] bg-brand-200">
+            <Minus className="size-3 stroke-3 text-brand-600" />
           </span>
         )}
       </button>

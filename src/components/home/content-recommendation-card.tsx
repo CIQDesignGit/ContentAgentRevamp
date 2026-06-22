@@ -460,204 +460,207 @@ export function ContentRecommendationBody({
           recommendationField
         )}
 
-        <div className="space-y-1 pt-2 py-2.5">
-          {/* Action bar: toggles on the left, Accept/Reject on the right */}
-          <div className="flex items-center justify-between gap-3">
+        {/* Action bar + expanded panels grouped together — no gap between them */}
+        <div className="pt-2">
+          <div className="space-y-1 py-2.5">
+            {/* Action bar: toggles on the left, Accept/Reject on the right */}
+            <div className="flex items-center justify-between gap-3">
 
-            {/* Left side: addNewLabel (locked state) OR Reasoning/AltKeywords toggles */}
-            {isPublishedLocked && addNewLabel && onAddNew ? (
-              <button
-                type="button"
-                onClick={onAddNew}
-                className="text-xs font-medium text-primary hover:underline"
-              >
-                {addNewLabel}
-              </button>
-            ) : !isPublishedLocked ? (
-              <div className="flex items-center gap-3">
-                {!hideReasoning && recommendation.reasoning.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const next = !showReasoning
-                      onReasoningToggle ? onReasoningToggle(next) : setShowReasoningLocal(next)
-                    }}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 text-xs font-medium transition-colors",
-                      showReasoning ? "text-primary" : "text-slate-500 hover:text-slate-900",
-                    )}
-                  >
-                    {showReasoning ? (
-                      <ToggleRight className="size-3.5 shrink-0 text-primary" aria-hidden />
-                    ) : (
-                      <ToggleLeft className="size-3.5 shrink-0 text-slate-400" aria-hidden />
-                    )}
-                    Reasoning
-                  </button>
-                )}
-                {!hideAltKeywords && altKeywords.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const next = !showAltKeywords
-                      onAltKeywordsToggle ? onAltKeywordsToggle(next) : setShowAltKeywordsLocal(next)
-                    }}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 text-xs font-medium transition-colors",
-                      showAltKeywords ? "text-primary" : "text-slate-500 hover:text-slate-900",
-                    )}
-                  >
-                    {showAltKeywords ? (
-                      <ToggleRight className="size-3.5 shrink-0 text-primary" aria-hidden />
-                    ) : (
-                      <ToggleLeft className="size-3.5 shrink-0 text-slate-400" aria-hidden />
-                    )}
-                    Alt Keywords
-                    <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
-                      {altKeywords.length}
-                    </span>
-                  </button>
-                )}
-              </div>
-            ) : (
-              <span />
-            )}
+              {/* Left side: addNewLabel (locked state) OR Reasoning/AltKeywords toggles */}
+              {isPublishedLocked && addNewLabel && onAddNew ? (
+                <button
+                  type="button"
+                  onClick={onAddNew}
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  {addNewLabel}
+                </button>
+              ) : !isPublishedLocked ? (
+                <div className="flex items-center gap-3">
+                  {!hideReasoning && recommendation.reasoning.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !showReasoning
+                        onReasoningToggle ? onReasoningToggle(next) : setShowReasoningLocal(next)
+                      }}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 text-xs font-medium transition-colors",
+                        showReasoning ? "text-primary" : "text-slate-500 hover:text-slate-900",
+                      )}
+                    >
+                      {showReasoning ? (
+                        <ToggleRight className="size-3.5 shrink-0 text-primary" aria-hidden />
+                      ) : (
+                        <ToggleLeft className="size-3.5 shrink-0 text-slate-400" aria-hidden />
+                      )}
+                      Reasoning
+                    </button>
+                  )}
+                  {!hideAltKeywords && altKeywords.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !showAltKeywords
+                        onAltKeywordsToggle ? onAltKeywordsToggle(next) : setShowAltKeywordsLocal(next)
+                      }}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 text-xs font-medium transition-colors",
+                        showAltKeywords ? "text-primary" : "text-slate-500 hover:text-slate-900",
+                      )}
+                    >
+                      {showAltKeywords ? (
+                        <ToggleRight className="size-3.5 shrink-0 text-primary" aria-hidden />
+                      ) : (
+                        <ToggleLeft className="size-3.5 shrink-0 text-slate-400" aria-hidden />
+                      )}
+                      Alt Keywords
+                      <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
+                        {altKeywords.length}
+                      </span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <span />
+              )}
 
-            {/* Right side: Accept / Reject / Undo buttons */}
-            {!hideActions && <div className="flex shrink-0 flex-col items-end justify-center gap-1">
-              {status === "pending" ||
-              showReacceptActions ||
-              showAcceptedReviewActions ||
-              showPushUpdate ||
-              (status === "rejected" && onUndoReject) ? (
-                <div className="flex items-center gap-2">
-                  {showReacceptActions ? (
-                    <>
+              {/* Right side: Accept / Reject / Undo buttons */}
+              {!hideActions && <div className="flex shrink-0 flex-col items-end justify-center gap-1">
+                {status === "pending" ||
+                showReacceptActions ||
+                showAcceptedReviewActions ||
+                showPushUpdate ||
+                (status === "rejected" && onUndoReject) ? (
+                  <div className="flex items-center gap-2">
+                    {showReacceptActions ? (
+                      <>
+                        <RecoActionButton
+                          onClick={onReset}
+                          label="Reset recommendation"
+                          icon={<RotateCcw className="size-3.5" />}
+                          iconOnly={iconOnlyActions}
+                          variant="ghost"
+                        />
+                        <RecoActionButton
+                          onClick={onUndoAccept}
+                          label="Undo"
+                          icon={<Undo2 className="size-3.5" />}
+                          iconOnly={iconOnlyActions}
+                        />
+                        <RecoActionButton
+                          onClick={onAccept}
+                          label="Accept"
+                          icon={<Check className="size-4 text-success-600" />}
+                          iconOnly={iconOnlyActions}
+                        />
+                      </>
+                    ) : null}
+                    {!showReacceptActions && isModified && !isFieldPublishingLocked(fp) ? (
                       <RecoActionButton
-                        onClick={onReset}
+                        onClick={handleResetRecommendation}
                         label="Reset recommendation"
                         icon={<RotateCcw className="size-3.5" />}
                         iconOnly={iconOnlyActions}
                         variant="ghost"
                       />
+                    ) : null}
+                    {status === "pending" ? (
+                      <>
+                        <RecoActionButton
+                          onClick={onReject}
+                          label={rejectLabel}
+                          icon={<X className="size-4 text-error-600" />}
+                          iconOnly={iconOnlyActions}
+                          variant="reject"
+                        />
+                        <RecoActionButton
+                          onClick={onAccept}
+                          label="Accept"
+                          icon={<Check className="size-4 text-success-600" />}
+                          iconOnly={iconOnlyActions}
+                          variant="accept"
+                        />
+                      </>
+                    ) : null}
+                    {showAcceptedReviewActions ? (
+                      <>
+                        {!iconOnlyActions ? (
+                          <span className="inline-flex h-8 items-center gap-1.5 text-xs font-medium text-success-600">
+                            <Check className="size-4 shrink-0" aria-hidden />
+                            Accepted
+                          </span>
+                        ) : null}
+                        <RecoActionButton
+                          onClick={onUndoAccept}
+                          label="Undo accept"
+                          icon={<Undo2 className="size-3.5" />}
+                          iconOnly={iconOnlyActions}
+                        />
+                      </>
+                    ) : null}
+                    {showPushUpdate ? (
                       <RecoActionButton
-                        onClick={onUndoAccept}
-                        label="Undo"
-                        icon={<Undo2 className="size-3.5" />}
-                        iconOnly={iconOnlyActions}
-                      />
-                      <RecoActionButton
-                        onClick={onAccept}
+                        onClick={onPushUpdate!}
                         label="Accept"
                         icon={<Check className="size-4 text-success-600" />}
                         iconOnly={iconOnlyActions}
                       />
-                    </>
-                  ) : null}
-                  {!showReacceptActions && isModified && !isFieldPublishingLocked(fp) ? (
-                    <RecoActionButton
-                      onClick={handleResetRecommendation}
-                      label="Reset recommendation"
-                      icon={<RotateCcw className="size-3.5" />}
-                      iconOnly={iconOnlyActions}
-                      variant="ghost"
-                    />
-                  ) : null}
-                  {status === "pending" ? (
-                    <>
-                      <RecoActionButton
-                        onClick={onReject}
-                        label={rejectLabel}
-                        icon={<X className="size-4 text-error-600" />}
-                        iconOnly={iconOnlyActions}
-                        variant="reject"
-                      />
-                      <RecoActionButton
-                        onClick={onAccept}
-                        label="Accept"
-                        icon={<Check className="size-4 text-success-600" />}
-                        iconOnly={iconOnlyActions}
-                        variant="accept"
-                      />
-                    </>
-                  ) : null}
-                  {showAcceptedReviewActions ? (
-                    <>
-                      {!iconOnlyActions ? (
-                        <span className="inline-flex h-8 items-center gap-1.5 text-xs font-medium text-success-600">
-                          <Check className="size-4 shrink-0" aria-hidden />
-                          Accepted
-                        </span>
-                      ) : null}
-                      <RecoActionButton
-                        onClick={onUndoAccept}
-                        label="Undo accept"
-                        icon={<Undo2 className="size-3.5" />}
-                        iconOnly={iconOnlyActions}
-                      />
-                    </>
-                  ) : null}
-                  {showPushUpdate ? (
-                    <RecoActionButton
-                      onClick={onPushUpdate!}
-                      label="Accept"
-                      icon={<Check className="size-4 text-success-600" />}
-                      iconOnly={iconOnlyActions}
-                    />
-                  ) : null}
-                  {status === "rejected" && onUndoReject ? (
-                    <>
-                      {!iconOnlyActions ? (
-                        <span className="inline-flex h-8 items-center gap-1.5 text-xs font-medium text-slate-500">
-                          <X className="size-4 shrink-0" aria-hidden />
-                          Rejected
-                        </span>
-                      ) : null}
-                      <RecoActionButton
-                        onClick={onUndoReject}
-                        label="Undo reject"
-                        icon={<Undo2 className="size-3.5" />}
-                        iconOnly={iconOnlyActions}
-                      />
-                    </>
-                  ) : null}
-                </div>
-              ) : null}
-              {status === "accepted" ? (
-                <FieldSyncStatusRow
-                  syncFootprint={fp}
-                  hasUnpublishedEdits={hasUnpublishedEdits}
-                  batch={activeBatch}
-                  fieldKey={fieldKey}
-                />
-              ) : null}
-            </div>}
+                    ) : null}
+                    {status === "rejected" && onUndoReject ? (
+                      <>
+                        {!iconOnlyActions ? (
+                          <span className="inline-flex h-8 items-center gap-1.5 text-xs font-medium text-slate-500">
+                            <X className="size-4 shrink-0" aria-hidden />
+                            Rejected
+                          </span>
+                        ) : null}
+                        <RecoActionButton
+                          onClick={onUndoReject}
+                          label="Undo reject"
+                          icon={<Undo2 className="size-3.5" />}
+                          iconOnly={iconOnlyActions}
+                        />
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
+                {status === "accepted" ? (
+                  <FieldSyncStatusRow
+                    syncFootprint={fp}
+                    hasUnpublishedEdits={hasUnpublishedEdits}
+                    batch={activeBatch}
+                    fieldKey={fieldKey}
+                  />
+                ) : null}
+              </div>}
+            </div>
           </div>
-        </div>
 
-        {/* Expanded panels — only rendered when their toggle is active and not externally managed */}
-        {!hideExpandedPanels && !isPublishedLocked && (showReasoning || showAltKeywords) ? (
-          <div className="flex flex-col border-t border-slate-100 pt-3">
-            {showReasoning && !hideReasoning && recommendation.reasoning.length > 0 && (
-              <div className="pb-2">
-                <ReasoningPanel
-                  reasoning={recommendation.reasoning}
-                  aeoPerformance={recommendation.aeoPerformance}
-                />
-              </div>
-            )}
-            {showAltKeywords && !hideAltKeywords && altKeywords.length > 0 && (
-              <div className={cn("pb-2", showReasoning && "border-t border-slate-100 pt-2")}>
-                <AltKeywordsPanel
-                  keywords={altKeywords}
-                  usedIds={usedKeywordIds}
-                  onUse={handleUseKeyword}
-                  onRemove={handleRemoveKeyword}
-                />
-              </div>
-            )}
-          </div>
-        ) : null}
+          {/* Expanded panels — directly below the action bar with no extra gap */}
+          {!hideExpandedPanels && !isPublishedLocked && (showReasoning || showAltKeywords) ? (
+            <div className="flex flex-col border-t border-slate-100 pt-3">
+              {showReasoning && !hideReasoning && recommendation.reasoning.length > 0 && (
+                <div className="pb-2">
+                  <ReasoningPanel
+                    reasoning={recommendation.reasoning}
+                    aeoPerformance={recommendation.aeoPerformance}
+                  />
+                </div>
+              )}
+              {showAltKeywords && !hideAltKeywords && altKeywords.length > 0 && (
+                <div className={cn("pb-2", showReasoning && "border-t border-slate-100 pt-2")}>
+                  <AltKeywordsPanel
+                    keywords={altKeywords}
+                    usedIds={usedKeywordIds}
+                    onUse={handleUseKeyword}
+                    onRemove={handleRemoveKeyword}
+                  />
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   )
