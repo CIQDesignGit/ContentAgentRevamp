@@ -372,7 +372,7 @@ export function BulletPointsSection({
 
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-      <header className="flex flex-wrap items-center gap-2 px-1 py-2">
+      <header className="flex flex-wrap items-center gap-2 pl-1 py-2">
         <ListChecks className="size-4 shrink-0 text-slate-400" aria-hidden />
         <span className="text-sm font-semibold text-slate-900">Bullet Points</span>
         {hasPimData && (

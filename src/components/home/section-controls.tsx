@@ -50,7 +50,7 @@ export function BulkSelectControl({
   const noneSelected = selectedCount === 0
 
   return (
-    <div className="flex items-center justify-end px-5">
+    <div className="flex items-center justify-end pl-3">
       <button
         type="button"
         onClick={allSelected ? onDeselectAll : onSelectAll}

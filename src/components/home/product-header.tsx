@@ -65,11 +65,11 @@ export function ProductHeader({
             <img
               src={thumbnailUrl}
               alt=""
-              className="w-14 shrink-0 rounded-lg border border-slate-200 bg-slate-100 object-contain p-1"
+              className="size-14 shrink-0 rounded-lg border border-slate-200 bg-slate-100 object-contain p-1"
             />
           ) : (
             <div
-              className="w-14 shrink-0 rounded-lg border border-slate-200 bg-slate-100"
+              className="size-14 shrink-0 rounded-lg border border-slate-200 bg-slate-100"
               aria-hidden
             />
           )}

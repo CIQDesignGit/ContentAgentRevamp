@@ -1,8 +1,8 @@
 import type { PdpStatus, PimStatus, RetailerStatus } from "@/components/actions-log/types"
 
-export type Metrics = { compliance: number; seo: number; aeo: number }
+export type Metrics = { compliance: number; seo: number; aeo: number; ops: number }
 
-export type ActionStatus = "to-do" | "in-progress" | "saved-for-later" | "success"
+export type ActionStatus = "to-do" | "in-progress" | "success"
 
 export type SalsifyIssue = {
   type: "error" | "warning"
@@ -23,6 +23,8 @@ export type Sku = {
   lastUpdated: string
   /** When false, this SKU exists only on the retailer PDP — no PIM catalog entry. */
   hasPimData?: boolean
+  /** True when the user has bookmarked this SKU for later attention. Independent of actionStatus. */
+  isBookmarked?: boolean
   actionStatus?: ActionStatus
 }
 

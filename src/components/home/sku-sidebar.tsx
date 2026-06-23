@@ -71,7 +71,7 @@ export function SkuSidebar({
   const SkuCardComponent = hideMetrics ? TitleOptimizationSkuCard : ContentAgentSkuCard
 
   return (
-    <aside className="flex w-[360px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
+    <aside className="flex w-[420px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex shrink-0 items-start justify-between px-4 pb-2 pt-4">
         {isSelectionMode ? (

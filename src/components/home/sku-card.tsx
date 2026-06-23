@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, Minus, Square } from "lucide-react"
+import { Bookmark, Check, Minus, Square } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ActionStatusBadge } from "./action-status-badge"
 import type { Sku } from "./types"
@@ -8,16 +8,21 @@ import type { Sku } from "./types"
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function CardMetric({ label, value }: { label: string; value: number }) {
-  const isBad = value < 40
   return (
-    <span className={cn(
-      "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px]",
-      isBad ? "border-error-100 bg-error-50 text-slate-500" : "border-slate-200 bg-white text-slate-500",
-    )}>
+    <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] text-slate-500">
       {label}
-      <span className={cn("font-semibold tabular-nums", isBad ? "text-error-600" : "text-slate-700")}>
-        {value}%
-      </span>
+      <span className="font-semibold tabular-nums text-slate-700">{value}%</span>
+    </span>
+  )
+}
+
+/** OPS (sales) tag — solid fill distinguishes it from the quality metric chips */
+function OpsTag({ value }: { value: number }) {
+  const formatted = value >= 1000 ? `${(value / 1000).toFixed(1)}k` : String(value)
+  return (
+    <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">
+      OPS
+      <span className="font-semibold tabular-nums text-slate-700">{formatted}</span>
     </span>
   )
 }
@@ -80,9 +85,15 @@ function MetaRow({ sku, isActive }: { sku: Sku; isActive: boolean }) {
         <span aria-hidden className="size-1 rounded-full bg-slate-300" />
         <span className="text-xs text-slate-400">{sku.category}</span>
       </p>
-      {sku.actionStatus && (
-        <ActionStatusBadge status={sku.actionStatus} showLabel={false} />
-      )}
+      {/* Workflow badge + bookmark can both show simultaneously */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        {sku.actionStatus && (
+          <ActionStatusBadge status={sku.actionStatus} showLabel={false} />
+        )}
+        {sku.isBookmarked && (
+          <Bookmark className="size-3 shrink-0 text-info-600" fill="currentColor" aria-label="Bookmarked" />
+        )}
+      </div>
     </div>
   )
 }
@@ -144,7 +155,6 @@ export function SkuCard({ sku, isActive, isSelected, isSelectionMode, hideMetric
               {sku.title}
             </p>
           </div>
-          {sku.hasPimData === false && <PdpOnlyTag isActive={false} />}
         </div>
       ) : (
         <div className="flex flex-col gap-2 px-3 pb-2.5 pt-3">
@@ -155,17 +165,26 @@ export function SkuCard({ sku, isActive, isSelected, isSelectionMode, hideMetric
               {sku.title}
             </p>
           </div>
-          {sku.hasPimData === false && <PdpOnlyTag isActive={isActive} />}
         </div>
       )}
 
       {/* Metrics zone — border-t creates a clear visual break from the identity section above */}
-      {!hideMetrics && (
-        <div className="flex items-center gap-1.5 px-3 py-2">
+      {!hideMetrics ? (
+        <div className="flex items-center gap-1.5 px-3 pt-2 pb-3">
           <CardMetric label="Compliance" value={sku.metrics.compliance} />
           <CardMetric label="SEO" value={sku.metrics.seo} />
           <CardMetric label="AEO" value={sku.metrics.aeo} />
+          {/* Divider separates quality metrics from OPS (sales) */}
+          <span aria-hidden className="mx-0.5 h-3 w-px bg-slate-200" />
+          <OpsTag value={sku.metrics.ops} />
+          {sku.hasPimData === false && <PdpOnlyTag isActive={isSelectionMode ? false : isActive} />}
         </div>
+      ) : (
+        sku.hasPimData === false && (
+          <div className="px-3 pb-3">
+            <PdpOnlyTag isActive={isSelectionMode ? false : isActive} />
+          </div>
+        )
       )}
     </button>
   )
