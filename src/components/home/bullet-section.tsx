@@ -13,6 +13,7 @@ import { BulletBulkActions } from "./bullet-bulk-actions"
 import { BulletsSourceCompare } from "./bullets-source-compare"
 import { CompareTabs, ContentRecommendationHeader } from "./content-recommendation-card"
 import { AiRecommendationSparklesIcon, SourceChannelLabel } from "./bullet-source-cell"
+import { ReasoningAltKeywordsBlock } from "./reasoning-alt-keywords-block"
 import {
   BulletRecommendationBlock,
   type BulletRecommendationSlotProps,
@@ -20,7 +21,7 @@ import {
 import type { FieldCompareTarget } from "./vertical-source-compare-grid"
 import { VerticalSourceCompareGrid } from "./vertical-source-compare-grid"
 import type { FieldPublishQueueItem } from "@/lib/build-field-publish-queue"
-import type { BulletRecommendation, PublishBatch } from "./types"
+import type { BulletRecommendation, PublishBatch, ReasoningCategory } from "./types"
 
 interface BulletPointsSectionProps {
   pimBullets: string[]
@@ -267,6 +268,28 @@ export function BulletPointsSection({
   const [gridCompareTarget] = useState<FieldCompareTarget>("pim")
   const [recoCompareTarget, setRecoCompareTarget] = useState<FieldCompareTarget>("final")
 
+  // No-PIM: merged reasoning across all bullets, grouped by category key
+  const mergedBulletReasoning = useMemo<ReasoningCategory[]>(() => {
+    if (hasPimData) return []
+    const byKey = new Map<string, ReasoningCategory>()
+    for (const reco of activeRecommendations) {
+      for (const cat of reco.reasoning) {
+        const existing = byKey.get(cat.key)
+        // Prefix each reason summary with the bullet label so context isn't lost
+        const prefixedReasons = cat.reasons.map((r) => ({
+          ...r,
+          summary: `${reco.label}: ${r.summary}`,
+        }))
+        if (existing) {
+          existing.reasons = [...existing.reasons, ...prefixedReasons]
+        } else {
+          byKey.set(cat.key, { ...cat, reasons: prefixedReasons })
+        }
+      }
+    }
+    return Array.from(byKey.values())
+  }, [hasPimData, activeRecommendations])
+
   // No PIM to compare against — "vs. PIM" falls back to "vs. PDP"; "Text" is still allowed.
   const effectiveRecoCompareTarget: FieldCompareTarget =
     !hasPimData && recoCompareTarget === "pim" ? "pdp" : recoCompareTarget
@@ -441,6 +464,11 @@ export function BulletPointsSection({
           ) : undefined
         }
       />
+
+      {/* No-PIM: full-width merged reasoning block below the combined bullet view */}
+      {!hasPimData && mergedBulletReasoning.length > 0 && (
+        <ReasoningAltKeywordsBlock reasoning={mergedBulletReasoning} />
+      )}
     </section>
   )
 }

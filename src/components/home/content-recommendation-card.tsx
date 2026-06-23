@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState, type ReactNode } from "react"
-import { Check, ChevronDown, ChevronRight, RotateCcw, ToggleLeft, ToggleRight, Undo2, X } from "lucide-react"
+import { Check, ChevronDown, ChevronRight, RotateCcw, Undo2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { buildTitleDiff } from "@/lib/build-title-diff"
 import {
@@ -17,8 +17,8 @@ import {
 import { fieldLabelContentStack, FIELD_RECO_HEADER_GAP } from "./field-layout"
 import { EditableRecommendationField } from "./editable-recommendation-field"
 import { FieldSyncStatusRow } from "./recommendation-sync-ui"
-import { ReasoningPanel, ToggleSwitch } from "./reasoning-ui"
-import { AltKeywordsPanel } from "./alt-keywords-panel"
+import { ToggleSwitch } from "./reasoning-ui"
+import { ReasoningAltKeywordsBlock } from "./reasoning-alt-keywords-block"
 import type { FieldCompareTarget } from "./vertical-source-compare-grid"
 import type { PublishBatch, TitleRecommendation, TitleStatus, SyncFootprint } from "./types"
 
@@ -461,12 +461,14 @@ export function ContentRecommendationBody({
         )}
 
         {/* Action bar + expanded panels grouped together — no gap between them */}
-        <div className="pt-2">
-          <div className="space-y-1 py-2.5">
-            {/* Action bar: toggles on the left, Accept/Reject on the right */}
+        <div className="pt-1.5">
+          {/* Action bar — only rendered when there are actual actions or the Add New button */}
+          {(!hideActions || (isPublishedLocked && addNewLabel && onAddNew)) && (
+          <div className="space-y-1 py-1.5">
+            {/* Action bar: add-new on the left, Accept/Reject on the right */}
             <div className="flex items-center justify-between gap-3">
 
-              {/* Left side: addNewLabel (locked state) OR Reasoning/AltKeywords toggles */}
+              {/* Left side: addNewLabel when locked */}
               {isPublishedLocked && addNewLabel && onAddNew ? (
                 <button
                   type="button"
@@ -475,52 +477,6 @@ export function ContentRecommendationBody({
                 >
                   {addNewLabel}
                 </button>
-              ) : !isPublishedLocked ? (
-                <div className="flex items-center gap-3">
-                  {!hideReasoning && recommendation.reasoning.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = !showReasoning
-                        onReasoningToggle ? onReasoningToggle(next) : setShowReasoningLocal(next)
-                      }}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 text-xs font-medium transition-colors",
-                        showReasoning ? "text-primary" : "text-slate-500 hover:text-slate-900",
-                      )}
-                    >
-                      {showReasoning ? (
-                        <ToggleRight className="size-3.5 shrink-0 text-primary" aria-hidden />
-                      ) : (
-                        <ToggleLeft className="size-3.5 shrink-0 text-slate-400" aria-hidden />
-                      )}
-                      Reasoning
-                    </button>
-                  )}
-                  {!hideAltKeywords && altKeywords.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = !showAltKeywords
-                        onAltKeywordsToggle ? onAltKeywordsToggle(next) : setShowAltKeywordsLocal(next)
-                      }}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 text-xs font-medium transition-colors",
-                        showAltKeywords ? "text-primary" : "text-slate-500 hover:text-slate-900",
-                      )}
-                    >
-                      {showAltKeywords ? (
-                        <ToggleRight className="size-3.5 shrink-0 text-primary" aria-hidden />
-                      ) : (
-                        <ToggleLeft className="size-3.5 shrink-0 text-slate-400" aria-hidden />
-                      )}
-                      Alt Keywords
-                      <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
-                        {altKeywords.length}
-                      </span>
-                    </button>
-                  )}
-                </div>
               ) : (
                 <span />
               )}
@@ -636,30 +592,25 @@ export function ContentRecommendationBody({
               </div>}
             </div>
           </div>
+          )}
 
-          {/* Expanded panels — directly below the action bar with no extra gap */}
-          {!hideExpandedPanels && !isPublishedLocked && (showReasoning || showAltKeywords) ? (
-            <div className="flex flex-col border-t border-slate-100 pt-3">
-              {showReasoning && !hideReasoning && recommendation.reasoning.length > 0 && (
-                <div className="pb-2">
-                  <ReasoningPanel
-                    reasoning={recommendation.reasoning}
-                    aeoPerformance={recommendation.aeoPerformance}
-                  />
-                </div>
-              )}
-              {showAltKeywords && !hideAltKeywords && altKeywords.length > 0 && (
-                <div className={cn("pb-2", showReasoning && "border-t border-slate-100 pt-2")}>
-                  <AltKeywordsPanel
-                    keywords={altKeywords}
-                    usedIds={usedKeywordIds}
-                    onUse={handleUseKeyword}
-                    onRemove={handleRemoveKeyword}
-                  />
-                </div>
-              )}
-            </div>
-          ) : null}
+          {/* Reasoning + Alt Keywords block */}
+          {!hideExpandedPanels && !isPublishedLocked && (
+            <ReasoningAltKeywordsBlock
+              reasoning={recommendation.reasoning}
+              altKeywords={altKeywords}
+              aeoPerformance={recommendation.aeoPerformance}
+              hideReasoning={hideReasoning}
+              hideAltKeywords={hideAltKeywords}
+              showReasoning={showReasoning}
+              showAltKeywords={showAltKeywords}
+              onReasoningToggle={(next) => onReasoningToggle ? onReasoningToggle(next) : setShowReasoningLocal(next)}
+              onAltKeywordsToggle={(next) => onAltKeywordsToggle ? onAltKeywordsToggle(next) : setShowAltKeywordsLocal(next)}
+              usedKeywordIds={usedKeywordIds}
+              onUseKeyword={handleUseKeyword}
+              onRemoveKeyword={handleRemoveKeyword}
+            />
+          )}
         </div>
       </div>
     </div>

@@ -10,11 +10,26 @@ import { COLUMNS, ColumnFilterPanel, type ColumnFilters } from "./column-filter-
 // ─── Shared constants ─────────────────────────────────────────────────────────
 
 const FILTERS = [
-  { key: "all", label: "All" },
-  { key: "compliance", label: "Compliance" },
-  { key: "seo", label: "SEO" },
-  { key: "aeo", label: "AEO" },
-  { key: "title-optimization", label: "Title Optimization" },
+  {
+    key: "compliance",
+    label: "Compliance",
+    description: "Checks content against retailer policy requirements",
+  },
+  {
+    key: "compliance-seo",
+    label: "Compliance + SEO",
+    description: "Policy checks plus keyword optimization",
+  },
+  {
+    key: "compliance-seo-aeo",
+    label: "Compliance + SEO + AEO",
+    description: "Full optimization with AI answer engine visibility",
+  },
+  {
+    key: "title-optimization",
+    label: "Title Optimization",
+    description: "AI-powered title rewrites for discoverability",
+  },
 ]
 
 export const BRANDS = ["Yankee Candle", "NutriChef", "Vevor", "Proctor Silex", "Dyson"]
@@ -77,6 +92,68 @@ function DropdownItem({
   )
 }
 
+// ─── Radio item for single-select filters ─────────────────────────────────────
+
+function RadioItem({
+  label,
+  description,
+  checked,
+  locked,
+  onSelect,
+}: {
+  label: string
+  description: string
+  checked: boolean
+  locked?: boolean
+  onSelect: () => void
+}) {
+  if (locked) {
+    return (
+      <li>
+        <span className="flex w-full cursor-not-allowed items-start gap-2.5 rounded-md px-2.5 py-2 text-slate-400">
+          <span className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border border-slate-200 bg-slate-50">
+            <Lock className="size-2.5 text-slate-300" />
+          </span>
+          <span className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium">{label}</span>
+            <span className="text-xs">{description}</span>
+          </span>
+        </span>
+      </li>
+    )
+  }
+
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onSelect}
+        className={cn(
+          "flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
+          checked ? "bg-primary/5 text-slate-900" : "text-slate-700 hover:bg-slate-50",
+        )}
+      >
+        {/* Radio circle */}
+        <span
+          className={cn(
+            "mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border transition-colors",
+            checked ? "border-primary bg-primary" : "border-slate-300",
+          )}
+        >
+          {checked && <span className="size-1.5 rounded-full bg-white" />}
+        </span>
+
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium leading-snug">{label}</span>
+          <span className={cn("text-xs leading-snug", checked ? "text-slate-500" : "text-slate-400")}>
+            {description}
+          </span>
+        </span>
+      </button>
+    </li>
+  )
+}
+
 // ─── Type single-select dropdown ──────────────────────────────────────────────
 
 function TypeFilterDropdown({
@@ -96,36 +173,20 @@ function TypeFilterDropdown({
     <Popover>
       <DropdownTrigger
         field="Task type"
-        value={selected?.label ?? "All"}
+        value={selected?.label ?? FILTERS[0].label}
       />
-      <PopoverContent align="start" className="w-48 p-1">
-        <ul>
-          {FILTERS.map((f) => {
-            const isLocked = !!lockedFilter && f.key !== lockedFilter
-            const isChecked = f.key === activeValue
-
-            if (isLocked) {
-              return (
-                <li key={f.key}>
-                  <span className="flex w-full cursor-not-allowed items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-slate-400">
-                    <span className="grid size-4 shrink-0 place-items-center rounded border border-slate-200 bg-slate-50">
-                      <Lock className="size-2.5 text-slate-300" />
-                    </span>
-                    {f.label}
-                  </span>
-                </li>
-              )
-            }
-
-            return (
-              <DropdownItem
-                key={f.key}
-                label={f.label}
-                checked={isChecked}
-                onToggle={() => onChange(f.key)}
-              />
-            )
-          })}
+      <PopoverContent align="start" className="w-72 p-1.5">
+        <ul className="flex flex-col gap-0.5">
+          {FILTERS.map((f) => (
+            <RadioItem
+              key={f.key}
+              label={f.label}
+              description={f.description}
+              checked={f.key === activeValue}
+              locked={!!lockedFilter && f.key !== lockedFilter}
+              onSelect={() => onChange(f.key)}
+            />
+          ))}
         </ul>
       </PopoverContent>
     </Popover>

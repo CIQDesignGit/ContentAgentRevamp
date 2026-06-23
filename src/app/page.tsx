@@ -48,7 +48,7 @@ export default function Home() {
   const router = useRouter()
   const [selectedSkuId, setSelectedSkuId] = useState(MOCK_SKUS[0].id)
   const [search, setSearch] = useState("")
-  const [filter, setFilter] = useState("all")
+  const [filter, setFilter] = useState("compliance")
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [contentState, setContentState] = useState<ContentState>(() => buildInitialState())

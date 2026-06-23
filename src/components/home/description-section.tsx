@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { AlignLeft, Columns2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { SectionSelectToggle } from "./section-controls"
 import { titleMatchPercent } from "@/lib/title-match"
 import { resolvePublishedSourceDisplay } from "@/lib/published-source-display"
@@ -12,6 +13,8 @@ import {
 } from "./content-recommendation-card"
 import { AiRecommendationSparklesIcon, SourceChannelLabel } from "./bullet-source-cell"
 import { fieldLabelContentStack } from "./field-layout"
+import { ReasoningPanel } from "./reasoning-ui"
+import { AltKeywordsPanel } from "./alt-keywords-panel"
 import type { FieldCompareTarget } from "./vertical-source-compare-grid"
 import { VerticalSourceCompareGrid } from "./vertical-source-compare-grid"
 import type { PublishBatch, TitleRecommendation, TitleStatus, SyncFootprint } from "./types"
@@ -71,6 +74,13 @@ export function DescriptionSection({
   const [draftOriginalText, setDraftOriginalText] = useState("")
   const [originalText] = useState(() => recommendation?.recommendedText ?? "")
 
+  // No-PIM layout: panel state lifted out of the grid column so they render full-width
+  const [noPimShowReasoning, setNoPimShowReasoning] = useState(false)
+  const [noPimShowAltKeywords, setNoPimShowAltKeywords] = useState(false)
+  const noPimAltKeywords = recommendation?.altKeywords ?? []
+  const noPimHasExpandedPanels =
+    !hasPimData && recommendation != null && (noPimShowReasoning || noPimShowAltKeywords)
+
   const publishedText = recommendation?.recommendedText
   const { pim: displayPim, pdp: displayPdp } = useMemo(
     () =>
@@ -114,7 +124,8 @@ export function DescriptionSection({
 
   const showHeaderInGrid = Boolean(hasPimData && recommendationHeaderEl && !showRecoBody)
 
-  // When no PIM data: recommendation lives in the left (PIM) column
+  // When no PIM data: recommendation lives in the left column.
+  // Expanded panels are suppressed here and rendered full-width below the grid instead.
   const noPimRecoCell =
     !hasPimData && recommendation ? (
       <div className="flex h-full flex-col gap-3 pb-3">
@@ -139,6 +150,11 @@ export function DescriptionSection({
           editAriaLabel="Edit AI recommended description"
           editRows={5}
           hideActions={hideActions}
+          hideExpandedPanels
+          showReasoningPanel={noPimShowReasoning}
+          showAltKeywordsPanel={noPimShowAltKeywords}
+          onReasoningToggle={setNoPimShowReasoning}
+          onAltKeywordsToggle={setNoPimShowAltKeywords}
         />
       </div>
     ) : null
@@ -328,6 +344,37 @@ export function DescriptionSection({
           ) : undefined
         }
       />
+
+      {/* Full-width expanded panels for no-PIM layout — escaped from the left column */}
+      {noPimHasExpandedPanels && (
+        <div className="flex flex-col border-t border-slate-100 pt-3">
+          {noPimShowReasoning && recommendation!.reasoning.length > 0 && (
+            <div className="pb-2">
+              <ReasoningPanel
+                reasoning={recommendation!.reasoning}
+                aeoPerformance={recommendation!.aeoPerformance}
+              />
+            </div>
+          )}
+          {noPimShowAltKeywords && noPimAltKeywords.length > 0 && (
+            <div
+              className={cn(
+                "pb-2",
+                noPimShowReasoning && recommendation!.reasoning.length > 0
+                  ? "border-t border-slate-100 pt-2"
+                  : undefined,
+              )}
+            >
+              <AltKeywordsPanel
+                keywords={noPimAltKeywords}
+                usedIds={new Set()}
+                onUse={() => {}}
+                onRemove={() => {}}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </section>
   )
 }

@@ -13,8 +13,7 @@ import {
   ContentRecommendationHeader,
 } from "./content-recommendation-card"
 import { BulletSourceCell, SourceCellLabel } from "./bullet-source-cell"
-import { ReasoningPanel } from "./reasoning-ui"
-import { AltKeywordsPanel } from "./alt-keywords-panel"
+import { ReasoningAltKeywordsBlock } from "./reasoning-alt-keywords-block"
 import type { AltKeyword } from "./types"
 import { RETAILER_LOGO_SRC } from "./source-logos"
 import { PublishQueueList } from "./publish-queue-list"
@@ -332,7 +331,7 @@ export function ProductTitleSection({
                       <button
                         type="button"
                         onClick={handleAddNewTitle}
-                        className="self-start text-base font-medium text-primary hover:underline"
+                        className="self-start text-sm font-medium text-primary hover:underline"
                       >
                         Edit Title
                       </button>
@@ -396,32 +395,19 @@ export function ProductTitleSection({
           </div>
 
           {/* Full-width expanded panels */}
-          {noPimHasExpandedPanels && (
-            <div className="flex flex-col border-t border-slate-100 pt-3">
-              {noPimShowReasoning && !isManualTitleEdit && recommendation!.reasoning.length > 0 && (
-                <div className="pb-2">
-                  <ReasoningPanel
-                    reasoning={recommendation!.reasoning}
-                    aeoPerformance={recommendation!.aeoPerformance}
-                  />
-                </div>
-              )}
-              {noPimShowAltKeywords && noPimAltKeywords.length > 0 && (
-                <div className={cn(
-                  "pb-2",
-                  noPimShowReasoning && !isManualTitleEdit && recommendation!.reasoning.length > 0
-                    ? "border-t border-slate-100 pt-2"
-                    : undefined,
-                )}>
-                  <AltKeywordsPanel
-                    keywords={noPimAltKeywords}
-                    usedIds={noPimUsedKeywordIds}
-                    onUse={handleNoPimUseKeyword}
-                    onRemove={handleNoPimRemoveKeyword}
-                  />
-                </div>
-              )}
-            </div>
+          {!isManualTitleEdit && recommendation && (
+            <ReasoningAltKeywordsBlock
+              reasoning={recommendation.reasoning}
+              altKeywords={noPimAltKeywords}
+              aeoPerformance={recommendation.aeoPerformance}
+              showReasoning={noPimShowReasoning}
+              showAltKeywords={noPimShowAltKeywords}
+              onReasoningToggle={setNoPimShowReasoning}
+              onAltKeywordsToggle={setNoPimShowAltKeywords}
+              usedKeywordIds={noPimUsedKeywordIds}
+              onUseKeyword={handleNoPimUseKeyword}
+              onRemoveKeyword={handleNoPimRemoveKeyword}
+            />
           )}
         </div>
       ) : (
@@ -441,7 +427,7 @@ export function ProductTitleSection({
                     <button
                       type="button"
                       onClick={handleAddNewTitle}
-                      className="self-start text-base font-medium text-primary hover:underline"
+                      className="self-start text-sm font-medium text-primary hover:underline"
                     >
                       Edit Title
                     </button>
