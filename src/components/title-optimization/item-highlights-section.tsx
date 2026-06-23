@@ -5,10 +5,7 @@ import { Lightbulb } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
 import { AiRecommendationSparklesIcon, BulletSourceCell, SourceCellLabel } from "@/components/home/bullet-source-cell"
-import { fieldLabelContentStack } from "@/components/home/field-layout"
 import { ReasoningAltKeywordsBlock } from "@/components/home/reasoning-alt-keywords-block"
-import { ReasoningPanel } from "@/components/home/reasoning-ui"
-import { AltKeywordsPanel } from "@/components/home/alt-keywords-panel"
 import { RETAILER_LOGO_SRC } from "@/components/home/source-logos"
 import type { AltKeyword, ReasoningCategory } from "@/components/home/types"
 
@@ -111,8 +108,7 @@ export function ItemHighlightsSection({
           const { showReasoning, showAltKeywords } = getPanel(h.id)
           const reasoning = h.reasoning ?? []
           const altKeywords = h.altKeywords ?? []
-          const hasAnyPanel = (reasoning.length > 0) || (altKeywords.length > 0)
-          const anyPanelOpen = showReasoning || showAltKeywords
+          const hasAnyPanel = reasoning.length > 0 || altKeywords.length > 0
 
           return (
             <div key={h.id} className="flex flex-col">
@@ -130,40 +126,17 @@ export function ItemHighlightsSection({
                 />
               </div>
 
-              {/* Toggle buttons + full-width expanded panels below the row */}
+              {/* Toggle buttons + expanded panels — shared component handles both */}
               {hasAnyPanel && (
                 <div className="pt-1">
-                  {/* Toggle bar — renders only buttons, no inline panels */}
                   <ReasoningAltKeywordsBlock
                     reasoning={reasoning}
                     altKeywords={altKeywords}
-                    hideExpandedPanels
                     showReasoning={showReasoning}
                     showAltKeywords={showAltKeywords}
                     onReasoningToggle={(v) => setPanel(h.id, "showReasoning", v)}
                     onAltKeywordsToggle={(v) => setPanel(h.id, "showAltKeywords", v)}
                   />
-
-                  {/* Full-width expanded panels */}
-                  {anyPanelOpen && (
-                    <div className="flex flex-col border-t border-slate-100 pt-3">
-                      {showReasoning && reasoning.length > 0 && (
-                        <div className="pb-2">
-                          <ReasoningPanel reasoning={reasoning} />
-                        </div>
-                      )}
-                      {showAltKeywords && altKeywords.length > 0 && (
-                        <div className={cn("pb-2", showReasoning && reasoning.length > 0 && "border-t border-slate-100 pt-2")}>
-                          <AltKeywordsPanel
-                            keywords={altKeywords}
-                            usedIds={new Set()}
-                            onUse={() => {}}
-                            onRemove={() => {}}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               )}
             </div>

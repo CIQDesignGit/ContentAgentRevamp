@@ -268,6 +268,17 @@ export function BulletPointsSection({
   const [gridCompareTarget] = useState<FieldCompareTarget>("pim")
   const [recoCompareTarget, setRecoCompareTarget] = useState<FieldCompareTarget>("final")
 
+  const activeRecommendations = useMemo(
+    () =>
+      recommendations.filter(
+        (reco) =>
+          reco.status === "pending" ||
+          reco.status === "accepted" ||
+          reco.status === "rejected",
+      ),
+    [recommendations],
+  )
+
   // No-PIM: merged reasoning across all bullets, grouped by category key
   const mergedBulletReasoning = useMemo<ReasoningCategory[]>(() => {
     if (hasPimData) return []
@@ -302,17 +313,6 @@ export function BulletPointsSection({
   const displayLists = useMemo(
     () => buildDisplayBulletLists(pimBullets, pdpBullets, recommendations, getFieldPublishBatch),
     [pimBullets, pdpBullets, recommendations, getFieldPublishBatch],
-  )
-
-  const activeRecommendations = useMemo(
-    () =>
-      recommendations.filter(
-        (reco) =>
-          reco.status === "pending" ||
-          reco.status === "accepted" ||
-          reco.status === "rejected",
-      ),
-    [recommendations],
   )
 
   const hasPendingRecommendations = useMemo(
