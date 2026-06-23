@@ -161,7 +161,7 @@ export function SkuCard({ sku, isActive, isSelected, isSelectionMode, hideMetric
 
       {/* Metrics zone — border-t creates a clear visual break from the identity section above */}
       {!hideMetrics && (
-        <div className="flex items-center gap-1.5 border-t border-slate-100 px-3 py-2">
+        <div className="flex items-center gap-1.5 px-3 py-2">
           <CardMetric label="Compliance" value={sku.metrics.compliance} />
           <CardMetric label="SEO" value={sku.metrics.seo} />
           <CardMetric label="AEO" value={sku.metrics.aeo} />
