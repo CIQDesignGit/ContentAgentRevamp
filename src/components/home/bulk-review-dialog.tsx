@@ -33,19 +33,12 @@ function BulletList({ items, strikethrough }: { items: string[]; strikethrough?:
 }
 
 function HighlightsList({ content }: { content: ContentState[string] }) {
-  const points = content.titleRecommendation?.reasoning.flatMap((cat) =>
-    cat.reasons.map((r) => ({ label: cat.label, summary: r.summary })),
+  const summaries = content.titleRecommendation?.reasoning.flatMap((cat) =>
+    cat.reasons.map((r) => r.summary),
   ) ?? []
-  if (points.length === 0) return <span className="text-sm text-slate-400">No highlights</span>
+  if (summaries.length === 0) return <span className="text-sm text-slate-400">No highlights</span>
   return (
-    <ul className="space-y-1.5">
-      {points.map((p, i) => (
-        <li key={i} className="text-sm leading-relaxed font-medium text-slate-800">
-          <span className="font-semibold text-slate-400">{p.label}: </span>
-          {p.summary}
-        </li>
-      ))}
-    </ul>
+    <p className="text-sm leading-relaxed text-slate-800">{summaries[0]}</p>
   )
 }
 
