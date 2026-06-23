@@ -9,7 +9,7 @@ import { SkuSidebar } from "@/components/home/sku-sidebar"
 import { ProductHeader, type PublishBarState } from "@/components/home/product-header"
 import { ProductTitleSection } from "@/components/home/title-section"
 import { PublishConfirmDialog } from "@/components/home/publish-confirm-dialog"
-import { BulkPublishConfirmDialog, BulkPublishSuccessDialog, type BulkField } from "@/components/home/bulk-publish-confirm-dialog"
+import { BulkPublishConfirmDialog, FIELD_LABELS, type BulkField } from "@/components/home/bulk-publish-confirm-dialog"
 import { UnpublishedChangesGuardDialog } from "@/components/home/unpublished-changes-guard-dialog"
 import { ItemHighlightsSection, type ItemHighlight } from "@/components/title-optimization/item-highlights-section"
 import {
@@ -72,8 +72,6 @@ export default function TitleOptimizationPage() {
   const [selectedSkuIds, setSelectedSkuIds] = useState<Set<string>>(new Set())
   const [bulkPublishDialogOpen, setBulkPublishDialogOpen] = useState(false)
   const [pendingBulkFields, setPendingBulkFields] = useState<BulkField[]>([])
-  const [bulkSuccessOpen, setBulkSuccessOpen] = useState(false)
-  const [bulkSuccessInfo, setBulkSuccessInfo] = useState<{ skuCount: number; fields: BulkField[] } | null>(null)
 
   const filteredSkus = useMemo(
     () => MOCK_SKUS.filter((s) => passesFilter(s, filter) && passesSearch(s, search)),
@@ -290,8 +288,13 @@ export default function TitleOptimizationPage() {
     setContentState(newState)
     batchesToSchedule.forEach(({ skuId, batchId }) => schedulePublishSimulation(skuId, batchId))
 
-    setBulkSuccessInfo({ skuCount: batchesToSchedule.length || skuIds.length, fields })
-    setBulkSuccessOpen(true)
+    const skuCount = batchesToSchedule.length || skuIds.length
+    const fieldList = fields.map((f) => FIELD_LABELS[f]).join(" · ")
+    toast.success("Changes sent!", {
+      description: `${skuCount} SKU${skuCount !== 1 ? "s" : ""} · ${fieldList} — PIM and PDP sync in progress.`,
+      duration: 6000,
+      dismissible: true,
+    })
     setIsSelectionMode(false)
     setSelectedSkuIds(new Set())
   }
@@ -374,13 +377,6 @@ export default function TitleOptimizationPage() {
           skuCount={selectedSkuIds.size}
           fields={pendingBulkFields}
           onConfirm={(fields) => handleBulkPublishConfirm(fields)}
-        />
-
-        <BulkPublishSuccessDialog
-          open={bulkSuccessOpen}
-          onOpenChange={setBulkSuccessOpen}
-          skuCount={bulkSuccessInfo?.skuCount ?? 0}
-          fields={bulkSuccessInfo?.fields ?? []}
         />
 
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">

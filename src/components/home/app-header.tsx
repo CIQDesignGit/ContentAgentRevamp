@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Bell, ChevronLeft, ChevronRight, HelpCircle, Home, Mail, Rocket, Share2 } from "lucide-react"
+import { ArrowLeft, Bell, Home, HelpCircle, Mail, Rocket, Share2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
 
@@ -62,24 +62,21 @@ export function AppHeader({ title = "Content Agent", backHref }: AppHeaderProps)
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4">
       <div className="flex items-center gap-3">
-        {/* Left button — back link when backHref is provided, decorative otherwise */}
+        {/* Left button — back link when backHref is provided, decorative brand mark otherwise */}
         {backHref ? (
           <Link
             href={backHref}
             aria-label="Go back"
-            className="grid size-8 place-items-center rounded-md bg-primary text-white hover:bg-brand-600 transition-colors"
+            className="grid size-8 place-items-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
           >
-            <ChevronLeft className="size-4" />
+            <ArrowLeft className="size-5" />
           </Link>
         ) : (
           <div className="grid size-8 place-items-center rounded-md bg-primary text-white">
-            <ChevronRight className="size-4" />
+            <Home className="size-4" />
           </div>
         )}
-        <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
-          <Home className="size-4 text-slate-500" />
-          <span>{title}</span>
-        </div>
+        <span className="text-sm font-medium text-slate-900">{title}</span>
       </div>
 
       <div className="flex items-center gap-2">

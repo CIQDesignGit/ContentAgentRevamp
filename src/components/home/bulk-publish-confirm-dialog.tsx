@@ -20,7 +20,7 @@ const FIELD_CONFIG: { id: BulkField; label: string }[] = [
   { id: "description", label: "Product Description"  },
 ]
 
-const FIELD_LABELS: Record<BulkField, string> = Object.fromEntries(
+export const FIELD_LABELS: Record<BulkField, string> = Object.fromEntries(
   FIELD_CONFIG.map((f) => [f.id, f.label]),
 ) as Record<BulkField, string>
 

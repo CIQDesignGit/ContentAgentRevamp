@@ -15,8 +15,8 @@ import { ImageSection } from "@/components/home/image-section"
 import { BulletPointsSection } from "@/components/home/bullet-section"
 import { DescriptionSection } from "@/components/home/description-section"
 import { PublishConfirmDialog } from "@/components/home/publish-confirm-dialog"
-import { BulkPublishConfirmDialog, BulkPublishSuccessDialog, type BulkField } from "@/components/home/bulk-publish-confirm-dialog"
-import { BulkReviewDialog } from "@/components/home/bulk-review-dialog"
+import { BulkPublishConfirmDialog, FIELD_LABELS, type BulkField } from "@/components/home/bulk-publish-confirm-dialog"
+import { BRD_INPUT_KEY, BRD_OUTPUT_KEY, type BrdOutput } from "@/components/home/bulk-review-view"
 import { toast } from "sonner"
 import { UnpublishedChangesGuardDialog } from "@/components/home/unpublished-changes-guard-dialog"
 
@@ -70,9 +70,6 @@ export default function Home() {
   const [selectedSkuIds, setSelectedSkuIds] = useState<Set<string>>(new Set())
   const [bulkPublishDialogOpen, setBulkPublishDialogOpen] = useState(false)
   const [pendingBulkFields, setPendingBulkFields] = useState<BulkField[]>([])
-  const [bulkSuccessOpen, setBulkSuccessOpen] = useState(false)
-  const [bulkSuccessInfo, setBulkSuccessInfo] = useState<{ skuCount: number; fields: BulkField[] } | null>(null)
-  const [bulkReviewOpen, setBulkReviewOpen] = useState(false)
 
   // Section-level publish inclusion — all selected by default
   const [titleIncluded, setTitleIncluded] = useState(true)
@@ -200,6 +197,17 @@ export default function Home() {
     setBulletsIncluded(true)
     setDescriptionIncluded(true)
   }, [selectedSkuId, clearPublishTimers])
+
+  // When the user returns from /bulk-review, pick up the approve result
+  useEffect(() => {
+    const raw = sessionStorage.getItem(BRD_OUTPUT_KEY)
+    if (!raw) return
+    sessionStorage.removeItem(BRD_OUTPUT_KEY)
+    const { fields, skuIds } = JSON.parse(raw) as BrdOutput
+    setSelectedSkuIds(new Set(skuIds))
+    setPendingBulkFields(fields)
+    setBulkPublishDialogOpen(true)
+  }, [])
 
   function schedulePublishSimulation(skuId: string, batchId: string) {
     const phases = ["pim_done", "retailer_done", "pdp_live", "done"] as const
@@ -361,9 +369,14 @@ export default function Home() {
     setContentState(newState)
     batchesToSchedule.forEach(({ skuId, batchId }) => schedulePublishSimulation(skuId, batchId))
 
-    // Show success modal with what was published
-    setBulkSuccessInfo({ skuCount: batchesToSchedule.length || skuIds.length, fields })
-    setBulkSuccessOpen(true)
+    // Show success toast (bottom-left, slides in)
+    const skuCount = batchesToSchedule.length || skuIds.length
+    const fieldList = fields.map((f) => FIELD_LABELS[f]).join(" · ")
+    toast.success("Changes sent!", {
+      description: `${skuCount} SKU${skuCount !== 1 ? "s" : ""} · ${fieldList} — PIM and PDP sync in progress.`,
+      duration: 6000,
+      dismissible: true,
+    })
     setIsSelectionMode(false)
     setSelectedSkuIds(new Set())
   }
@@ -811,19 +824,13 @@ export default function Home() {
           onSelectAllSkus={handleSelectAllSkus}
           onDeselectAllSkus={handleDeselectAllSkus}
           onBulkAcceptAndPublish={(fields) => { setPendingBulkFields(fields); setBulkPublishDialogOpen(true) }}
-          onBulkReview={() => setBulkReviewOpen(true)}
-        />
-
-        <BulkReviewDialog
-          open={bulkReviewOpen}
-          onOpenChange={setBulkReviewOpen}
-          selectedSkuIds={selectedSkuIds}
-          contentState={contentState}
-          skus={filteredSkus}
-          onBulkApprove={(fields, skuIds) => {
-            setSelectedSkuIds(new Set(skuIds))
-            setPendingBulkFields(fields)
-            setBulkPublishDialogOpen(true)
+          onBulkReview={() => {
+            // Store current state so the bulk-review page can read it
+            sessionStorage.setItem(
+              BRD_INPUT_KEY,
+              JSON.stringify({ selectedSkuIds: [...selectedSkuIds], contentState }),
+            )
+            router.push("/bulk-review")
           }}
         />
 
@@ -833,13 +840,6 @@ export default function Home() {
           skuCount={selectedSkuIds.size}
           fields={pendingBulkFields}
           onConfirm={(fields) => handleBulkPublishConfirm(fields)}
-        />
-
-        <BulkPublishSuccessDialog
-          open={bulkSuccessOpen}
-          onOpenChange={setBulkSuccessOpen}
-          skuCount={bulkSuccessInfo?.skuCount ?? 0}
-          fields={bulkSuccessInfo?.fields ?? []}
         />
 
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">

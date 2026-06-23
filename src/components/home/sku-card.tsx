@@ -16,13 +16,13 @@ function CardMetric({ label, value }: { label: string; value: number }) {
   )
 }
 
-/** OPS (sales) tag — solid fill distinguishes it from the quality metric chips */
+/** OPS (sales) tag — subtly stepped-up vs quality chips: filled bg + stronger border + bold value */
 function OpsTag({ value }: { value: number }) {
   const formatted = value >= 1000 ? `${(value / 1000).toFixed(1)}k` : String(value)
   return (
-    <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">
+    <span className="inline-flex items-center gap-1 rounded-md border border-brand-200 bg-brand-25 px-1.5 py-0.5 text-[10px] text-slate-600">
       OPS
-      <span className="font-semibold tabular-nums text-slate-700">{formatted}</span>
+      <span className="font-bold tabular-nums text-slate-900">{formatted}</span>
     </span>
   )
 }
@@ -82,8 +82,6 @@ function MetaRow({ sku, isActive }: { sku: Sku; isActive: boolean }) {
         <span className="font-mono text-xs text-slate-500">{sku.asin}</span>
         <span aria-hidden className="size-1 rounded-full bg-slate-300" />
         <span className="text-xs text-slate-400">{sku.brand}</span>
-        <span aria-hidden className="size-1 rounded-full bg-slate-300" />
-        <span className="text-xs text-slate-400">{sku.category}</span>
       </p>
       {/* Workflow badge + bookmark can both show simultaneously */}
       <div className="flex items-center gap-1.5 shrink-0">
@@ -103,7 +101,7 @@ function MetaRow({ sku, isActive }: { sku: Sku; isActive: boolean }) {
 function PdpOnlyTag({ isActive }: { isActive: boolean }) {
   return (
     <span className={cn(
-      "inline-flex w-fit items-center rounded-md border px-1.5 py-0.5 text-[9px] font-semibold tracking-wide",
+      "inline-flex w-fit shrink-0 items-center whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[9px] font-semibold tracking-wide",
       isActive
         ? "border-brand-300 bg-brand-100 text-primary"
         : "border-brand-200 bg-brand-50 text-brand-700",
@@ -140,8 +138,6 @@ export function SkuCard({ sku, isActive, isSelected, isSelectionMode, hideMetric
                 <span className="font-mono text-xs text-slate-500">{sku.asin}</span>
                 <span aria-hidden className="size-1 rounded-full bg-slate-300" />
                 <span className="text-xs text-slate-400">{sku.brand}</span>
-                <span aria-hidden className="size-1 rounded-full bg-slate-300" />
-                <span className="text-xs text-slate-400">{sku.category}</span>
               </p>
               {sku.actionStatus && (
                 <ActionStatusBadge status={sku.actionStatus} showLabel={false} />
@@ -156,35 +152,61 @@ export function SkuCard({ sku, isActive, isSelected, isSelectionMode, hideMetric
             </p>
           </div>
         </div>
-      ) : (
-        <div className="flex flex-col gap-2 px-3 pb-2.5 pt-3">
+      ) : hideMetrics ? (
+        /* Title Optimization layout: square image + [title / OPS] column side-by-side */
+        <div className="flex flex-col gap-2 px-3 py-3">
           <MetaRow sku={sku} isActive={isActive} />
-          <div className="flex gap-3">
-            <SkuThumb sku={sku} />
-            <p className="line-clamp-2 flex-1 text-[13px] font-semibold leading-snug text-slate-700">
-              {sku.title}
-            </p>
+          <div className="flex items-stretch gap-3">
+            {/* Image stretches to match the right column height, stays square */}
+            {sku.thumbnailUrl ? (
+              <img
+                src={sku.thumbnailUrl}
+                alt=""
+                className="aspect-square self-stretch shrink-0 rounded-lg border border-slate-100 bg-slate-50 object-contain p-0.5"
+              />
+            ) : (
+              <div
+                className="aspect-square self-stretch shrink-0 rounded-lg border border-slate-100 bg-slate-100"
+                aria-hidden
+              />
+            )}
+            {/* Right column: title + OPS tag, tightly stacked */}
+            <div className="flex min-w-0 flex-1 flex-col justify-start gap-1.5">
+              <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-slate-700">
+                {sku.title}
+              </p>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <OpsTag value={sku.metrics.ops} />
+                {sku.hasPimData === false && (
+                  <PdpOnlyTag isActive={isSelectionMode ? false : isActive} />
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Metrics zone — border-t creates a clear visual break from the identity section above */}
-      {!hideMetrics ? (
-        <div className="flex items-center gap-1.5 px-3 pt-2 pb-3">
-          <CardMetric label="Compliance" value={sku.metrics.compliance} />
-          <CardMetric label="SEO" value={sku.metrics.seo} />
-          <CardMetric label="AEO" value={sku.metrics.aeo} />
-          {/* Divider separates quality metrics from OPS (sales) */}
-          <span aria-hidden className="mx-0.5 h-3 w-px bg-slate-200" />
-          <OpsTag value={sku.metrics.ops} />
-          {sku.hasPimData === false && <PdpOnlyTag isActive={isSelectionMode ? false : isActive} />}
         </div>
       ) : (
-        sku.hasPimData === false && (
-          <div className="px-3 pb-3">
-            <PdpOnlyTag isActive={isSelectionMode ? false : isActive} />
+        /* Content Agent layout: MetaRow + [img + title] + metrics row */
+        <>
+          <div className="flex flex-col gap-2 px-3 pb-2.5 pt-3">
+            <MetaRow sku={sku} isActive={isActive} />
+            <div className="flex gap-3">
+              <SkuThumb sku={sku} />
+              <p className="line-clamp-2 flex-1 text-[13px] font-semibold leading-snug text-slate-700">
+                {sku.title}
+              </p>
+            </div>
           </div>
-        )
+          <div className="flex flex-wrap items-center gap-1.5 px-3 pt-2 pb-3">
+            <CardMetric label="Compliance" value={sku.metrics.compliance} />
+            <CardMetric label="SEO" value={sku.metrics.seo} />
+            <CardMetric label="AEO" value={sku.metrics.aeo} />
+            <span aria-hidden className="mx-0.5 h-3 w-px bg-slate-200" />
+            <OpsTag value={sku.metrics.ops} />
+            {sku.hasPimData === false && (
+              <PdpOnlyTag isActive={isSelectionMode ? false : isActive} />
+            )}
+          </div>
+        </>
       )}
     </button>
   )

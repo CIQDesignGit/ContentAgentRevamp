@@ -174,7 +174,7 @@ export function SkuSidebar({
               className="bg-brand-500 text-xs text-white hover:bg-brand-600"
               onClick={() => onBulkAcceptAndPublish(ALL_BULK_FIELDS)}
             >
-              Bulk approve
+              Approve {selectedCount} SKU{selectedCount !== 1 ? "s" : ""}
             </Button>
           </div>
         </div>
