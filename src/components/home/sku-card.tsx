@@ -2,17 +2,31 @@
 
 import { Bookmark, Check, Minus, Square } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ActionStatusBadge } from "./action-status-badge"
 import type { Sku } from "./types"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+const METRIC_TIPS: Record<string, string> = {
+  Compliance: "Compliance with Amazon's policies",
+  SEO: "Search engine optimisation",
+  AEO: "Answer engine optimisation",
+}
+
 function CardMetric({ label, value }: { label: string; value: number }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] text-slate-500">
-      {label}
-      <span className="font-semibold tabular-nums text-slate-700">{value}%</span>
-    </span>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] text-slate-500">
+            {label}
+            <span className="font-semibold tabular-nums text-slate-700">{value}%</span>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{METRIC_TIPS[label] ?? label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }
 
@@ -20,10 +34,17 @@ function CardMetric({ label, value }: { label: string; value: number }) {
 function OpsTag({ value }: { value: number }) {
   const formatted = value >= 1000 ? `${(value / 1000).toFixed(1)}k` : String(value)
   return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-brand-200 bg-brand-25 px-1.5 py-0.5 text-[10px] text-slate-600">
-      OPS
-      <span className="font-bold tabular-nums text-slate-900">{formatted}</span>
-    </span>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <span className="inline-flex items-center gap-1 rounded-md border border-brand-200 bg-brand-25 px-1.5 py-0.5 text-[10px] text-slate-600">
+            OPS
+            <span className="font-bold tabular-nums text-slate-900">{formatted}</span>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>Orders per session — a relative sales performance indicator</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }
 
@@ -130,28 +151,40 @@ export function SkuCard({ sku, isActive, isSelected, isSelectionMode, hideMetric
       )}
     >
       {isSelectionMode ? (
-        <div className="flex flex-col gap-2 px-3 py-3">
-          <div className="flex items-center gap-2.5">
-            <Checkbox checked={isSelected} />
-            <div className="flex min-w-0 flex-1 items-center justify-between gap-1">
-              <p className="flex min-w-0 flex-wrap items-center gap-1">
-                <span className="font-mono text-xs text-slate-500">{sku.asin}</span>
-                <span aria-hidden className="size-1 rounded-full bg-slate-300" />
-                <span className="text-xs text-slate-400">{sku.brand}</span>
+        <>
+          <div className="flex flex-col gap-2 px-3 py-3">
+            <div className="flex items-center gap-2.5">
+              <Checkbox checked={isSelected} />
+              <div className="flex min-w-0 flex-1 items-center justify-between gap-1">
+                <p className="flex min-w-0 flex-wrap items-center gap-1">
+                  <span className="font-mono text-xs text-slate-500">{sku.asin}</span>
+                  <span aria-hidden className="size-1 rounded-full bg-slate-300" />
+                  <span className="text-xs text-slate-400">{sku.brand}</span>
+                </p>
+                {sku.actionStatus && (
+                  <ActionStatusBadge status={sku.actionStatus} showLabel={false} />
+                )}
+              </div>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <SkuThumb sku={sku} />
+              <p className="line-clamp-2 flex-1 text-[13px] font-semibold leading-snug text-slate-700">
+                {sku.title}
               </p>
-              {sku.actionStatus && (
-                <ActionStatusBadge status={sku.actionStatus} showLabel={false} />
-              )}
             </div>
           </div>
-          <div className="flex items-start gap-2.5">
-            <SkuThumb sku={sku} />
-            {/* font-semibold: title must read as the dominant element */}
-            <p className="line-clamp-2 flex-1 text-[13px] font-semibold leading-snug text-slate-700">
-              {sku.title}
-            </p>
-          </div>
-        </div>
+          {/* Content Agent: keep metric tags visible in selection mode */}
+          {!hideMetrics && (
+            <div className="flex flex-wrap items-center gap-1.5 px-3 pt-0 pb-3">
+              <CardMetric label="Compliance" value={sku.metrics.compliance} />
+              <CardMetric label="SEO" value={sku.metrics.seo} />
+              <CardMetric label="AEO" value={sku.metrics.aeo} />
+              <span aria-hidden className="mx-0.5 h-3 w-px bg-slate-200" />
+              <OpsTag value={sku.metrics.ops} />
+              {sku.hasPimData === false && <PdpOnlyTag isActive={false} />}
+            </div>
+          )}
+        </>
       ) : hideMetrics ? (
         /* Title Optimization layout: square image + [title / OPS] column side-by-side */
         <div className="flex flex-col gap-2 px-3 py-3">
