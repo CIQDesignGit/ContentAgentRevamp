@@ -460,9 +460,7 @@ export function ContentRecommendationBody({
           recommendationField
         )}
 
-        {/* Action bar + expanded panels grouped together — no gap between them */}
-        <div className="pt-1.5">
-          {/* Action bar — only rendered when there are actual actions or the Add New button */}
+        {/* Action bar — only rendered when there are actual actions or the Add New button */}
           {(!hideActions || (isPublishedLocked && addNewLabel && onAddNew)) && (
           <div className="space-y-1 py-1.5">
             {/* Action bar: add-new on the left, Accept/Reject on the right */}
@@ -611,7 +609,6 @@ export function ContentRecommendationBody({
               onRemoveKeyword={handleRemoveKeyword}
             />
           )}
-        </div>
       </div>
     </div>
   )

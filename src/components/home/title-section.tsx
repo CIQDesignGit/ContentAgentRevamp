@@ -318,7 +318,7 @@ export function ProductTitleSection({
 
       {!hasPimData ? (
         /* ── No-PIM layout: 2-column grid (AI Recommendation | Retailer) + full-width panels below ── */
-        <div className={fieldSectionStack("w-full")}>
+        <div className="flex flex-col gap-3 w-full">
           <div className="grid grid-cols-2 items-start gap-x-3">
             {/* Left: AI Recommendation — panels are rendered full-width below, not inline */}
             <div className={fieldLabelContentStack("min-h-0 min-w-0")}>
