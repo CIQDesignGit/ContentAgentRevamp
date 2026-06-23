@@ -78,8 +78,10 @@ function RowCheckbox({ checked, indeterminate, onToggle, label }: {
 
 // All header cells are individually sticky top-0 so the frozen corner cell
 // can also be sticky left-0 — if <thead> owns the sticky, children can't add left-0.
-const TH_BASE = "sticky top-0 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-600 text-left whitespace-nowrap"
-const SUB_BASE = "sticky top-0 bg-slate-50 px-3 py-1.5 text-[10px] font-medium text-slate-400 text-left whitespace-nowrap"
+// z-20 ensures row 1 renders above row 2 when both are frozen
+const TH_BASE = "sticky top-0 z-20 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-600 text-left whitespace-nowrap"
+// top-[33px] offsets below the first header row; z-10 keeps it below row 1
+const SUB_BASE = "sticky top-[33px] z-10 bg-slate-50 px-3 py-1.5 text-[10px] font-medium text-slate-400 text-left whitespace-nowrap"
 
 function FieldColHead({ label, checked, onToggle, className = "", colSpan }: {
   label: string; checked: boolean; onToggle: () => void; className?: string; colSpan?: number
