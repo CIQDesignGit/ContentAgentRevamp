@@ -17,6 +17,7 @@ export const MOCK_SKUS: Sku[] = [
       { type: "warning", label: "Title too long" },
     ],
     lastUpdated: "Apr 8, 2025",
+    actionStatus: "to-do",
   },
   {
     id: "sku-2",
@@ -33,6 +34,7 @@ export const MOCK_SKUS: Sku[] = [
       { type: "warning", label: "PDP-only SKU" },
     ],
     lastUpdated: "Mar 7, 2025",
+    actionStatus: "in-progress",
   },
   {
     id: "sku-3",
@@ -45,6 +47,7 @@ export const MOCK_SKUS: Sku[] = [
     metrics: { compliance: 54, seo: 40, aeo: 16 },
     salsifyIssues: [{ type: "error", label: "Image mismatch" }],
     lastUpdated: "Feb 14, 2025",
+    actionStatus: "to-do",
   },
   {
     id: "sku-4",
@@ -57,6 +60,7 @@ export const MOCK_SKUS: Sku[] = [
     metrics: { compliance: 54, seo: 30, aeo: 40 },
     salsifyIssues: [{ type: "warning", label: "Bullet count low" }],
     lastUpdated: "Jan 22, 2025",
+    actionStatus: "saved-for-later",
   },
   {
     id: "sku-5",
@@ -72,6 +76,7 @@ export const MOCK_SKUS: Sku[] = [
       { type: "error", label: "Image mismatch" },
     ],
     lastUpdated: "Mar 19, 2025",
+    actionStatus: "in-progress",
   },
   {
     id: "sku-6",
@@ -84,6 +89,7 @@ export const MOCK_SKUS: Sku[] = [
     metrics: { compliance: 72, seo: 55, aeo: 48 },
     salsifyIssues: [{ type: "warning", label: "Title too long" }],
     lastUpdated: "Mar 3, 2025",
+    actionStatus: "to-do",
   },
   {
     id: "sku-7",
@@ -96,6 +102,7 @@ export const MOCK_SKUS: Sku[] = [
     metrics: { compliance: 88, seo: 75, aeo: 62 },
     salsifyIssues: [{ type: "error", label: "Image mismatch" }],
     lastUpdated: "Apr 12, 2025",
+    actionStatus: "to-do",
   },
   {
     id: "sku-8",
@@ -108,6 +115,7 @@ export const MOCK_SKUS: Sku[] = [
     metrics: { compliance: 45, seo: 38, aeo: 30 },
     salsifyIssues: [{ type: "warning", label: "Bullet count low" }],
     lastUpdated: "Apr 1, 2025",
+    actionStatus: "to-do",
   },
   {
     id: "sku-9",
@@ -120,6 +128,7 @@ export const MOCK_SKUS: Sku[] = [
     metrics: { compliance: 65, seo: 50, aeo: 42 },
     salsifyIssues: [{ type: "error", label: "Description missing" }],
     lastUpdated: "Mar 28, 2025",
+    actionStatus: "to-do",
   },
   {
     id: "sku-10",
@@ -135,6 +144,7 @@ export const MOCK_SKUS: Sku[] = [
       { type: "error", label: "Description missing" },
     ],
     lastUpdated: "Feb 27, 2025",
+    actionStatus: "to-do",
   },
 ]
 

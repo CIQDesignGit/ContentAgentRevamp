@@ -27,7 +27,7 @@ export const COLUMNS: ColumnDef[] = [
   {
     id: "action_status",
     label: "Action Status",
-    options: ["Pending", "In Review", "Published", "Draft", "Issues Found"],
+    options: ["To do", "In progress", "Saved for later", "Success"],
   },
   {
     id: "pim_content_health",

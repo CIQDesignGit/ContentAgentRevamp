@@ -1,8 +1,9 @@
 "use client"
 
-import { BookmarkPlus, Search, ShieldCheck, Sparkles } from "lucide-react"
+import { BookmarkCheck, BookmarkPlus, Search, ShieldCheck, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MetricChip } from "./metric-chip"
+import type { ActionStatus } from "./types"
 
 export type PublishBarState = "disabled" | "ready" | "publishing" | "syncing" | "complete"
 
@@ -23,6 +24,9 @@ interface ProductHeaderProps {
   /** Total number of selectable sections. */
   totalSections?: number
   hideMetrics?: boolean
+  actionStatus?: ActionStatus
+  isBookmarked?: boolean
+  onBookmarkClick?: () => void
 }
 
 export function ProductHeader({
@@ -40,6 +44,9 @@ export function ProductHeader({
   selectedCount,
   totalSections,
   hideMetrics = false,
+  actionStatus,
+  isBookmarked = false,
+  onBookmarkClick,
 }: ProductHeaderProps) {
   const hasSelection = selectedCount !== undefined && totalSections !== undefined
   const ctaLabel = "Publish to PDP"
@@ -102,11 +109,20 @@ export function ProductHeader({
           </button>
           <button
             type="button"
-            aria-label="Bookmark"
-            title="Bookmark"
-            className="grid size-8 place-items-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-100"
+            aria-label={isBookmarked ? "Remove bookmark" : "Bookmark"}
+            title={isBookmarked ? "Remove bookmark" : "Save for later"}
+            onClick={onBookmarkClick}
+            className={cn(
+              "grid size-8 place-items-center rounded-md border transition-colors",
+              isBookmarked
+                ? "border-info-200 bg-info-50 text-info-600 hover:bg-info-100"
+                : "border-slate-200 text-slate-600 hover:bg-slate-100",
+            )}
           >
-            <BookmarkPlus className="size-4" />
+            {isBookmarked
+              ? <BookmarkCheck className="size-4" />
+              : <BookmarkPlus className="size-4" />
+            }
           </button>
         </div>
       </div>

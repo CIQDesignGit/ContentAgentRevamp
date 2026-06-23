@@ -38,7 +38,7 @@ import {
   passesFilter,
   passesSearch,
 } from "@/components/home/data"
-import type { BulletRecommendation, ContentState, SkuContent } from "@/components/home/types"
+import type { ActionStatus, BulletRecommendation, ContentState, SkuContent } from "@/components/home/types"
 
 type PendingNavigation =
   | { kind: "sku"; skuId: string }
@@ -52,6 +52,10 @@ export default function Home() {
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [contentState, setContentState] = useState<ContentState>(() => buildInitialState())
+  // Tracks each SKU's workflow state: to-do → in-progress (publish) → success (done, filtered out)
+  const [actionStatusMap, setActionStatusMap] = useState<Record<string, ActionStatus>>(() =>
+    Object.fromEntries(MOCK_SKUS.map((s) => [s.id, s.actionStatus ?? "to-do"]))
+  )
   const [publishDialogOpen, setPublishDialogOpen] = useState(false)
   const [unpublishedGuardOpen, setUnpublishedGuardOpen] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null)
@@ -75,11 +79,19 @@ export default function Home() {
   const includedCount = [titleIncluded, imageIncluded, bulletsIncluded, descriptionIncluded].filter(Boolean).length
 
   const filteredSkus = useMemo(
-    () => MOCK_SKUS.filter((s) => passesFilter(s, filter) && passesSearch(s, search)),
-    [filter, search],
+    () => MOCK_SKUS
+      // Success SKUs are "done" — they graduate out of the review list
+      .filter((s) => (actionStatusMap[s.id] ?? "to-do") !== "success")
+      .filter((s) => passesFilter(s, filter) && passesSearch(s, search))
+      // Merge live actionStatus so cards and badges reflect current state
+      .map((s) => ({ ...s, actionStatus: actionStatusMap[s.id] ?? ("to-do" as ActionStatus) })),
+    [actionStatusMap, filter, search],
   )
 
-  const selectedSku = MOCK_SKUS.find((s) => s.id === selectedSkuId) ?? MOCK_SKUS[0]
+  const selectedSku = useMemo(() => {
+    const sku = MOCK_SKUS.find((s) => s.id === selectedSkuId) ?? MOCK_SKUS[0]
+    return { ...sku, actionStatus: actionStatusMap[sku.id] ?? ("to-do" as ActionStatus) }
+  }, [selectedSkuId, actionStatusMap])
   const content: SkuContent = contentState[selectedSkuId] ?? makeInitialContent(selectedSku)
 
   const publishSummary = useMemo(() => getPublishSummary(content), [content])
@@ -212,8 +224,23 @@ export default function Home() {
       return next
     })
 
+    // Published SKUs move to "in-progress" until PDP verification completes
+    setActionStatusMap((prev) => ({ ...prev, [selectedSkuId]: "in-progress" }))
+
     toast.success("Your changes are published", {
       description: `${fieldNames} sent to PIM & PDP.`,
+    })
+  }
+
+  function handleBookmarkToggle() {
+    setActionStatusMap((prev) => {
+      const current = prev[selectedSkuId] ?? "to-do"
+      // Don't override in-progress or success workflow states with bookmark
+      if (current === "in-progress" || current === "success") return prev
+      return {
+        ...prev,
+        [selectedSkuId]: current === "saved-for-later" ? "to-do" : "saved-for-later",
+      }
     })
   }
 
@@ -817,6 +844,9 @@ export default function Home() {
             publishableCount={publishSummary.publishable.length}
             selectedCount={includedCount}
             totalSections={4}
+            actionStatus={selectedSku.actionStatus}
+            isBookmarked={selectedSku.actionStatus === "saved-for-later"}
+            onBookmarkClick={handleBookmarkToggle}
             onPublishClick={() => {
               if (includedCount > 0) setPublishDialogOpen(true)
             }}
@@ -842,7 +872,7 @@ export default function Home() {
           <div className="flex min-h-0 flex-1">
             <section className="flex min-w-0 flex-1 flex-col">
               {/* Bulk select strip — sits above the scrollable section list */}
-              <div className="flex shrink-0 items-center justify-end px-5 pt-3 pb-1">
+              <div className="flex shrink-0 items-center justify-end pt-3 pb-1">
                 <BulkSelectControl
                   selectedCount={includedCount}
                   totalCount={4}

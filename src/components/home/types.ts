@@ -2,6 +2,8 @@ import type { PdpStatus, PimStatus, RetailerStatus } from "@/components/actions-
 
 export type Metrics = { compliance: number; seo: number; aeo: number }
 
+export type ActionStatus = "to-do" | "in-progress" | "saved-for-later" | "success"
+
 export type SalsifyIssue = {
   type: "error" | "warning"
   label: string
@@ -21,6 +23,7 @@ export type Sku = {
   lastUpdated: string
   /** When false, this SKU exists only on the retailer PDP — no PIM catalog entry. */
   hasPimData?: boolean
+  actionStatus?: ActionStatus
 }
 
 export type ProductImage = { id: string; label: string; url?: string; hue?: number }

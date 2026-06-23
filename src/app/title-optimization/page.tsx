@@ -398,6 +398,7 @@ export default function TitleOptimizationPage() {
             hideMetrics
             selectedCount={[titleIncluded, highlightIncluded].filter(Boolean).length}
             totalSections={2}
+            actionStatus={selectedSku.actionStatus}
             onPublishClick={() => { if (publishSummary.publishable.length > 0) setPublishDialogOpen(true) }}
           />
 
