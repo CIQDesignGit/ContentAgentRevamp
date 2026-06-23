@@ -1,6 +1,6 @@
 "use client"
 
-import { BookmarkCheck, BookmarkPlus, Search, ShieldCheck, Sparkles } from "lucide-react"
+import { Bookmark, BookmarkPlus, Search, ShieldCheck, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MetricChip } from "./metric-chip"
 import type { ActionStatus } from "./types"
@@ -115,12 +115,12 @@ export function ProductHeader({
             className={cn(
               "grid size-8 place-items-center rounded-md border transition-colors",
               isBookmarked
-                ? "border-info-200 bg-info-50 text-info-600 hover:bg-info-100"
+                ? "border-brand-200 bg-brand-50 text-brand-500 hover:bg-brand-100"
                 : "border-slate-200 text-slate-600 hover:bg-slate-100",
             )}
           >
             {isBookmarked
-              ? <BookmarkCheck className="size-4" />
+              ? <Bookmark className="size-4" fill="currentColor" />
               : <BookmarkPlus className="size-4" />
             }
           </button>

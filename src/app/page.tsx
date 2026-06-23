@@ -65,6 +65,8 @@ export default function Home() {
   const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null)
   const publishTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
+  const [bookmarkedOnly, setBookmarkedOnly] = useState(false)
+
   // ── Bulk SKU selection state ──────────────────────────────────────────────
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedSkuIds, setSelectedSkuIds] = useState<Set<string>>(new Set())
@@ -84,13 +86,15 @@ export default function Home() {
       // Success SKUs are "done" — they graduate out of the review list
       .filter((s) => (actionStatusMap[s.id] ?? "to-do") !== "success")
       .filter((s) => passesFilter(s, filter) && passesSearch(s, search))
+      // When the bookmarks toggle is active, only show bookmarked SKUs
+      .filter((s) => !bookmarkedOnly || bookmarkSet.has(s.id))
       // Merge live actionStatus and isBookmarked so cards reflect current state
       .map((s) => ({
         ...s,
         actionStatus: actionStatusMap[s.id] ?? ("to-do" as ActionStatus),
         isBookmarked: bookmarkSet.has(s.id),
       })),
-    [actionStatusMap, bookmarkSet, filter, search],
+    [actionStatusMap, bookmarkSet, bookmarkedOnly, filter, search],
   )
 
   const selectedSku = useMemo(() => {
@@ -807,6 +811,9 @@ export default function Home() {
         onBrandsChange={setSelectedBrands}
         matchCount={filteredSkus.length}
         onActivityLogClick={() => requestNavigation({ kind: "route", path: "/actions-log" })}
+        bookmarkedCount={bookmarkSet.size}
+        bookmarkedOnly={bookmarkedOnly}
+        onBookmarkedOnlyChange={setBookmarkedOnly}
       />
 
       <div className="flex min-h-0 flex-1">
@@ -883,17 +890,16 @@ export default function Home() {
 
           <div className="flex min-h-0 flex-1">
             <section className="flex min-w-0 flex-1 flex-col">
-              {/* Bulk select strip — sits above the scrollable section list */}
-              <div className="flex shrink-0 items-center justify-end px-5 pt-3 pb-1">
-                <BulkSelectControl
-                  selectedCount={includedCount}
-                  totalCount={4}
-                  onSelectAll={() => { setTitleIncluded(true); setImageIncluded(true); setBulletsIncluded(true); setDescriptionIncluded(true) }}
-                  onDeselectAll={() => { setTitleIncluded(false); setImageIncluded(false); setBulletsIncluded(false); setDescriptionIncluded(false) }}
-                />
-              </div>
-
               <div className="flex-1 space-y-4 overflow-y-auto px-5 pb-5">
+                {/* Bulk select strip — scrolls with the content */}
+                <div className="flex items-center justify-end pt-3 pb-1">
+                  <BulkSelectControl
+                    selectedCount={includedCount}
+                    totalCount={4}
+                    onSelectAll={() => { setTitleIncluded(true); setImageIncluded(true); setBulletsIncluded(true); setDescriptionIncluded(true) }}
+                    onDeselectAll={() => { setTitleIncluded(false); setImageIncluded(false); setBulletsIncluded(false); setDescriptionIncluded(false) }}
+                  />
+                </div>
                 <ProductTitleSection
                   key={selectedSkuId}
                   pimTitle={content.title}

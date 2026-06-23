@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { BrainCircuit, Check, ChevronDown, FunnelPlus, History, Lock, Search, X } from "lucide-react"
+import { Bookmark, BrainCircuit, Check, ChevronDown, FunnelPlus, History, Lock, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { COLUMNS, ColumnFilterPanel, type ColumnFilters } from "./column-filter-dialog"
@@ -287,11 +287,17 @@ interface FilterBarProps {
   onActivityLogClick?: () => void
   /** When set, locks the type filter to this key — all others are shown as disabled. */
   lockedFilter?: string
+  /** Number of currently bookmarked SKUs — shows the bookmark toggle when > 0 */
+  bookmarkedCount?: number
+  /** When true, sidebar shows only bookmarked SKUs */
+  bookmarkedOnly?: boolean
+  onBookmarkedOnlyChange?: (v: boolean) => void
 }
 
 export function FilterBar({
   search, onSearchChange, activeFilter, onFilterChange,
   selectedBrands, onBrandsChange, matchCount, onActivityLogClick, lockedFilter,
+  bookmarkedCount = 0, bookmarkedOnly = false, onBookmarkedOnlyChange,
 }: FilterBarProps) {
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(search.length > 0)
@@ -334,6 +340,32 @@ export function FilterBar({
         <span aria-hidden className="h-4 w-px shrink-0 bg-slate-200" />
 
         <BrandMultiSelect selected={selectedBrands} onChange={onBrandsChange} />
+
+        {/* Bookmark quick-filter — only visible when at least one SKU is bookmarked */}
+        {bookmarkedCount > 0 && (
+          <button
+            type="button"
+            onClick={() => onBookmarkedOnlyChange?.(!bookmarkedOnly)}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg border py-1 pl-2 pr-2.5 text-xs whitespace-nowrap transition-colors outline-none",
+              bookmarkedOnly
+                ? "border-info-300 bg-info-50 text-info-700 hover:bg-info-100"
+                : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50",
+            )}
+          >
+            <Bookmark
+              className="size-3"
+              fill={bookmarkedOnly ? "currentColor" : "none"}
+            />
+            Bookmarked
+            <span className={cn(
+              "rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+              bookmarkedOnly ? "bg-info-100 text-info-700" : "bg-slate-100 text-slate-500",
+            )}>
+              {bookmarkedCount}
+            </span>
+          </button>
+        )}
 
         {/* Applied column filter chips — one per column, grouped */}
         {COLUMNS

@@ -110,7 +110,7 @@ function MetaRow({ sku, isActive }: { sku: Sku; isActive: boolean }) {
           <ActionStatusBadge status={sku.actionStatus} showLabel={false} />
         )}
         {sku.isBookmarked && (
-          <Bookmark className="size-3 shrink-0 text-info-600" fill="currentColor" aria-label="Bookmarked" />
+          <Bookmark className="size-3 shrink-0 text-brand-500" fill="currentColor" aria-label="Bookmarked" />
         )}
       </div>
     </div>
