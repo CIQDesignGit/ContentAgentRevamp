@@ -15,13 +15,13 @@ import { CompareTabs, ContentRecommendationHeader } from "./content-recommendati
 import { AiRecommendationSparklesIcon, SourceChannelLabel } from "./bullet-source-cell"
 import { ReasoningAltKeywordsBlock } from "./reasoning-alt-keywords-block"
 import {
-  BulletRecommendationBlock,
-  type BulletRecommendationSlotProps,
-} from "./bullet-recommendation-slot"
+  BulletsCombinedRecommendationView,
+  type CombinedBulletItem,
+} from "./bullets-combined-recommendation"
 import type { FieldCompareTarget } from "./vertical-source-compare-grid"
 import { VerticalSourceCompareGrid } from "./vertical-source-compare-grid"
 import type { FieldPublishQueueItem } from "@/lib/build-field-publish-queue"
-import type { BulletRecommendation, PublishBatch, ReasoningCategory } from "./types"
+import type { AltKeyword, BulletRecommendation, PublishBatch, ReasoningCategory } from "./types"
 
 interface BulletPointsSectionProps {
   pimBullets: string[]
@@ -75,53 +75,6 @@ function getBulletBaselines(
   return { pimBaseline: display.pim, pdpBaseline: display.pdp }
 }
 
-function buildRecommendationBlockProps(
-  reco: BulletRecommendation,
-  pimBullets: string[],
-  pdpBullets: string[],
-  originals: Record<string, string>,
-  compareTarget: FieldCompareTarget,
-  getFieldPublishBatch: BulletPointsSectionProps["getFieldPublishBatch"],
-  getBulletPublishQueue: BulletPointsSectionProps["getBulletPublishQueue"],
-  handlers: Pick<
-    BulletPointsSectionProps,
-    | "onRecommendationTextChange"
-    | "onAccept"
-    | "onReject"
-    | "onReset"
-    | "onUndoAccept"
-    | "onUndoReject"
-    | "onPushUpdate"
-    | "onAcceptNewDraft"
-  >,
-): BulletRecommendationSlotProps {
-  const { pimBaseline, pdpBaseline } = getBulletBaselines(
-    reco,
-    pimBullets,
-    pdpBullets,
-    getFieldPublishBatch,
-  )
-
-  return {
-    item: reco,
-    pimBaseline,
-    pdpBaseline,
-    originalText: originals[reco.id] ?? reco.recommendedText,
-    compareTarget,
-    publishQueue: getBulletPublishQueue?.(reco.id) ?? [],
-    activeBatch: getFieldPublishBatch?.(`bullet:${reco.id}`),
-    onTextChange: (text) => handlers.onRecommendationTextChange(reco.id, text),
-    onAccept: () => handlers.onAccept(reco.id),
-    onReject: () => handlers.onReject(reco.id),
-    onReset: () => handlers.onReset(reco.id),
-    onUndoAccept: () => handlers.onUndoAccept(reco.id),
-    onUndoReject: () => handlers.onUndoReject(reco.id),
-    onPushUpdate: () => handlers.onPushUpdate(reco.id),
-    onAcceptNewDraft: handlers.onAcceptNewDraft
-      ? (text) => handlers.onAcceptNewDraft!(reco.id, text)
-      : undefined,
-  }
-}
 
 /**
  * PDP-only combined bullet list view.
@@ -301,6 +254,18 @@ export function BulletPointsSection({
     return Array.from(byKey.values())
   }, [hasPimData, activeRecommendations])
 
+  // Deduplicated alt keywords from all active bullet recommendations (by keyword id)
+  const mergedBulletAltKeywords = useMemo<AltKeyword[]>(() => {
+    const seen = new Set<string>()
+    const result: AltKeyword[] = []
+    for (const reco of activeRecommendations) {
+      for (const kw of reco.altKeywords ?? []) {
+        if (!seen.has(kw.id)) { seen.add(kw.id); result.push(kw) }
+      }
+    }
+    return result
+  }, [activeRecommendations])
+
   // No PIM to compare against — "vs. PIM" falls back to "vs. PDP"; "Text" is still allowed.
   const effectiveRecoCompareTarget: FieldCompareTarget =
     !hasPimData && recoCompareTarget === "pim" ? "pdp" : recoCompareTarget
@@ -331,23 +296,17 @@ export function BulletPointsSection({
     onAcceptNewDraft,
   }
 
-  // PIM+PDP: each bullet gets its own "Bullet N" label heading
-  const recommendationBlocks = activeRecommendations.map((reco) => (
-    <BulletRecommendationBlock
-      key={reco.id}
-      hideActions={hideActions}
-      {...buildRecommendationBlockProps(
-        reco,
-        pimBullets,
-        pdpBullets,
-        originals,
-        effectiveRecoCompareTarget,
-        getFieldPublishBatch,
-        getBulletPublishQueue,
-        handlers,
-      )}
-    />
-  ))
+  // PIM+PDP: build combined item array for the new single-box view
+  const combinedBulletItems = useMemo<CombinedBulletItem[]>(
+    () =>
+      activeRecommendations.map((reco) => {
+        const { pimBaseline, pdpBaseline } = getBulletBaselines(
+          reco, pimBullets, pdpBullets, getFieldPublishBatch,
+        )
+        return { reco, pimBaseline, pdpBaseline, originalText: originals[reco.id] ?? reco.recommendedText }
+      }),
+    [activeRecommendations, pimBullets, pdpBullets, originals, getFieldPublishBatch],
+  )
 
   // When no PIM data: all bullets rendered as one combined list in the left column
   const noPimBulletsCell =
@@ -381,16 +340,14 @@ export function BulletPointsSection({
               <Columns2 className="size-3.5 shrink-0 text-slate-400" aria-hidden />
               {matchPercent}% match between PIM and retailer
             </span>
-            <span className="text-xs text-slate-400">
-              {pimBullets.length} PIM · {pdpBullets.length} PDP
-            </span>
           </>
         )}
-        {hasPendingRecommendations && !hideActions && (
+        {/* CompareTabs only shown here for the no-PIM path; PIM path has tabs inside the combined box */}
+        {!hasPimData && hasPendingRecommendations && !hideActions && (
           <CompareTabs
             value={effectiveRecoCompareTarget}
             onChange={setRecoCompareTarget}
-            exclude={hasPimData ? [] : ["pim"]}
+            exclude={["pim"]}
           />
         )}
         <div className="ml-auto">
@@ -431,7 +388,7 @@ export function BulletPointsSection({
           />
         }
         recommendationBody={
-          hasPimData && recommendationBlocks.length > 0 ? (
+          hasPimData && combinedBulletItems.length > 0 ? (
             <div className="w-full min-w-0">
               <div className="border-b border-slate-200 pb-3">
                 <ContentRecommendationHeader
@@ -450,7 +407,20 @@ export function BulletPointsSection({
                   hideCompareTabs
                 />
               </div>
-              <div className="divide-y divide-slate-200">{recommendationBlocks}</div>
+              <div className="pt-3">
+                <BulletsCombinedRecommendationView
+                  items={combinedBulletItems}
+                  hasPimData={hasPimData}
+                  altKeywords={mergedBulletAltKeywords}
+                  hideActions={hideActions}
+                  onTextChange={onRecommendationTextChange}
+                  onAccept={onAccept}
+                  onReject={onReject}
+                  onReset={onReset}
+                  onUndoAccept={onUndoAccept}
+                  onUndoReject={onUndoReject}
+                />
+              </div>
               {!hideActions && (
                 <BulletBulkActions
                   recommendations={recommendations}

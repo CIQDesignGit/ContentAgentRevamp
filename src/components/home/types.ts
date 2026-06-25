@@ -105,6 +105,7 @@ export type BulletRecommendation = {
   status: BulletRecoStatus
   kind: "edit" | "add"
   reasoning: ReasoningCategory[]
+  altKeywords?: AltKeyword[]
   aeoPerformance?: AeoPerformance
   pimIndex?: number
   syncFootprint?: SyncFootprint

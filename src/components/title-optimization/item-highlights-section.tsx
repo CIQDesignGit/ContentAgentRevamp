@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Lightbulb } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Checkbox } from "@/components/ui/checkbox"
+import { SectionSelectToggle } from "@/components/home/section-controls"
 import { AiRecommendationSparklesIcon, BulletSourceCell, SourceCellLabel } from "@/components/home/bullet-source-cell"
 import { ReasoningAltKeywordsBlock } from "@/components/home/reasoning-alt-keywords-block"
 import { RETAILER_LOGO_SRC } from "@/components/home/source-logos"
@@ -83,12 +83,9 @@ export function ItemHighlightsSection({
       <header className="flex flex-wrap items-center gap-2 pl-1 py-2">
         <Lightbulb className="size-4 shrink-0 text-slate-400" aria-hidden />
         <span className="text-sm font-semibold text-slate-900">Item Highlights</span>
-        <Checkbox
-          checked={isIncluded}
-          onCheckedChange={onToggleInclude}
-          aria-label={isIncluded ? "Remove from publish" : "Include in publish"}
-          className="ml-auto size-5 shrink-0 rounded-[3px]"
-        />
+        <div className="ml-auto">
+          <SectionSelectToggle selected={isIncluded} onToggle={onToggleInclude} />
+        </div>
       </header>
 
       <div className="flex flex-col gap-3 w-full">

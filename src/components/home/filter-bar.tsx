@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Bookmark, BrainCircuit, Check, ChevronDown, FunnelPlus, History, Lock, Search, X } from "lucide-react"
+import { Bookmark, Check, ChevronDown, FunnelPlus, History, Lock, Map, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { COLUMNS, ColumnFilterPanel, type ColumnFilters } from "./column-filter-dialog"
@@ -429,7 +429,7 @@ export function FilterBar({
           onClick={() => router.push("/agent")}
           className="grid size-8 place-items-center rounded-md text-slate-500 hover:bg-slate-100"
         >
-          <BrainCircuit className="size-4" />
+          <Map className="size-4" />
         </button>
         <button
           type="button"

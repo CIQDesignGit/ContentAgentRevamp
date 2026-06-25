@@ -178,6 +178,12 @@ export const SKU_CONTENT: Record<string, SkuContentBundle> = {
             ],
           },
         ],
+        altKeywords: [
+          { id: "bkw-1", keyword: "black cherry candle", rank: 4, volume: "110K", replacesWord: "FRAGRANCE" },
+          { id: "bkw-2", keyword: "fruity scented candle", rank: 11, volume: "74K" },
+          { id: "bkw-3", keyword: "warm spice home fragrance", rank: 18, volume: "52K" },
+          { id: "bkw-4", keyword: "cherry blossom jar candle", rank: 23, volume: "38K" },
+        ],
       },
       {
         id: "br-2",

@@ -18,7 +18,7 @@ import { PIM_CHANNEL_LABEL, PIM_LOGO_ALT, RETAILER_LOGO_SRC, SALSIFY_LOGO_SRC } 
 import type { ProductImage } from "./types"
 import { SectionSelectToggle } from "./section-controls"
 
-const CARD_WIDTH_PX = 136
+const CARD_WIDTH_PX = 192
 const CARD_GAP_PX = 12
 
 function ProductImageCard({
@@ -33,7 +33,7 @@ function ProductImageCard({
   const hasContent = Boolean(image.url) || image.hue !== undefined
 
   return (
-    <div className="group flex h-44 w-[136px] shrink-0 flex-col rounded-xl border border-slate-200 bg-slate-50">
+    <div className="group flex h-60 w-[192px] shrink-0 flex-col rounded-xl border border-slate-200 bg-slate-50">
       <header className="flex items-center justify-between gap-2 px-2 py-1.5">
         <span className="truncate text-xs font-medium text-slate-900">{image.label}</span>
         {!readOnly && hasContent ? (
@@ -211,8 +211,8 @@ function ImageCompareColumn({
         {columnLabel ?? (
           <SourceCellLabel logoSrc={logoSrc!} logoAlt={logoAlt!} sublabel={sublabel!} />
         )}
-        <span className="inline-flex items-center gap-1 rounded-md border border-warning-200 bg-warning-50 px-2 py-0.5 text-xs font-medium text-warning-600">
-          {presentCount}/{images.length} Present
+        <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-500">
+          {images.length} Images
         </span>
       </div>
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">

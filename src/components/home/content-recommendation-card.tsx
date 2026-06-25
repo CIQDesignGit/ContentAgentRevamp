@@ -345,6 +345,8 @@ export function ContentRecommendationBody({
   const [usedKeywordIds, setUsedKeywordIds] = useState<Set<string>>(new Set())
   // Tracks the exact string each keyword appended so removal can precisely strip it
   const [appliedSuffixes, setAppliedSuffixes] = useState<Map<string, string>>(new Map())
+  // Transient highlight for newly inserted keyword text
+  const [insertHighlight, setInsertHighlight] = useState<{ key: number; text: string } | null>(null)
   const altKeywords = recommendation.altKeywords ?? []
 
   function handleUseKeyword(kw: { id: string; keyword: string; replacesWord?: string }) {
@@ -360,6 +362,7 @@ export function ContentRecommendationBody({
       setAppliedSuffixes((prev) => new Map(prev).set(kw.id, suffix))
     }
     setUsedKeywordIds((prev) => new Set(prev).add(kw.id))
+    setInsertHighlight({ key: Date.now(), text: kw.keyword })
   }
 
   function handleRemoveKeyword(kw: { id: string }) {
@@ -445,6 +448,8 @@ export function ContentRecommendationBody({
       compact={compact}
       charLimit={charLimit}
       exitEditKey={compareTarget}
+      highlightedText={insertHighlight?.text}
+      highlightKey={insertHighlight?.key}
     />
   )
 

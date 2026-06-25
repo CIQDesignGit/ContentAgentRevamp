@@ -18,8 +18,9 @@ function CardMetric({ label, value }: { label: string; value: number }) {
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger>
-          <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] text-slate-500">
+        {/* render={<span />} prevents a <button> inside the SkuCard <button> */}
+        <TooltipTrigger render={<span />}>
+          <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-xs text-slate-500">
             {label}
             <span className="font-semibold tabular-nums text-slate-700">{value}%</span>
           </span>
@@ -36,13 +37,14 @@ function OpsTag({ value }: { value: number }) {
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger>
-          <span className="inline-flex items-center gap-1 rounded-md border border-brand-200 bg-brand-25 px-1.5 py-0.5 text-[10px] text-slate-600">
-            OPS
-            <span className="font-bold tabular-nums text-slate-900">{formatted}</span>
+        {/* render={<span />} prevents a <button> inside the SkuCard <button> */}
+        <TooltipTrigger render={<span />}>
+          <span className="inline-flex items-center gap-1 rounded-md border border-brand-200 bg-brand-25 px-1.5 py-0.5 text-xs text-slate-600">
+            3M OPS
+            <span className="font-bold tabular-nums text-slate-900">${formatted}</span>
           </span>
         </TooltipTrigger>
-        <TooltipContent>Orders per session — a relative sales performance indicator</TooltipContent>
+        <TooltipContent>Orders per session over the last 3 months</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   )
@@ -168,7 +170,7 @@ export function SkuCard({ sku, isActive, isSelected, isSelectionMode, hideMetric
             </div>
             <div className="flex items-start gap-2.5">
               <SkuThumb sku={sku} />
-              <p className="line-clamp-2 flex-1 text-[13px] font-semibold leading-snug text-slate-700">
+              <p className="line-clamp-2 flex-1 text-sm font-semibold leading-snug text-slate-700">
                 {sku.title}
               </p>
             </div>
@@ -181,7 +183,6 @@ export function SkuCard({ sku, isActive, isSelected, isSelectionMode, hideMetric
               <CardMetric label="AEO" value={sku.metrics.aeo} />
               <span aria-hidden className="mx-0.5 h-3 w-px bg-slate-200" />
               <OpsTag value={sku.metrics.ops} />
-              {sku.hasPimData === false && <PdpOnlyTag isActive={false} />}
             </div>
           )}
         </>
@@ -205,14 +206,11 @@ export function SkuCard({ sku, isActive, isSelected, isSelectionMode, hideMetric
             )}
             {/* Right column: title + OPS tag, tightly stacked */}
             <div className="flex min-w-0 flex-1 flex-col justify-start gap-1.5">
-              <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-slate-700">
+              <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-700">
                 {sku.title}
               </p>
               <div className="flex flex-wrap items-center gap-1.5">
                 <OpsTag value={sku.metrics.ops} />
-                {sku.hasPimData === false && (
-                  <PdpOnlyTag isActive={isSelectionMode ? false : isActive} />
-                )}
               </div>
             </div>
           </div>
@@ -224,7 +222,7 @@ export function SkuCard({ sku, isActive, isSelected, isSelectionMode, hideMetric
             <MetaRow sku={sku} isActive={isActive} />
             <div className="flex gap-3">
               <SkuThumb sku={sku} />
-              <p className="line-clamp-2 flex-1 text-[13px] font-semibold leading-snug text-slate-700">
+              <p className="line-clamp-2 flex-1 text-sm font-semibold leading-snug text-slate-700">
                 {sku.title}
               </p>
             </div>
@@ -235,9 +233,6 @@ export function SkuCard({ sku, isActive, isSelected, isSelectionMode, hideMetric
             <CardMetric label="AEO" value={sku.metrics.aeo} />
             <span aria-hidden className="mx-0.5 h-3 w-px bg-slate-200" />
             <OpsTag value={sku.metrics.ops} />
-            {sku.hasPimData === false && (
-              <PdpOnlyTag isActive={isSelectionMode ? false : isActive} />
-            )}
           </div>
         </>
       )}

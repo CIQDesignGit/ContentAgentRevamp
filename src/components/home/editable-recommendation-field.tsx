@@ -75,6 +75,19 @@ interface EditableRecommendationFieldProps {
    * edit mode so the diff view becomes visible again.
    */
   exitEditKey?: string
+  /**
+   * Substring to transiently highlight after a keyword insertion.
+   * Change `highlightKey` each time you want to re-trigger the flash.
+   */
+  highlightedText?: string
+  highlightKey?: number
+}
+
+/** Splits `text` into [before, match, after] for the first case-insensitive occurrence of `highlight`. */
+function splitHighlight(text: string, highlight: string): [string, string, string] {
+  const idx = text.toLowerCase().indexOf(highlight.toLowerCase())
+  if (idx === -1) return [text, "", ""]
+  return [text.slice(0, idx), text.slice(idx, idx + highlight.length), text.slice(idx + highlight.length)]
 }
 
 export function EditableRecommendationField({
@@ -90,8 +103,12 @@ export function EditableRecommendationField({
   compact = false,
   charLimit,
   exitEditKey,
+  highlightedText,
+  highlightKey,
 }: EditableRecommendationFieldProps) {
   const [isEditing, setIsEditing] = useState(false)
+  // Two-phase highlight: `lit` = instantly amber (no transition), `fading` = transition class added before color clears
+  const [highlightPhase, setHighlightPhase] = useState<"off" | "lit" | "fading">("off")
   const canEdit = !readOnly
 
   useEffect(() => {
@@ -107,6 +124,23 @@ export function EditableRecommendationField({
     setIsEditing(false)
   }, [exitEditKey])
 
+  // Trigger a flash highlight when a keyword is inserted.
+  // Phase 1 — "lit": instantly amber, no transition class (pop in).
+  // Phase 2 — "fading": add transition class first, then clear color so only the exit animates (ease out).
+  useEffect(() => {
+    if (!highlightedText || highlightKey === undefined) return
+    setHighlightPhase("lit")
+    const startFade = setTimeout(() => {
+      setHighlightPhase("fading")          // render with transition class while still amber
+      setTimeout(() => setHighlightPhase("off"), 50) // next paint: clear color → transition fires
+    }, 1400)
+    return () => clearTimeout(startFade)
+  }, [highlightKey]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Render plain text, splitting off the highlighted substring when present
+  const [before, mid, after] =
+    highlightedText && !isEditing ? splitHighlight(value, highlightedText) : [value, "", ""]
+
   const plainText = (
     <p
       className={cn(
@@ -114,7 +148,20 @@ export function EditableRecommendationField({
         tone === "muted" ? "text-slate-500" : "text-slate-900",
       )}
     >
-      {value}
+      {before}
+      {mid && (
+        <span
+          className={cn(
+            "rounded px-0.5",
+            // Transition class added only during "fading" phase so ease-out fires but pop-in doesn't
+            highlightPhase === "fading" && "transition-colors duration-700 ease-out",
+            highlightPhase !== "off" ? "bg-amber-100 text-amber-900" : "bg-transparent",
+          )}
+        >
+          {mid}
+        </span>
+      )}
+      {after}
     </p>
   )
 
