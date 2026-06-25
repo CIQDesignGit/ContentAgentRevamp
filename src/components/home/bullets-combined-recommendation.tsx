@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Check, Circle, RotateCcw, ToggleLeft, ToggleRight, Undo2, X } from "lucide-react"
+import { Check, Circle, GripVertical, RotateCcw, ToggleLeft, ToggleRight, Trash2, Undo2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { buildTitleDiff } from "@/lib/build-title-diff"
 import { CompareTabs } from "./content-recommendation-card"
@@ -133,6 +133,10 @@ export function BulletsCombinedRecommendationView({
   const [appliedSuffixes, setAppliedSuffixes] = useState<Map<string, string>>(new Map())
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  // ─── Drag & drop state ──────────────────────────────────────────────────────
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
+
   // Sync existing entries when parent updates text (after onTextChange)
   useEffect(() => {
     setFlatList((prev) =>
@@ -244,6 +248,47 @@ export function BulletsCombinedRecommendationView({
     insertLocalAt(flatIdx, after)
   }
 
+  // ─── Drag & drop handlers ───────────────────────────────────────────────────
+
+  function handleDragStart(id: string) {
+    setDraggingId(id)
+  }
+
+  function handleDragOver(e: React.DragEvent, id: string) {
+    e.preventDefault()
+    if (id !== draggingId) setDragOverId(id)
+  }
+
+  function handleDrop(targetId: string) {
+    if (!draggingId || draggingId === targetId) return
+    setFlatList((prev) => {
+      const fromIdx = prev.findIndex((e) => e.id === draggingId)
+      const toIdx = prev.findIndex((e) => e.id === targetId)
+      if (fromIdx === -1 || toIdx === -1) return prev
+      const next = [...prev]
+      const [moved] = next.splice(fromIdx, 1)
+      next.splice(toIdx, 0, moved)
+      return next
+    })
+    setDraggingId(null)
+    setDragOverId(null)
+  }
+
+  function handleDragEnd() {
+    setDraggingId(null)
+    setDragOverId(null)
+  }
+
+  function handleDelete(entry: FlatEntry) {
+    if (entry.kind === "local") {
+      setFlatList((prev) => prev.filter((e) => e.id !== entry.id))
+    } else {
+      // Reject the recommendation in the parent and remove from visible list
+      onReject(entry.id)
+      setFlatList((prev) => prev.filter((e) => e.id !== entry.id))
+    }
+  }
+
   // ─── Keyword helpers ────────────────────────────────────────────────────────
 
   function targetId() {
@@ -306,11 +351,33 @@ export function BulletsCombinedRecommendationView({
 
               if (entry.kind === "local") {
                 const displayText = isEditing ? editingText : entry.text
+                const isDragTarget = dragOverId === entry.id && draggingId !== entry.id
                 return (
-                  <li key={entry.id} className="flex items-start gap-2">
+                  <li
+                    key={entry.id}
+                    className={cn(
+                      "group/item flex items-start gap-2 transition-opacity",
+                      draggingId === entry.id && "opacity-40",
+                      isDragTarget && "border-t-2 border-brand-400 pt-1",
+                    )}
+                    draggable={!isEditing}
+                    onDragStart={() => handleDragStart(entry.id)}
+                    onDragOver={(e) => handleDragOver(e, entry.id)}
+                    onDrop={() => handleDrop(entry.id)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    {/* Drag handle — visible on hover */}
+                    <span
+                      className="mt-0.5 shrink-0 cursor-grab opacity-0 transition-opacity group-hover/item:opacity-100 active:cursor-grabbing"
+                      aria-hidden
+                    >
+                      <GripVertical className="size-3.5 text-slate-400" />
+                    </span>
+
                     <span className="mt-0.5 grid size-5 shrink-0 select-none place-items-center rounded-md bg-brand-50 text-[11px] font-semibold text-primary">
                       {flatIdx + 1}
                     </span>
+
                     {isEditing ? (
                       <textarea
                         ref={textareaRef}
@@ -328,6 +395,18 @@ export function BulletsCombinedRecommendationView({
                         {displayText || <span className="italic text-slate-400">Empty bullet</span>}
                       </button>
                     )}
+
+                    {/* Delete button — visible on hover */}
+                    {!isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(entry)}
+                        aria-label="Delete bullet"
+                        className="mt-0.5 grid size-6 shrink-0 place-items-center rounded text-slate-400 opacity-0 transition-opacity group-hover/item:opacity-100 hover:bg-error-50 hover:text-error-600"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    )}
                   </li>
                 )
               }
@@ -339,9 +418,32 @@ export function BulletsCombinedRecommendationView({
               const diff = buildTitleDiff(baseline, reco.recommendedText)
               const isModified = reco.recommendedText !== originalText
               const isEditable = reco.status !== "rejected"
+              const isDragTarget = dragOverId === entry.id && draggingId !== entry.id
 
               return (
-                <li key={entry.id} className="flex items-start gap-2">
+                <li
+                  key={entry.id}
+                  className={cn(
+                    "group/item flex items-start gap-2 transition-opacity",
+                    draggingId === entry.id && "opacity-40",
+                    isDragTarget && "border-t-2 border-brand-400 pt-1",
+                  )}
+                  draggable={!isEditing}
+                  onDragStart={() => handleDragStart(entry.id)}
+                  onDragOver={(e) => handleDragOver(e, entry.id)}
+                  onDrop={() => handleDrop(entry.id)}
+                  onDragEnd={handleDragEnd}
+                >
+                  {/* Drag handle — visible on hover */}
+                  {!isEditing && (
+                    <span
+                      className="mt-0.5 shrink-0 cursor-grab opacity-0 transition-opacity group-hover/item:opacity-100 active:cursor-grabbing"
+                      aria-hidden
+                    >
+                      <GripVertical className="size-3.5 text-slate-400" />
+                    </span>
+                  )}
+
                   <span className={cn(
                     "mt-0.5 grid size-5 shrink-0 select-none place-items-center rounded-md text-[11px] font-semibold",
                     reco.status === "rejected" ? "bg-slate-100 text-slate-300"
@@ -378,40 +480,60 @@ export function BulletsCombinedRecommendationView({
                     <p className="flex-1 text-sm leading-relaxed text-slate-400 line-through">{reco.recommendedText}</p>
                   )}
 
-                  {!hideActions && !isEditing && (
+                  {/* Right-side actions */}
+                  {!isEditing && (
                     <div className="flex shrink-0 items-center gap-1">
-                      {reco.status === "pending" && (
+                      {!hideActions && (
                         <>
-                          {isModified && (
-                            <button type="button" onClick={() => onReset(reco.id)} aria-label="Reset"
-                              className="grid size-6 place-items-center rounded text-slate-400 hover:bg-slate-100">
-                              <RotateCcw className="size-3" />
+                          {reco.status === "pending" && (
+                            <>
+                              {isModified && (
+                                <button type="button" onClick={() => onReset(reco.id)} aria-label="Reset"
+                                  className="grid size-6 place-items-center rounded text-slate-400 hover:bg-slate-100">
+                                  <RotateCcw className="size-3" />
+                                </button>
+                              )}
+                              <button type="button" onClick={() => onReject(reco.id)} aria-label={`Reject ${reco.label}`}
+                                className="grid size-7 place-items-center rounded-md border border-error-100 bg-error-50 text-error-600 hover:bg-error-100">
+                                <X className="size-3.5" />
+                              </button>
+                              <button type="button" onClick={() => onAccept(reco.id)} aria-label={`Accept ${reco.label}`}
+                                className="grid size-7 place-items-center rounded-md border border-success-100 bg-success-50 text-success-600 hover:bg-success-100">
+                                <Check className="size-3.5" />
+                              </button>
+                            </>
+                          )}
+                          {reco.status !== "pending" && (
+                            <button type="button"
+                              onClick={() => reco.status === "accepted" ? onUndoAccept(reco.id) : onUndoReject(reco.id)}
+                              aria-label={reco.status === "accepted" ? "Undo accept" : "Undo reject"}
+                              className="grid size-7 place-items-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+                              <Undo2 className="size-3.5" />
                             </button>
                           )}
-                          <button type="button" onClick={() => onReject(reco.id)} aria-label={`Reject ${reco.label}`}
-                            className="grid size-7 place-items-center rounded-md border border-error-100 bg-error-50 text-error-600 hover:bg-error-100">
-                            <X className="size-3.5" />
-                          </button>
-                          <button type="button" onClick={() => onAccept(reco.id)} aria-label={`Accept ${reco.label}`}
-                            className="grid size-7 place-items-center rounded-md border border-success-100 bg-success-50 text-success-600 hover:bg-success-100">
-                            <Check className="size-3.5" />
-                          </button>
                         </>
                       )}
-                      {reco.status !== "pending" && (
-                        <button type="button"
-                          onClick={() => reco.status === "accepted" ? onUndoAccept(reco.id) : onUndoReject(reco.id)}
-                          aria-label={reco.status === "accepted" ? "Undo accept" : "Undo reject"}
-                          className="grid size-7 place-items-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
-                          <Undo2 className="size-3.5" />
-                        </button>
-                      )}
+
+                      {/* Delete — always visible on hover */}
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(entry)}
+                        aria-label={`Delete ${reco.label}`}
+                        className="grid size-7 place-items-center rounded text-slate-400 opacity-0 transition-opacity group-hover/item:opacity-100 hover:bg-error-50 hover:text-error-600"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
                     </div>
                   )}
                 </li>
               )
             })}
           </ul>
+
+          {/* Hint shown at the bottom of the bullet box */}
+          <p className="mt-2 px-6 py-2 text-[11px] text-slate-400">
+            Press <kbd className="rounded border border-slate-200 bg-slate-50 px-1 py-0.5 font-mono text-[10px] text-slate-500">Enter</kbd> on any bullet to add a new point
+          </p>
         </div>
       </div>
 
