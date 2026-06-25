@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Bookmark, Check, ChevronDown, FunnelPlus, History, Lock, Map, Search, X } from "lucide-react"
+import { Check, ChevronDown, FunnelPlus, History, Lock, Map, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { COLUMNS, ColumnFilterPanel, type ColumnFilters } from "./column-filter-dialog"
@@ -341,31 +341,6 @@ export function FilterBar({
 
         <BrandMultiSelect selected={selectedBrands} onChange={onBrandsChange} />
 
-        {/* Bookmark quick-filter — only visible when at least one SKU is bookmarked */}
-        {bookmarkedCount > 0 && (
-          <button
-            type="button"
-            onClick={() => onBookmarkedOnlyChange?.(!bookmarkedOnly)}
-            className={cn(
-              "flex items-center gap-1.5 rounded-lg border py-1 pl-2 pr-2.5 text-xs whitespace-nowrap transition-colors outline-none",
-              bookmarkedOnly
-                ? "border-info-300 bg-info-50 text-info-700 hover:bg-info-100"
-                : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50",
-            )}
-          >
-            <Bookmark
-              className="size-3"
-              fill={bookmarkedOnly ? "currentColor" : "none"}
-            />
-            Bookmarked
-            <span className={cn(
-              "rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
-              bookmarkedOnly ? "bg-info-100 text-info-700" : "bg-slate-100 text-slate-500",
-            )}>
-              {bookmarkedCount}
-            </span>
-          </button>
-        )}
 
         {/* Applied column filter chips — one per column, grouped */}
         {COLUMNS
