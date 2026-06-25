@@ -8,22 +8,26 @@ import type { ContentState, Sku } from "./types"
 
 // ─── Cell helpers ─────────────────────────────────────────────────────────────
 
-function OldCell({ text }: { text: string }) {
-  return <p className="line-through text-sm leading-relaxed text-slate-400">{text || "—"}</p>
+function OldCell({ text, editing }: { text: string; editing?: boolean }) {
+  return (
+    <p className={`text-sm leading-relaxed text-slate-500 ${editing ? "" : "line-through"}`}>
+      {text || "—"}
+    </p>
+  )
 }
 
 function NewCell({ text }: { text: string }) {
   return <p className="text-sm leading-relaxed font-medium text-slate-800">{text || "—"}</p>
 }
 
-function BulletList({ items, strikethrough }: { items: string[]; strikethrough?: boolean }) {
+function BulletList({ items, editing }: { items: string[]; editing?: boolean }) {
   if (items.length === 0) return <span className="text-sm text-slate-400">—</span>
   return (
     <ul className="space-y-1.5">
       {items.map((b, i) => (
         <li
           key={i}
-          className={`flex gap-1 text-sm leading-snug ${strikethrough ? "line-through text-slate-400" : "text-slate-700"}`}
+          className={`flex gap-1 text-sm leading-snug text-slate-500 ${editing ? "" : "line-through"}`}
         >
           <span className="shrink-0">•</span>
           <span>{b}</span>
@@ -254,7 +258,7 @@ export function BulkReviewTable({
                 className={`${cellCls(`${sku.id}-title`, "border-r border-slate-200")} w-64 min-w-64`}
                 onClick={() => setActiveCell(`${sku.id}-title`)}
               >
-                <OldCell text={content.title} />
+                <OldCell text={content.title} editing={activeCell === `${sku.id}-title`} />
                 <div className="mt-2 border-t border-slate-100 pt-2">
                   <EditableCell
                     editing={activeCell === `${sku.id}-title`}
@@ -281,7 +285,7 @@ export function BulkReviewTable({
 
               {/* Bullets — current (read-only) */}
               <td className="px-3 py-3 border-r border-slate-100 w-[500px] min-w-[500px]">
-                <BulletList items={content.bullets} strikethrough />
+                <BulletList items={content.bullets} editing={activeCell === `${sku.id}-bullets`} />
               </td>
 
               {/* Bullets — recommended (editable) */}
@@ -299,7 +303,7 @@ export function BulkReviewTable({
 
               {/* Description — current (read-only) */}
               <td className="px-3 py-3 border-r border-slate-100 w-[500px] min-w-[500px]">
-                <OldCell text={content.description} />
+                <OldCell text={content.description} editing={activeCell === `${sku.id}-description`} />
               </td>
 
               {/* Description — recommended (editable) */}
