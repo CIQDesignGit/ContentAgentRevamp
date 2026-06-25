@@ -84,7 +84,7 @@ export function ItemHighlightsSection({
         <Lightbulb className="size-4 shrink-0 text-slate-400" aria-hidden />
         <span className="text-sm font-semibold text-slate-900">Item Highlights</span>
         <div className="ml-auto">
-          <SectionSelectToggle selected={isIncluded} onToggle={onToggleInclude} />
+          <SectionSelectToggle selected={isIncluded} onToggle={onToggleInclude ?? (() => {})} />
         </div>
       </header>
 
