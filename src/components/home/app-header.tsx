@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, Bell, Home, HelpCircle, Mail, Rocket, Share2 } from "lucide-react"
+import { ArrowLeft, Bell, ChevronRight, Home, HelpCircle, LayoutDashboard, Mail, Rocket, Share2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
 
@@ -51,23 +51,31 @@ function IconHeaderButton({
   )
 }
 
+interface BreadcrumbItem {
+  label: string
+  /** When provided, the item is a clickable link. Omit for the current (last) page. */
+  href?: string
+}
+
 interface AppHeaderProps {
-  /** Page title shown next to the Home icon. Defaults to "Content Agent". */
+  /** Simple page title. Ignored when `breadcrumb` is provided. */
   title?: string
   /** When provided, the left button becomes a back-link navigating to this path. */
   backHref?: string
+  /** Renders a breadcrumb trail instead of a plain title. Last item = current page (no link). */
+  breadcrumb?: BreadcrumbItem[]
 }
 
-export function AppHeader({ title = "Content Agent", backHref }: AppHeaderProps) {
+export function AppHeader({ title = "Content Agent", backHref, breadcrumb }: AppHeaderProps) {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4">
       <div className="flex items-center gap-3">
-        {/* Left button — back link when backHref is provided, decorative brand mark otherwise */}
+        {/* Left button — back link or brand mark */}
         {backHref ? (
           <Link
             href={backHref}
             aria-label="Go back"
-            className="grid size-8 place-items-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+            className="grid size-8 place-items-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
           >
             <ArrowLeft className="size-5" />
           </Link>
@@ -76,10 +84,38 @@ export function AppHeader({ title = "Content Agent", backHref }: AppHeaderProps)
             <Home className="size-4" />
           </div>
         )}
-        <span className="text-sm font-medium text-slate-900">{title}</span>
+
+        {/* Breadcrumb trail or plain title */}
+        {breadcrumb ? (
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1">
+            {breadcrumb.map((item, i) => {
+              const isLast = i === breadcrumb.length - 1
+              return (
+                <span key={item.label} className="flex items-center gap-1">
+                  {i > 0 && <ChevronRight className="size-3.5 text-slate-300" />}
+                  {item.href && !isLast ? (
+                    <Link
+                      href={item.href}
+                      className="text-sm text-slate-400 transition-colors hover:text-slate-600"
+                    >
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <span className="text-sm font-medium text-slate-900">{item.label}</span>
+                  )}
+                </span>
+              )
+            })}
+          </nav>
+        ) : (
+          <span className="text-sm font-medium text-slate-900">{title}</span>
+        )}
       </div>
 
       <div className="flex items-center gap-2">
+        <IconHeaderButton label="Brand Performance" href="/brand-performance">
+          <LayoutDashboard className="size-4" />
+        </IconHeaderButton>
         <IconHeaderButton
           label={backHref ? "Content Agent" : "Title Optimization"}
           href={backHref ? "/" : "/title-optimization"}
