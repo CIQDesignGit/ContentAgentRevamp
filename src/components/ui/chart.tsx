@@ -84,8 +84,8 @@ const ChartTooltip = RechartsPrimitive.Tooltip
 
 // ─── ChartTooltipContent ───────────────────────────────────────────────────
 
-// Recharts' Tooltip is generic so React.ComponentProps loses `payload` —
-// explicitly re-declare it here with the shape the component body accesses.
+// Recharts' Tooltip is generic — React.ComponentProps loses several props due
+// to type erasure. Declare every prop the component body accesses explicitly.
 type TooltipPayloadItem = {
   value?: number | string | Array<number | string>
   name?: number | string
@@ -105,7 +105,22 @@ const ChartTooltipContent = React.forwardRef<
       indicator?: "line" | "dot" | "dashed"
       nameKey?: string
       labelKey?: string
+      labelClassName?: string
+      color?: string
+      // Props lost from Recharts generic Tooltip via ComponentProps
       payload?: TooltipPayloadItem[]
+      label?: string | number
+      labelFormatter?: (
+        label: string | number | undefined,
+        payload: TooltipPayloadItem[],
+      ) => React.ReactNode
+      formatter?: (
+        value: number | string | Array<number | string> | undefined,
+        name: number | string | undefined,
+        item: TooltipPayloadItem,
+        index: number,
+        payload: TooltipPayloadItem[],
+      ) => React.ReactNode
     }
 >(
   (
