@@ -84,6 +84,18 @@ const ChartTooltip = RechartsPrimitive.Tooltip
 
 // ─── ChartTooltipContent ───────────────────────────────────────────────────
 
+// Recharts' Tooltip is generic so React.ComponentProps loses `payload` —
+// explicitly re-declare it here with the shape the component body accesses.
+type TooltipPayloadItem = {
+  value?: number | string | Array<number | string>
+  name?: number | string
+  dataKey?: number | string
+  color?: string
+  fill?: string
+  stroke?: string
+  payload?: Record<string, unknown>
+}
+
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
@@ -93,6 +105,7 @@ const ChartTooltipContent = React.forwardRef<
       indicator?: "line" | "dot" | "dashed"
       nameKey?: string
       labelKey?: string
+      payload?: TooltipPayloadItem[]
     }
 >(
   (

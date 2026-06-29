@@ -27,9 +27,11 @@ export function BrandPerformanceView() {
 
           {/* AI Insight — gradient border card below the metrics */}
           <div className="mt-5 rounded-xl bg-linear-to-r from-brand-500 via-cyan-400 to-pink-500 p-px">
-            <div className="flex flex-col gap-2 rounded-[11px] bg-white px-4 py-3.5">
-              <h2 className="font-semibold text-slate-900">AI Insight</h2>
-              <p className="max-w-2xl text-[14px] leading-relaxed text-slate-600">{heroData.summary}</p>
+            <div className="rounded-[11px] bg-white">
+              <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+                <h2 className="font-semibold text-slate-900">AI Insight</h2>
+              </div>
+              <p className="max-w-2xl px-6 py-4 text-[14px] leading-relaxed text-slate-600">{heroData.summary}</p>
             </div>
           </div>
 

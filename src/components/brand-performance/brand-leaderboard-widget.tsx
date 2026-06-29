@@ -51,7 +51,7 @@ function DonutChart() {
   const [tip, setTip] = useState<TipState | null>(null)
 
   return (
-    <div className="relative size-56 shrink-0">
+    <div className="relative size-56 shrink-0" onMouseLeave={() => setTip(null)}>
       <ChartContainer config={{}} className="size-56">
         <PieChart>
           <Pie
