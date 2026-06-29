@@ -13,7 +13,7 @@ export function AeoOverview() {
     <div className="flex divide-x divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
 
       {/* ── Score panel ── */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-8">
+      <div className="flex flex-1 flex-col items-center justify-start gap-3 px-6 py-8">
         <p className="text-[14px] font-semibold text-slate-600">AI Visibility Score</p>
         <p className="text-6xl font-light leading-none text-slate-900">
           {visibilityScore}
@@ -23,7 +23,7 @@ export function AeoOverview() {
       </div>
 
       {/* ── Rank panel ── */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-8">
+      <div className="flex flex-1 flex-col items-center justify-start gap-3 px-6 py-8">
         <p className="text-[14px] font-semibold text-slate-600">Category Rank</p>
         <p className="text-6xl font-light leading-none text-slate-900">#{categoryRank}</p>
         <div className="flex flex-col items-center gap-1.5">

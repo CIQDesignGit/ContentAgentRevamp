@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Trophy } from "lucide-react"
 import { Pie, PieChart } from "recharts"
 
 import { ChartContainer } from "@/components/ui/chart"
@@ -40,7 +41,6 @@ const chartSlices = [
     : []),
 ]
 
-const MAX_SCORE = sorted[0].score
 
 // ─── Tooltip state type ────────────────────────────────────────────────────
 interface TipState { brand: string; score: number; x: number; y: number }
@@ -51,8 +51,8 @@ function DonutChart() {
   const [tip, setTip] = useState<TipState | null>(null)
 
   return (
-    <div className="relative size-44 shrink-0">
-      <ChartContainer config={{}} className="size-44">
+    <div className="relative size-56 shrink-0">
+      <ChartContainer config={{}} className="size-56">
         <PieChart>
           <Pie
             data={chartSlices}
@@ -69,8 +69,12 @@ function DonutChart() {
               const slice = d as { brand: string; score: number }
               setTip({ brand: slice.brand, score: slice.score, x: e.clientX + 14, y: e.clientY - 52 })
             }}
-            onMouseMove={(_d: unknown, _i: number, e: React.MouseEvent) => {
-              setTip((prev) => (prev ? { ...prev, x: e.clientX + 14, y: e.clientY - 52 } : null))
+            onMouseMove={(d: unknown, _i: number, e: React.MouseEvent) => {
+              // Update both content and position so switching slices refreshes the tooltip
+              const slice = d as { brand?: string; score?: number }
+              if (slice.brand != null) {
+                setTip({ brand: slice.brand, score: slice.score ?? 0, x: e.clientX + 14, y: e.clientY - 52 })
+              }
             }}
             onMouseLeave={() => setTip(null)}
           />
@@ -80,7 +84,7 @@ function DonutChart() {
       {/* Center label */}
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-2xl font-bold text-slate-900">{youScore}%</span>
-        <span className="text-[10px] text-slate-400">your share</span>
+        <span className="text-center text-[10px] leading-tight text-slate-400">your AI<br />visibility</span>
       </div>
 
       {/* Custom tooltip — fixed position, always top-right of cursor */}
@@ -112,10 +116,13 @@ function BrandRow({
       "flex items-center gap-2.5 rounded-lg px-2.5 py-2 hover:bg-slate-50",
       isYou && "bg-brand-50",
     )}>
-      <span className={cn(
-        "w-4 shrink-0 text-center text-xs tabular-nums",
-        isLeader ? "font-bold text-warning-500" : isYou ? "font-bold text-brand-500" : "text-slate-500",
-      )}>{rank}</span>
+      {isLeader
+        ? <Trophy className="size-3.5 shrink-0 text-warning-500" />
+        : <span className={cn(
+            "w-4 shrink-0 text-center text-xs tabular-nums",
+            isYou ? "font-bold text-brand-500" : "text-slate-500",
+          )}>{rank}</span>
+      }
       <span className={cn("size-2 shrink-0 rounded-full", dot.bg)} />
       <span className={cn(
         "min-w-0 flex-1 truncate text-[13px]",
@@ -124,18 +131,10 @@ function BrandRow({
       {isYou && (
         <span className="shrink-0 rounded-full bg-brand-500 px-1.5 py-0.5 text-[9px] font-bold text-white">YOU</span>
       )}
-      <div className="flex shrink-0 items-center gap-1.5">
-        <div className="h-1 w-12 overflow-hidden rounded-full bg-slate-100">
-          <div
-            className={cn("h-full rounded-full", isYou ? "bg-brand-500" : "bg-slate-300")}
-            style={{ width: `${(score / MAX_SCORE) * 100}%` }}
-          />
-        </div>
-        <span className={cn(
-          "w-7 text-right text-[11px] font-semibold tabular-nums",
-          isYou ? "text-brand-600" : isTopTier ? "text-slate-600" : "text-slate-500",
-        )}>{score}%</span>
-      </div>
+      <span className={cn(
+        "shrink-0 text-[11px] font-semibold tabular-nums",
+        isYou ? "text-brand-600" : isTopTier ? "text-slate-600" : "text-slate-500",
+      )}>{score}%</span>
     </div>
   )
 }
@@ -149,7 +148,7 @@ export function BrandLeaderboardWidget() {
       </div>
       <div className="flex items-center gap-6 p-6">
         <DonutChart />
-        <div className="h-44 w-px shrink-0 bg-slate-100" />
+        <div className="h-56 w-px shrink-0 bg-slate-100" />
         <div className="grid flex-1 grid-flow-col grid-rows-5 gap-x-3 gap-y-0.5">
           {leaderboardData.map((row) => (
             <BrandRow key={row.rank} rank={row.rank} brand={row.brand} score={row.score} isYou={row.isYou} />

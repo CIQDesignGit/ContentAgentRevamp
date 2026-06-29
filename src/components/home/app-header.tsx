@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, Bell, ChevronRight, Home, HelpCircle, LayoutDashboard, Mail, Rocket, Share2 } from "lucide-react"
+import { ArrowLeft, BarChart3, Bell, ChevronRight, Home, HelpCircle, Mail, Rocket, Share2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
 
@@ -114,7 +114,7 @@ export function AppHeader({ title = "Content Agent", backHref, breadcrumb }: App
 
       <div className="flex items-center gap-2">
         <IconHeaderButton label="Brand Performance" href="/brand-performance">
-          <LayoutDashboard className="size-4" />
+          <BarChart3 className="size-4" />
         </IconHeaderButton>
         <IconHeaderButton
           label={backHref ? "Content Agent" : "Title Optimization"}

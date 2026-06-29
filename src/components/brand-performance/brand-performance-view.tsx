@@ -1,7 +1,5 @@
 "use client"
 
-import { Sparkles } from "lucide-react"
-
 import { AppHeader } from "@/components/home/app-header"
 import { PageShell } from "@/components/layout/page-shell"
 
@@ -29,13 +27,8 @@ export function BrandPerformanceView() {
 
           {/* AI Insight — gradient border card below the metrics */}
           <div className="mt-5 rounded-xl bg-linear-to-r from-brand-500 via-cyan-400 to-pink-500 p-px">
-            <div className="flex flex-col gap-2 rounded-[11px] bg-brand-25 px-4 py-3.5">
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="size-4 shrink-0 text-brand-500" />
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-brand-500">
-                  AI Insight
-                </p>
-              </div>
+            <div className="flex flex-col gap-2 rounded-[11px] bg-white px-4 py-3.5">
+              <h2 className="font-semibold text-slate-900">AI Insight</h2>
               <p className="max-w-2xl text-[14px] leading-relaxed text-slate-600">{heroData.summary}</p>
             </div>
           </div>
