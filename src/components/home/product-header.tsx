@@ -1,8 +1,9 @@
 "use client"
 
-import { Bookmark, BookmarkPlus, Package, Search, ShieldCheck, Sparkles } from "lucide-react"
+import { Bookmark, BookmarkPlus, Package, Search, ShieldCheck, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MetricChip } from "./metric-chip"
+import { OpsTag } from "./sku-card"
 import type { ActionStatus } from "./types"
 
 export type PublishBarState = "disabled" | "ready" | "publishing" | "syncing" | "complete"
@@ -23,6 +24,7 @@ interface ProductHeaderProps {
   selectedCount?: number
   /** Total number of selectable sections. */
   totalSections?: number
+  ops?: number
   hideMetrics?: boolean
   actionStatus?: ActionStatus
   isBookmarked?: boolean
@@ -45,6 +47,7 @@ export function ProductHeader({
   onPublishClick,
   selectedCount,
   totalSections,
+  ops,
   hideMetrics = false,
   actionStatus,
   isBookmarked = false,
@@ -98,10 +101,11 @@ export function ProductHeader({
             </span>
             <h1 className="truncate text-base font-semibold text-slate-900">{title}</h1>
             {!hideMetrics && (
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
                 <MetricChip label="Compliance" value={compliance} icon={<ShieldCheck className="size-3" />} />
                 <MetricChip label="SEO" value={seo} icon={<Search className="size-3" />} />
-                <MetricChip label="AEO" value={aeo} icon={<Sparkles className="size-3" />} />
+                <MetricChip label="AEO" value={aeo} icon={<Zap className="size-3" />} />
+                {ops !== undefined && <OpsTag value={ops} />}
               </div>
             )}
           </div>

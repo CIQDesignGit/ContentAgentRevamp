@@ -177,7 +177,7 @@ export function SkuSidebar({
       {skus.length === 0 && leavingIds.size === 0 ? (
         <p className="px-4 pb-4 text-xs text-slate-500">No SKUs match the current filter.</p>
       ) : (
-        <ul className="scrollbar-none flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-4">
+        <ul className="scrollbar-none flex min-h-0 flex-1 flex-col overflow-y-auto bg-white px-3 pb-4">
           {rendered.map((sku) => {
             const isLeaving = leavingIds.has(sku.id)
             return (

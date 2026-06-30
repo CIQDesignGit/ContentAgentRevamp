@@ -917,6 +917,7 @@ export default function Home() {
             compliance={selectedSku.metrics.compliance}
             seo={selectedSku.metrics.seo}
             aeo={selectedSku.metrics.aeo}
+            ops={selectedSku.metrics.ops}
             publishState={publishBarState}
             publishableCount={effectivePublishSummary.publishable.length}
             selectedCount={includedCount}
@@ -949,19 +950,19 @@ export default function Home() {
 
           <div className="flex min-h-0 flex-1">
             <section className="flex min-w-0 flex-1 flex-col">
-              <div className="flex-1 space-y-4 overflow-y-auto px-5 pb-5">
+              <div className="flex-1 space-y-4 overflow-y-auto bg-slate-100 px-5 pb-5">
                 {/* Toolbar: sync info (left) + bulk select (right) */}
                 <div className="flex items-center justify-between pt-3 pb-1">
                   {/* PIM sync + AI sync chips — icons match SourceLogoBadge styling */}
                   <div className="flex items-center gap-3">
                     {selectedSku.pimSyncedOn && (
-                      <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                      <span className="flex items-center gap-1.5 text-xs text-slate-500">
                         <SourceLogoBadge src={SALSIFY_LOGO_SRC} alt="PIM" />
                         Synced on {selectedSku.pimSyncedOn}
                       </span>
                     )}
                     {selectedSku.aiSyncedOn && (
-                      <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                      <span className="flex items-center gap-1.5 text-xs text-slate-500">
                         <SourceLogoBadge src={RETAILER_LOGO_SRC} alt="Amazon" />
                         Synced on {selectedSku.aiSyncedOn}
                       </span>

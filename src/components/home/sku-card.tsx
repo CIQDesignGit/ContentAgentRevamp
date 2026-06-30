@@ -1,6 +1,6 @@
 "use client"
 
-import { Bookmark, Check, Minus, Square } from "lucide-react"
+import { Bookmark, Check, DollarSign, Minus, Search, ShieldCheck, Square, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ActionStatusBadge } from "./action-status-badge"
@@ -14,13 +14,21 @@ const METRIC_TIPS: Record<string, string> = {
   AEO: "Answer engine optimisation",
 }
 
+const METRIC_ICONS = {
+  Compliance: ShieldCheck,
+  SEO: Search,
+  AEO: Zap,
+} as const
+
 function CardMetric({ label, value }: { label: string; value: number }) {
+  const Icon = METRIC_ICONS[label as keyof typeof METRIC_ICONS]
   return (
     <TooltipProvider>
       <Tooltip>
         {/* render={<span />} prevents a <button> inside the SkuCard <button> */}
         <TooltipTrigger render={<span />}>
-          <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-xs text-slate-500">
+          <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+            {Icon && <Icon className="size-3 shrink-0 text-slate-400" />}
             {label}
             <span className="font-semibold tabular-nums text-slate-700">{value}%</span>
           </span>
@@ -31,17 +39,17 @@ function CardMetric({ label, value }: { label: string; value: number }) {
   )
 }
 
-/** OPS (sales) tag — subtly stepped-up vs quality chips: filled bg + stronger border + bold value */
-function OpsTag({ value }: { value: number }) {
+export function OpsTag({ value }: { value: number }) {
   const formatted = value >= 1000 ? `${(value / 1000).toFixed(1)}k` : String(value)
   return (
     <TooltipProvider>
       <Tooltip>
         {/* render={<span />} prevents a <button> inside the SkuCard <button> */}
         <TooltipTrigger render={<span />}>
-          <span className="inline-flex items-center gap-1 rounded-md border border-brand-200 bg-brand-25 px-1.5 py-0.5 text-xs text-slate-600">
+          <span className="inline-flex items-center gap-1 rounded-md bg-brand-50 px-1.5 py-0.5 text-xs text-slate-500">
+            <DollarSign className="size-3 shrink-0 text-slate-400" />
             3M OPS
-            <span className="font-bold tabular-nums text-slate-900">${formatted}</span>
+            <span className="font-bold tabular-nums text-slate-700">${formatted}</span>
           </span>
         </TooltipTrigger>
         <TooltipContent>Orders per session over the last 3 months</TooltipContent>
@@ -177,11 +185,10 @@ export function SkuCard({ sku, isActive, isSelected, isSelectionMode, hideMetric
           </div>
           {/* Content Agent: keep metric tags visible in selection mode */}
           {!hideMetrics && (
-            <div className="flex flex-wrap items-center gap-1.5 px-3 pt-0 pb-3">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 pt-0 pb-3">
               <CardMetric label="Compliance" value={sku.metrics.compliance} />
               <CardMetric label="SEO" value={sku.metrics.seo} />
               <CardMetric label="AEO" value={sku.metrics.aeo} />
-              <span aria-hidden className="mx-0.5 h-3 w-px bg-slate-200" />
               <OpsTag value={sku.metrics.ops} />
             </div>
           )}
@@ -209,7 +216,7 @@ export function SkuCard({ sku, isActive, isSelected, isSelectionMode, hideMetric
               <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-700">
                 {sku.title}
               </p>
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-3">
                 <OpsTag value={sku.metrics.ops} />
               </div>
             </div>
@@ -227,11 +234,10 @@ export function SkuCard({ sku, isActive, isSelected, isSelectionMode, hideMetric
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5 px-3 pt-2 pb-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 pt-2 pb-3">
             <CardMetric label="Compliance" value={sku.metrics.compliance} />
             <CardMetric label="SEO" value={sku.metrics.seo} />
             <CardMetric label="AEO" value={sku.metrics.aeo} />
-            <span aria-hidden className="mx-0.5 h-3 w-px bg-slate-200" />
             <OpsTag value={sku.metrics.ops} />
           </div>
         </>
