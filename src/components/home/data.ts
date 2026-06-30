@@ -17,7 +17,9 @@ export const MOCK_SKUS: Sku[] = [
       { type: "warning", label: "Title too long" },
     ],
     lastUpdated: "Apr 8, 2025",
-    actionStatus: "to-do",
+    pimSyncedOn: "2026-06-28",
+    aiSyncedOn: "2026-06-28",
+    actionStatus: "in-progress",
   },
   {
     id: "sku-2",
@@ -34,6 +36,8 @@ export const MOCK_SKUS: Sku[] = [
       { type: "warning", label: "PDP-only SKU" },
     ],
     lastUpdated: "Mar 7, 2025",
+    pimSyncedOn: "2026-06-27",
+    aiSyncedOn: "2026-06-27",
     actionStatus: "to-do",
   },
   {
@@ -47,6 +51,8 @@ export const MOCK_SKUS: Sku[] = [
     metrics: { compliance: 54, seo: 40, aeo: 16, ops: 7600 },
     salsifyIssues: [{ type: "error", label: "Image mismatch" }],
     lastUpdated: "Feb 14, 2025",
+    pimSyncedOn: "2026-06-28",
+    aiSyncedOn: "2026-06-26",
     actionStatus: "to-do",
   },
   {
@@ -60,8 +66,10 @@ export const MOCK_SKUS: Sku[] = [
     metrics: { compliance: 54, seo: 30, aeo: 40, ops: 930 },
     salsifyIssues: [{ type: "warning", label: "Bullet count low" }],
     lastUpdated: "Jan 22, 2025",
+    pimSyncedOn: "2026-06-25",
+    aiSyncedOn: "2026-06-25",
     isBookmarked: true,
-    actionStatus: "to-do",
+    actionStatus: "in-progress",
   },
   {
     id: "sku-5",
@@ -77,6 +85,8 @@ export const MOCK_SKUS: Sku[] = [
       { type: "error", label: "Image mismatch" },
     ],
     lastUpdated: "Mar 19, 2025",
+    pimSyncedOn: "2026-06-28",
+    aiSyncedOn: "2026-06-28",
     actionStatus: "to-do",
   },
   {
@@ -90,6 +100,8 @@ export const MOCK_SKUS: Sku[] = [
     metrics: { compliance: 72, seo: 55, aeo: 48, ops: 5480 },
     salsifyIssues: [{ type: "warning", label: "Title too long" }],
     lastUpdated: "Mar 3, 2025",
+    pimSyncedOn: "2026-06-27",
+    aiSyncedOn: "2026-06-27",
     actionStatus: "to-do",
   },
   {
@@ -103,7 +115,9 @@ export const MOCK_SKUS: Sku[] = [
     metrics: { compliance: 88, seo: 75, aeo: 62, ops: 12400 },
     salsifyIssues: [{ type: "error", label: "Image mismatch" }],
     lastUpdated: "Apr 12, 2025",
-    actionStatus: "to-do",
+    pimSyncedOn: "2026-06-28",
+    aiSyncedOn: "2026-06-28",
+    actionStatus: "in-progress",
   },
   {
     id: "sku-8",
@@ -116,6 +130,8 @@ export const MOCK_SKUS: Sku[] = [
     metrics: { compliance: 45, seo: 38, aeo: 30, ops: 8750 },
     salsifyIssues: [{ type: "warning", label: "Bullet count low" }],
     lastUpdated: "Apr 1, 2025",
+    pimSyncedOn: "2026-06-26",
+    aiSyncedOn: "2026-06-26",
     actionStatus: "to-do",
   },
   {
@@ -129,6 +145,8 @@ export const MOCK_SKUS: Sku[] = [
     metrics: { compliance: 65, seo: 50, aeo: 42, ops: 3190 },
     salsifyIssues: [{ type: "error", label: "Description missing" }],
     lastUpdated: "Mar 28, 2025",
+    pimSyncedOn: "2026-06-28",
+    aiSyncedOn: "2026-06-28",
     actionStatus: "to-do",
   },
   {
@@ -145,6 +163,8 @@ export const MOCK_SKUS: Sku[] = [
       { type: "error", label: "Description missing" },
     ],
     lastUpdated: "Feb 27, 2025",
+    pimSyncedOn: "2026-06-25",
+    aiSyncedOn: "2026-06-25",
     actionStatus: "to-do",
   },
 ]

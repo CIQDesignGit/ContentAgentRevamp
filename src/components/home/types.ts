@@ -26,6 +26,10 @@ export type Sku = {
   /** True when the user has bookmarked this SKU for later attention. Independent of actionStatus. */
   isBookmarked?: boolean
   actionStatus?: ActionStatus
+  /** ISO date string — when PIM/Salsify data was last pulled into the tool. */
+  pimSyncedOn?: string
+  /** ISO date string — when the AI last generated recommendations for this SKU. */
+  aiSyncedOn?: string
 }
 
 export type ProductImage = { id: string; label: string; url?: string; hue?: number }

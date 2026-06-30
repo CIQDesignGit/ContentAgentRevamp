@@ -6,6 +6,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 
 import { BulkSelectControl } from "@/components/home/section-controls"
+import { SourceLogoBadge } from "@/components/home/bullet-source-cell"
+import {
+  RETAILER_LOGO_SRC,
+  SALSIFY_LOGO_SRC,
+} from "@/components/home/source-logos"
 import { AppHeader } from "@/components/home/app-header"
 import { FilterBar } from "@/components/home/filter-bar"
 import { SkuSidebar } from "@/components/home/sku-sidebar"
@@ -866,6 +871,7 @@ export default function Home() {
             actionStatus={selectedSku.actionStatus}
             isBookmarked={selectedSku.isBookmarked ?? false}
             onBookmarkClick={handleBookmarkToggle}
+            lastUpdated={selectedSku.lastUpdated}
             onPublishClick={() => {
               if (includedCount > 0) setPublishDialogOpen(true)
             }}
@@ -891,8 +897,23 @@ export default function Home() {
           <div className="flex min-h-0 flex-1">
             <section className="flex min-w-0 flex-1 flex-col">
               <div className="flex-1 space-y-4 overflow-y-auto px-5 pb-5">
-                {/* Bulk select strip — scrolls with the content */}
-                <div className="flex items-center justify-end pt-3 pb-1">
+                {/* Toolbar: sync info (left) + bulk select (right) */}
+                <div className="flex items-center justify-between pt-3 pb-1">
+                  {/* PIM sync + AI sync chips — icons match SourceLogoBadge styling */}
+                  <div className="flex items-center gap-3">
+                    {selectedSku.pimSyncedOn && (
+                      <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <SourceLogoBadge src={SALSIFY_LOGO_SRC} alt="PIM" />
+                        Synced on {selectedSku.pimSyncedOn}
+                      </span>
+                    )}
+                    {selectedSku.aiSyncedOn && (
+                      <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <SourceLogoBadge src={RETAILER_LOGO_SRC} alt="Amazon" />
+                        Synced on {selectedSku.aiSyncedOn}
+                      </span>
+                    )}
+                  </div>
                   <BulkSelectControl
                     selectedCount={includedCount}
                     totalCount={4}

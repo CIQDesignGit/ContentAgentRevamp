@@ -1,5 +1,5 @@
 import type { ElementType } from "react"
-import { ClockCheck } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { ActionStatus } from "./types"
 
@@ -11,9 +11,9 @@ const STATUS_CONFIG: Partial<Record<ActionStatus, {
   iconClass: string
 }>> = {
   "in-progress": {
-    icon: ClockCheck,
+    icon: RefreshCw,
     label: "In progress",
-    colorClass: "text-warning-600",
+    colorClass: "text-slate-600",
     iconClass: "size-3.5",
   },
 }

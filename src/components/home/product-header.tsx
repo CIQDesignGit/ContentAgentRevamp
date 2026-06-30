@@ -1,6 +1,6 @@
 "use client"
 
-import { Bookmark, BookmarkPlus, Search, ShieldCheck, Sparkles } from "lucide-react"
+import { Bookmark, BookmarkPlus, Package, Search, ShieldCheck, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MetricChip } from "./metric-chip"
 import type { ActionStatus } from "./types"
@@ -27,6 +27,8 @@ interface ProductHeaderProps {
   actionStatus?: ActionStatus
   isBookmarked?: boolean
   onBookmarkClick?: () => void
+  /** ISO string or Date — shown as "Last updated: Jun 30, 2026 at 11:30 AM" */
+  lastUpdated?: string | Date
 }
 
 export function ProductHeader({
@@ -47,9 +49,20 @@ export function ProductHeader({
   actionStatus,
   isBookmarked = false,
   onBookmarkClick,
+  lastUpdated,
 }: ProductHeaderProps) {
   const hasSelection = selectedCount !== undefined && totalSections !== undefined
   const ctaLabel = "Publish to PDP"
+
+  const formattedLastUpdated = lastUpdated
+    ? new Date(lastUpdated).toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : null
   // When section-level selection is in use, enable publish as long as at least one section is selected.
   // Falls back to the standard publishState logic on pages that don't use section selection.
   const canPublish = hasSelection
@@ -77,9 +90,12 @@ export function ProductHeader({
           {/* Metadata + title + optional metrics */}
           <div className="min-w-0 space-y-1">
             <span className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span>{asin}</span>
+              <span className="flex items-center gap-1">
+                <Package className="size-3 shrink-0 text-slate-400" />
+                {productId}
+              </span>
               <span aria-hidden className="size-1 rounded-full bg-slate-300" />
-              <span>{productId}</span>
+              <span className="font-mono">#{asin}</span>
               <span aria-hidden className="size-1 rounded-full bg-slate-300" />
               <span>{brand}</span>
             </span>
@@ -94,36 +110,43 @@ export function ProductHeader({
           </div>
         </div>
 
-        {/* Right: publish CTA + bookmark */}
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={onPublishClick}
-            disabled={!canPublish}
-            className={cn(
-              "inline-flex h-8 items-center gap-2 rounded-md px-4 text-xs font-medium text-white",
-              canPublish ? "bg-primary hover:bg-brand-700" : "cursor-not-allowed bg-slate-300",
-            )}
-          >
-            {ctaLabel}
-          </button>
-          <button
-            type="button"
-            aria-label={isBookmarked ? "Remove bookmark" : "Bookmark"}
-            title={isBookmarked ? "Remove bookmark" : "Save for later"}
-            onClick={onBookmarkClick}
-            className={cn(
-              "grid size-8 place-items-center rounded-md border transition-colors",
-              isBookmarked
-                ? "border-brand-200 bg-brand-50 text-brand-500 hover:bg-brand-100"
-                : "border-slate-200 text-slate-600 hover:bg-slate-100",
-            )}
-          >
-            {isBookmarked
-              ? <Bookmark className="size-4" fill="currentColor" />
-              : <BookmarkPlus className="size-4" />
-            }
-          </button>
+        {/* Right: publish CTA + bookmark + last updated */}
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onPublishClick}
+              disabled={!canPublish}
+              className={cn(
+                "inline-flex h-8 items-center gap-2 rounded-md px-4 text-xs font-medium text-white",
+                canPublish ? "bg-primary hover:bg-brand-700" : "cursor-not-allowed bg-slate-300",
+              )}
+            >
+              {ctaLabel}
+            </button>
+            <button
+              type="button"
+              aria-label={isBookmarked ? "Remove bookmark" : "Bookmark"}
+              title={isBookmarked ? "Remove bookmark" : "Save for later"}
+              onClick={onBookmarkClick}
+              className={cn(
+                "grid size-8 place-items-center rounded-md border transition-colors",
+                isBookmarked
+                  ? "border-brand-200 bg-brand-50 text-brand-500 hover:bg-brand-100"
+                  : "border-slate-200 text-slate-600 hover:bg-slate-100",
+              )}
+            >
+              {isBookmarked
+                ? <Bookmark className="size-4" fill="currentColor" />
+                : <BookmarkPlus className="size-4" />
+              }
+            </button>
+          </div>
+          {formattedLastUpdated && (
+            <p className="text-xs text-slate-400">
+              Last updated: {formattedLastUpdated}
+            </p>
+          )}
         </div>
       </div>
     </div>

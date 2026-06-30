@@ -106,13 +106,13 @@ function MetaRow({ sku, isActive }: { sku: Sku; isActive: boolean }) {
         <span aria-hidden className="size-1 rounded-full bg-slate-300" />
         <span className="text-xs text-slate-400">{sku.brand}</span>
       </p>
-      {/* Workflow badge + bookmark can both show simultaneously */}
+      {/* Bookmark first, then in-progress — both can show simultaneously */}
       <div className="flex items-center gap-1.5 shrink-0">
-        {sku.actionStatus && (
-          <ActionStatusBadge status={sku.actionStatus} showLabel={false} />
-        )}
         {sku.isBookmarked && (
           <Bookmark className="size-3 shrink-0 text-brand-500" fill="currentColor" aria-label="Bookmarked" />
+        )}
+        {sku.actionStatus && (
+          <ActionStatusBadge status={sku.actionStatus} showLabel={false} />
         )}
       </div>
     </div>
