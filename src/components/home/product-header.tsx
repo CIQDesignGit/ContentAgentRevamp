@@ -51,7 +51,6 @@ export function ProductHeader({
   onBookmarkClick,
   lastUpdated,
 }: ProductHeaderProps) {
-  const hasSelection = selectedCount !== undefined && totalSections !== undefined
   const ctaLabel = "Publish to PDP"
 
   const formattedLastUpdated = lastUpdated
@@ -63,11 +62,9 @@ export function ProductHeader({
         minute: "2-digit",
       })
     : null
-  // When section-level selection is in use, enable publish as long as at least one section is selected.
-  // Falls back to the standard publishState logic on pages that don't use section selection.
-  const canPublish = hasSelection
-    ? selectedCount! > 0
-    : publishState === "ready" || (publishState === "syncing" && publishableCount > 0)
+  // Button is only disabled when there are zero accepted changes to publish.
+  // Section checkboxes (selectedCount) control *what* goes in the dialog, not *whether* to enable it.
+  const canPublish = publishState === "ready" || (publishState === "syncing" && publishableCount > 0)
 
   return (
     <div className="flex shrink-0 flex-col border-b border-slate-200 bg-white">

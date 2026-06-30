@@ -88,8 +88,8 @@ export default function Home() {
 
   const filteredSkus = useMemo(
     () => MOCK_SKUS
-      // Success SKUs are "done" — they graduate out of the review list
-      .filter((s) => (actionStatusMap[s.id] ?? "to-do") !== "success")
+      // Sidebar is a "to-do" list — only show SKUs that haven't been actioned yet
+      .filter((s) => (actionStatusMap[s.id] ?? "to-do") === "to-do")
       .filter((s) => passesFilter(s, filter) && passesSearch(s, search))
       // When the bookmarks toggle is active, only show bookmarked SKUs
       .filter((s) => !bookmarkedOnly || bookmarkSet.has(s.id))
@@ -130,15 +130,43 @@ export default function Home() {
 
   const publishBarState: PublishBarState = useMemo(() => {
     const hasPublishable = publishSummary.publishable.length > 0
+    // Pending reviews (unreviewed AI suggestions) also count — user can publish directly.
+    const hasPending = publishSummary.pendingReviewCount > 0
     const inFlight = Boolean(activeBatch) || Boolean(content.isPublishing)
 
     if (inFlight) {
-      // Keep publish enabled when more accepted changes are staged during an active sync.
       return hasPublishable ? "syncing" : "publishing"
     }
-    if (hasPublishable) return "ready"
+    if (hasPublishable || hasPending) return "ready"
     return "disabled"
-  }, [content.isPublishing, activeBatch, publishSummary.publishable.length])
+  }, [content.isPublishing, activeBatch, publishSummary.publishable.length, publishSummary.pendingReviewCount])
+
+  // Combines accepted + still-pending AI suggestions so the dialog shows everything
+  // that will be published (pending items are auto-accepted on confirm).
+  const effectivePublishSummary = useMemo(() => {
+    const acceptedKeys = new Set(publishSummary.publishable.map((f) => f.key))
+    const pendingFields: { key: string; label: string }[] = []
+
+    if (content.titleStatus === "pending" && content.titleRecommendation) {
+      pendingFields.push({ key: "title", label: "Title" })
+    }
+    content.bulletRecommendations.forEach((r) => {
+      if (r.status === "pending") {
+        pendingFields.push({ key: `bullet:${r.id}`, label: r.label || "Bullet" })
+      }
+    })
+    if (content.descriptionStatus === "pending" && content.descriptionRecommendation) {
+      pendingFields.push({ key: "description", label: "Description" })
+    }
+
+    return {
+      ...publishSummary,
+      publishable: [
+        ...publishSummary.publishable,
+        ...pendingFields.filter((f) => !acceptedKeys.has(f.key)),
+      ],
+    }
+  }, [publishSummary, content])
 
   const hasUnpublishedAcceptedChanges = publishSummary.publishable.length > 0
 
@@ -240,12 +268,28 @@ export default function Home() {
 
   function handlePublishConfirm() {
     setPublishDialogOpen(false)
-    const fieldKeys = publishSummary.publishable.map((f) => f.key)
     const queuedFollowUp = Boolean(activeBatch)
-    const fieldNames = publishSummary.publishable.map((f) => f.label).join(", ")
+    const fieldNames = effectivePublishSummary.publishable.map((f) => f.label).join(", ")
 
     patch((prev) => {
-      const next = applyPublishStart(prev, fieldKeys, queuedFollowUp)
+      // Auto-accept any still-pending recommendations so they get included in this publish.
+      const withAccepted: SkuContent = {
+        ...prev,
+        titleStatus: prev.titleStatus === "pending" ? "accepted" : prev.titleStatus,
+        titleSyncFootprint: prev.titleStatus === "pending" ? "none" : prev.titleSyncFootprint,
+        descriptionStatus: prev.descriptionStatus === "pending" ? "accepted" : prev.descriptionStatus,
+        descriptionSyncFootprint: prev.descriptionStatus === "pending" ? "none" : prev.descriptionSyncFootprint,
+        bulletRecommendations: prev.bulletRecommendations.map((r) =>
+          r.status === "pending"
+            ? { ...r, status: "accepted" as const, syncFootprint: "none" as const, hasUnpublishedEdits: false, footprint: undefined }
+            : r,
+        ),
+      }
+
+      const fieldKeys = getPublishSummary(withAccepted).publishable.map((f) => f.key)
+      if (fieldKeys.length === 0) return withAccepted
+
+      const next = applyPublishStart(withAccepted, fieldKeys, queuedFollowUp)
       const batch = next.publishBatches?.[next.publishBatches.length - 1]
       if (batch && !batch.queuedFollowUp) {
         schedulePublishSimulation(selectedSkuId, batch.id)
@@ -253,12 +297,21 @@ export default function Home() {
       return next
     })
 
-    // Published SKUs move to "in-progress" until PDP verification completes
-    setActionStatusMap((prev) => ({ ...prev, [selectedSkuId]: "in-progress" }))
-
     toast.success("Your changes are published", {
       description: `${fieldNames} sent to PIM & PDP.`,
     })
+
+    // Capture the next SKU now — filteredSkus still contains the current SKU at this point.
+    // After the status update below it will be removed from the list.
+    const currentIndex = filteredSkus.findIndex((s) => s.id === selectedSkuId)
+    const nextSkuId = filteredSkus[currentIndex + 1]?.id
+
+    // Delay sidebar removal until the confirm dialog has finished closing (~300ms)
+    // so the card exit animation starts after the popup is gone, then auto-advance.
+    setTimeout(() => {
+      setActionStatusMap((prev) => ({ ...prev, [selectedSkuId]: "in-progress" }))
+      if (nextSkuId) setSelectedSkuId(nextSkuId)
+    }, 300)
   }
 
   function handleBookmarkToggle() {
@@ -865,7 +918,7 @@ export default function Home() {
             seo={selectedSku.metrics.seo}
             aeo={selectedSku.metrics.aeo}
             publishState={publishBarState}
-            publishableCount={publishSummary.publishable.length}
+            publishableCount={effectivePublishSummary.publishable.length}
             selectedCount={includedCount}
             totalSections={4}
             actionStatus={selectedSku.actionStatus}
@@ -889,8 +942,8 @@ export default function Home() {
           <PublishConfirmDialog
             open={publishDialogOpen}
             onOpenChange={setPublishDialogOpen}
-            summary={publishSummary}
-            hasActiveBatch={publishSummary.hasActiveBatch}
+            summary={effectivePublishSummary}
+            hasActiveBatch={effectivePublishSummary.hasActiveBatch}
             onConfirm={handlePublishConfirm}
           />
 

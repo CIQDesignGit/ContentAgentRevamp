@@ -1,10 +1,52 @@
 "use client"
 
+import { useEffect, useRef, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 import { AlignJustify, PanelLeftOpen } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox, ContentAgentSkuCard, TitleOptimizationSkuCard } from "./sku-card"
 import type { BulkField } from "./bulk-publish-confirm-dialog"
 import type { Sku } from "./types"
+
+// ─── Slide-out hook ───────────────────────────────────────────────────────────
+
+// Total animation budget: 350ms slide starts → 550ms slide ends
+//                         350ms delay → 500ms height collapse (ends at 850ms)
+const TOTAL_MS = 950
+
+function useSlidingList(incoming: Sku[]) {
+  const [rendered, setRendered] = useState<Sku[]>(incoming)
+  const [leavingIds, setLeavingIds] = useState<Set<string>>(new Set())
+  const prevIdsRef = useRef(new Set(incoming.map((s) => s.id)))
+
+  useEffect(() => {
+    const incomingIds = new Set(incoming.map((s) => s.id))
+    const removed = [...prevIdsRef.current].filter((id) => !incomingIds.has(id))
+    prevIdsRef.current = incomingIds
+
+    if (removed.length === 0) {
+      setRendered(incoming)
+      return
+    }
+
+    setLeavingIds((prev) => new Set([...prev, ...removed]))
+    setRendered((prev) => prev.map((s) => incoming.find((i) => i.id === s.id) ?? s))
+
+    const timer = setTimeout(() => {
+      setLeavingIds((prev) => {
+        const next = new Set(prev)
+        removed.forEach((id) => next.delete(id))
+        return next
+      })
+      setRendered(incoming)
+    }, TOTAL_MS)
+
+    return () => clearTimeout(timer)
+  }, [incoming]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return { rendered, leavingIds }
+}
 
 // All fields forwarded to the confirm dialog — no per-field toggle in sidebar
 const ALL_BULK_FIELDS: BulkField[] = ["title", "images", "bullets", "description"]
@@ -67,8 +109,8 @@ export function SkuSidebar({
   const allSelected = selectedCount === skus.length && skus.length > 0
   const someSelected = selectedCount > 0 && !allSelected
 
-  // Select the right named card component based on the page context
   const SkuCardComponent = hideMetrics ? TitleOptimizationSkuCard : ContentAgentSkuCard
+  const { rendered, leavingIds } = useSlidingList(skus)
 
   return (
     <aside className="flex w-[420px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
@@ -132,22 +174,59 @@ export function SkuSidebar({
       </div>
 
       {/* ── SKU list ─────────────────────────────────────────────────────────── */}
-      {skus.length === 0 ? (
+      {skus.length === 0 && leavingIds.size === 0 ? (
         <p className="px-4 pb-4 text-xs text-slate-500">No SKUs match the current filter.</p>
       ) : (
-        <ul className="scrollbar-none flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pb-4">
-          {skus.map((sku) => (
-            <li key={sku.id}>
-              <SkuCardComponent
-                sku={sku}
-                isActive={sku.id === selectedSkuId}
-                isSelected={selectedSkuIds.has(sku.id)}
-                isSelectionMode={isSelectionMode}
-                onSelect={() => onSelect(sku.id)}
-                onToggle={() => onToggleSkuSelection(sku.id)}
-              />
-            </li>
-          ))}
+        <ul className="scrollbar-none flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-4">
+          {rendered.map((sku) => {
+            const isLeaving = leavingIds.has(sku.id)
+            return (
+              /**
+               * Outer <li> — handles height + gap collapse via CSS grid-rows trick.
+               * This layer is purely layout: it never moves visually.
+               * The delay means the space only starts closing AFTER the card has
+               * mostly slid off screen.
+               */
+              <li
+                key={sku.id}
+                className={cn(
+                  "grid transition-[grid-template-rows,margin-bottom] ease-in-out",
+                  isLeaving
+                    ? "grid-rows-[0fr] mb-0 duration-500 delay-[350ms]"
+                    : "grid-rows-[1fr] mb-2 duration-200 delay-0",
+                )}
+              >
+                {/**
+                 * Inner div — min-h-0 + overflow-hidden are REQUIRED for the
+                 * grid-rows collapse to actually hide content.
+                 * This clips the card at the li boundary as it slides left.
+                 */}
+                <div className="min-h-0 overflow-hidden">
+                  <AnimatePresence>
+                    {!isLeaving && (
+                      <motion.div
+                        key={sku.id}
+                        exit={{ x: "-110%", opacity: 0 }}
+                        transition={{
+                          x:       { duration: 0.55, ease: [0.4, 0, 0.2, 1] },
+                          opacity: { duration: 0.3,  ease: "easeOut" },
+                        }}
+                      >
+                        <SkuCardComponent
+                          sku={sku}
+                          isActive={sku.id === selectedSkuId}
+                          isSelected={selectedSkuIds.has(sku.id)}
+                          isSelectionMode={isSelectionMode}
+                          onSelect={() => onSelect(sku.id)}
+                          onToggle={() => onToggleSkuSelection(sku.id)}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </li>
+            )
+          })}
         </ul>
       )}
 

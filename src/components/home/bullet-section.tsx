@@ -435,9 +435,12 @@ export function BulletPointsSection({
         }
       />
 
-      {/* No-PIM: full-width merged reasoning block below the combined bullet view */}
-      {!hasPimData && mergedBulletReasoning.length > 0 && (
-        <ReasoningAltKeywordsBlock reasoning={mergedBulletReasoning} />
+      {/* No-PIM: full-width merged reasoning + alt keywords block below the combined bullet view */}
+      {!hasPimData && (mergedBulletReasoning.length > 0 || mergedBulletAltKeywords.length > 0) && (
+        <ReasoningAltKeywordsBlock
+          reasoning={mergedBulletReasoning}
+          altKeywords={mergedBulletAltKeywords}
+        />
       )}
     </section>
   )
