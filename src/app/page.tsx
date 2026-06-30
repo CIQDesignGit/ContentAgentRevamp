@@ -24,6 +24,7 @@ import { BulkPublishConfirmDialog, FIELD_LABELS, type BulkField } from "@/compon
 import { BRD_INPUT_KEY, BRD_OUTPUT_KEY, type BrdOutput } from "@/components/home/bulk-review-view"
 import { toast } from "sonner"
 import { UnpublishedChangesGuardDialog } from "@/components/home/unpublished-changes-guard-dialog"
+import { QueueEmptyState } from "@/components/home/queue-empty-state"
 
 import { getFieldPublishQueue } from "@/lib/build-field-publish-queue"
 import { getActivePublishBatch, getPublishBatchForField } from "@/lib/publish-batch"
@@ -72,6 +73,10 @@ export default function Home() {
 
   const [bookmarkedOnly, setBookmarkedOnly] = useState(false)
 
+  // Controls the column-filter popover in FilterBar — lifted so the sidebar
+  // empty-state nudge can open it programmatically.
+  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false)
+
   // ── Bulk SKU selection state ──────────────────────────────────────────────
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedSkuIds, setSelectedSkuIds] = useState<Set<string>>(new Set())
@@ -100,6 +105,13 @@ export default function Home() {
         isBookmarked: bookmarkSet.has(s.id),
       })),
     [actionStatusMap, bookmarkSet, bookmarkedOnly, filter, search],
+  )
+
+  // True when every SKU has been actioned (none remain with "to-do" status),
+  // regardless of active filters. Used to show the "All caught up!" empty state.
+  const queueEmpty = useMemo(
+    () => MOCK_SKUS.every((s) => (actionStatusMap[s.id] ?? "to-do") !== "to-do"),
+    [actionStatusMap],
   )
 
   const selectedSku = useMemo(() => {
@@ -441,6 +453,20 @@ export default function Home() {
     })
     setIsSelectionMode(false)
     setSelectedSkuIds(new Set())
+
+    // Mark published SKUs as "in-progress" so they leave the sidebar list and
+    // trigger the staggered exit animation. Small delay lets the confirm dialog
+    // finish closing first (matches the single-SKU publish flow).
+    const publishedIds = batchesToSchedule.map(({ skuId }) => skuId)
+    if (publishedIds.length > 0) {
+      setTimeout(() => {
+        setActionStatusMap((prev) => {
+          const next = { ...prev }
+          publishedIds.forEach((id) => { next[id] = "in-progress" })
+          return next
+        })
+      }, 300)
+    }
   }
 
   const bulletOriginals = useMemo(() => {
@@ -872,6 +898,8 @@ export default function Home() {
         bookmarkedCount={bookmarkSet.size}
         bookmarkedOnly={bookmarkedOnly}
         onBookmarkedOnlyChange={setBookmarkedOnly}
+        filterPopoverOpen={filterPopoverOpen}
+        onFilterPopoverOpenChange={setFilterPopoverOpen}
       />
 
       <div className="flex min-h-0 flex-1">
@@ -880,6 +908,8 @@ export default function Home() {
           selectedSkuId={selectedSkuId}
           onSelect={(skuId) => requestNavigation({ kind: "sku", skuId })}
           totalCount={MOCK_SKUS.length}
+          queueEmpty={queueEmpty}
+          onOpenFilterPanel={() => setFilterPopoverOpen(true)}
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed((v) => !v)}
           isSelectionMode={isSelectionMode}
@@ -908,7 +938,11 @@ export default function Home() {
         />
 
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <ProductHeader
+          {queueEmpty ? (
+            <QueueEmptyState />
+          ) : (
+            <>
+            <ProductHeader
             title={selectedSku.title}
             asin={selectedSku.asin}
             productId={selectedSku.productId}
@@ -1060,6 +1094,8 @@ export default function Home() {
               </div>
             </section>
           </div>
+            </>
+          )}
         </main>
       </div>
     </div>

@@ -292,17 +292,26 @@ interface FilterBarProps {
   /** When true, sidebar shows only bookmarked SKUs */
   bookmarkedOnly?: boolean
   onBookmarkedOnlyChange?: (v: boolean) => void
+  /** Controlled open state for the column-filter popover (optional). */
+  filterPopoverOpen?: boolean
+  onFilterPopoverOpenChange?: (v: boolean) => void
 }
 
 export function FilterBar({
   search, onSearchChange, activeFilter, onFilterChange,
   selectedBrands, onBrandsChange, matchCount, onActivityLogClick, lockedFilter,
   bookmarkedCount = 0, bookmarkedOnly = false, onBookmarkedOnlyChange,
+  filterPopoverOpen: filterPopoverOpenProp,
+  onFilterPopoverOpenChange,
 }: FilterBarProps) {
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(search.length > 0)
-  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false)
+  const [internalFilterPopoverOpen, setInternalFilterPopoverOpen] = useState(false)
   const [columnFilters, setColumnFilters] = useState<ColumnFilters>({})
+
+  // Support both controlled (via props) and uncontrolled usage
+  const filterPopoverOpen = filterPopoverOpenProp ?? internalFilterPopoverOpen
+  const setFilterPopoverOpen = onFilterPopoverOpenChange ?? setInternalFilterPopoverOpen
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {

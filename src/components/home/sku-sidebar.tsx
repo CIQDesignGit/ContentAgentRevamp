@@ -1,23 +1,25 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
-import { AlignJustify, PanelLeftOpen } from "lucide-react"
+import { motion } from "framer-motion"
+import { AlignJustify, CheckCircle2, PanelLeftOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox, ContentAgentSkuCard, TitleOptimizationSkuCard } from "./sku-card"
 import type { BulkField } from "./bulk-publish-confirm-dialog"
 import type { Sku } from "./types"
 
-// ─── Slide-out hook ───────────────────────────────────────────────────────────
+// ─── Staggered slide-out hook ─────────────────────────────────────────────────
 
-// Total animation budget: 350ms slide starts → 550ms slide ends
-//                         350ms delay → 500ms height collapse (ends at 850ms)
-const TOTAL_MS = 950
+// Each removed card in a bulk removal starts sliding 60ms after the one above it,
+// creating a top-to-bottom wave. After a card slides out, its row height collapses
+// (350ms later, 500ms duration). Total budget = (N-1)×60 + 950ms.
+const STAGGER_MS = 150
 
 function useSlidingList(incoming: Sku[]) {
   const [rendered, setRendered] = useState<Sku[]>(incoming)
-  const [leavingIds, setLeavingIds] = useState<Set<string>>(new Set())
+  // id → stagger delay in ms. Presence in map = "this card is leaving".
+  const [leavingDelays, setLeavingDelays] = useState<Map<string, number>>(new Map())
   const prevIdsRef = useRef(new Set(incoming.map((s) => s.id)))
 
   useEffect(() => {
@@ -30,22 +32,70 @@ function useSlidingList(incoming: Sku[]) {
       return
     }
 
-    setLeavingIds((prev) => new Set([...prev, ...removed]))
+    // Sort removed IDs by their position in the current rendered list so the
+    // stagger wave flows visually top-to-bottom.
+    const renderedIds = rendered.map((s) => s.id)
+    const removedSorted = [...removed].sort(
+      (a, b) => renderedIds.indexOf(a) - renderedIds.indexOf(b),
+    )
+
+    setLeavingDelays((prev) => {
+      const next = new Map(prev)
+      removedSorted.forEach((id, i) => next.set(id, i * STAGGER_MS))
+      return next
+    })
     setRendered((prev) => prev.map((s) => incoming.find((i) => i.id === s.id) ?? s))
 
+    // For N cards: last card starts at (N-1)×60ms, finishes collapsing at +950ms
+    const totalMs = (removed.length - 1) * STAGGER_MS + 950
     const timer = setTimeout(() => {
-      setLeavingIds((prev) => {
-        const next = new Set(prev)
+      setLeavingDelays((prev) => {
+        const next = new Map(prev)
         removed.forEach((id) => next.delete(id))
         return next
       })
       setRendered(incoming)
-    }, TOTAL_MS)
+    }, totalMs)
 
     return () => clearTimeout(timer)
   }, [incoming]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { rendered, leavingIds }
+  return { rendered, leavingDelays }
+}
+
+// ─── Empty state — shown when the to-do queue is fully cleared ────────────────
+
+function SidebarEmptyState({ onOpenFilterPanel }: { onOpenFilterPanel?: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: "easeOut", delay: 0.15 }}
+      className="flex flex-1 flex-col items-center justify-center gap-3 px-6 pb-16 text-center"
+    >
+      <div className="flex size-12 items-center justify-center rounded-full bg-brand-50">
+        <CheckCircle2 className="size-6 text-brand-500" />
+      </div>
+      <div className="space-y-2">
+        <p className="text-sm font-semibold text-slate-700">All caught up!</p>
+        <p className="text-xs leading-relaxed text-slate-400">
+          All SKU changes are published.
+        </p>
+        {onOpenFilterPanel && (
+          <p className="text-xs text-slate-400">
+            <button
+              type="button"
+              onClick={onOpenFilterPanel}
+              className="font-medium text-brand-500 underline-offset-2 hover:underline"
+            >
+              Change the filter
+            </button>
+            {" "}to review in‑progress or completed SKUs.
+          </p>
+        )}
+      </div>
+    </motion.div>
+  )
 }
 
 // All fields forwarded to the confirm dialog — no per-field toggle in sidebar
@@ -60,6 +110,13 @@ interface SkuSidebarProps {
   totalCount: number
   collapsed: boolean
   onToggle: () => void
+  /**
+   * True when the queue is genuinely empty because all SKUs were published —
+   * as opposed to empty because a filter is hiding them.
+   */
+  queueEmpty?: boolean
+  /** Called when the user clicks "change the filter" in the empty state nudge. */
+  onOpenFilterPanel?: () => void
   /** When true, renders TitleOptimizationSkuCard (no quality-score chips). Defaults to false. */
   hideMetrics?: boolean
   isSelectionMode?: boolean
@@ -80,6 +137,8 @@ export function SkuSidebar({
   totalCount,
   collapsed,
   onToggle,
+  queueEmpty = false,
+  onOpenFilterPanel,
   hideMetrics = false,
   isSelectionMode = false,
   selectedSkuIds = new Set(),
@@ -110,7 +169,14 @@ export function SkuSidebar({
   const someSelected = selectedCount > 0 && !allSelected
 
   const SkuCardComponent = hideMetrics ? TitleOptimizationSkuCard : ContentAgentSkuCard
-  const { rendered, leavingIds } = useSlidingList(skus)
+  const { rendered, leavingDelays } = useSlidingList(skus)
+
+  // Only show empty state once all exit animations have fully completed.
+  // Must use `rendered.length` (not `skus.length`) because `skus` becomes empty
+  // immediately when publish fires, while `rendered` stays populated until the
+  // cleanup timeout fires (after TOTAL_MS). Using `skus` would unmount the <ul>
+  // before the effect even runs, preventing any animation from ever starting.
+  const isEmpty = rendered.length === 0
 
   return (
     <aside className="flex w-[420px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
@@ -173,56 +239,67 @@ export function SkuSidebar({
         )}
       </div>
 
-      {/* ── SKU list ─────────────────────────────────────────────────────────── */}
-      {skus.length === 0 && leavingIds.size === 0 ? (
-        <p className="px-4 pb-4 text-xs text-slate-500">No SKUs match the current filter.</p>
+      {/* ── SKU list / empty state ────────────────────────────────────────────── */}
+      {isEmpty ? (
+        queueEmpty ? (
+          <SidebarEmptyState onOpenFilterPanel={onOpenFilterPanel} />
+        ) : (
+          <p className="px-4 pb-4 text-xs text-slate-500">No SKUs match the current filter.</p>
+        )
       ) : (
         <ul className="scrollbar-none flex min-h-0 flex-1 flex-col overflow-y-auto bg-white px-3 pb-4">
           {rendered.map((sku) => {
-            const isLeaving = leavingIds.has(sku.id)
+            const isLeaving = leavingDelays.has(sku.id)
+            // Per-card stagger offset in ms (0 for single removals)
+            const staggerMs = leavingDelays.get(sku.id) ?? 0
+
             return (
               /**
-               * Outer <li> — handles height + gap collapse via CSS grid-rows trick.
-               * This layer is purely layout: it never moves visually.
-               * The delay means the space only starts closing AFTER the card has
-               * mostly slid off screen.
+               * Outer <li> — collapses height via CSS grid-rows trick.
+               * transitionDelay is inline (dynamic per card) so the space only
+               * starts closing after the card has mostly slid off screen.
                */
               <li
                 key={sku.id}
+                style={{
+                  transitionDelay: isLeaving ? `${staggerMs + 350}ms` : "0ms",
+                }}
                 className={cn(
                   "grid transition-[grid-template-rows,margin-bottom] ease-in-out",
                   isLeaving
-                    ? "grid-rows-[0fr] mb-0 duration-500 delay-[350ms]"
-                    : "grid-rows-[1fr] mb-2 duration-200 delay-0",
+                    ? "grid-rows-[0fr] mb-0 duration-500"
+                    : "grid-rows-[1fr] mb-2 duration-200",
                 )}
               >
-                {/**
-                 * Inner div — min-h-0 + overflow-hidden are REQUIRED for the
-                 * grid-rows collapse to actually hide content.
-                 * This clips the card at the li boundary as it slides left.
-                 */}
+                {/* min-h-0 + overflow-hidden clip the card as it slides left */}
                 <div className="min-h-0 overflow-hidden">
-                  <AnimatePresence>
-                    {!isLeaving && (
-                      <motion.div
-                        key={sku.id}
-                        exit={{ x: "-110%", opacity: 0 }}
-                        transition={{
-                          x:       { duration: 0.55, ease: [0.4, 0, 0.2, 1] },
-                          opacity: { duration: 0.3,  ease: "easeOut" },
-                        }}
-                      >
-                        <SkuCardComponent
-                          sku={sku}
-                          isActive={sku.id === selectedSkuId}
-                          isSelected={selectedSkuIds.has(sku.id)}
-                          isSelectionMode={isSelectionMode}
-                          onSelect={() => onSelect(sku.id)}
-                          onToggle={() => onToggleSkuSelection(sku.id)}
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  {/*
+                   * Drive the slide via `animate` (not `exit`) so the stagger delay
+                   * is evaluated fresh on the same render where isLeaving turns true.
+                   * With AnimatePresence + exit, the delay was read from the *previous*
+                   * render's props (all zeros), causing simultaneous exits.
+                   */}
+                  <motion.div
+                    initial={false}
+                    animate={
+                      isLeaving
+                        ? { x: "-110%", opacity: 0 }
+                        : { x: 0, opacity: 1 }
+                    }
+                    transition={{
+                      x:       { delay: staggerMs / 1000, duration: 0.55, ease: [0.4, 0, 0.2, 1] },
+                      opacity: { delay: staggerMs / 1000, duration: 0.3,  ease: "easeOut" },
+                    }}
+                  >
+                    <SkuCardComponent
+                      sku={sku}
+                      isActive={sku.id === selectedSkuId}
+                      isSelected={selectedSkuIds.has(sku.id)}
+                      isSelectionMode={isSelectionMode}
+                      onSelect={() => onSelect(sku.id)}
+                      onToggle={() => onToggleSkuSelection(sku.id)}
+                    />
+                  </motion.div>
                 </div>
               </li>
             )
